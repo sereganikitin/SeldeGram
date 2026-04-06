@@ -1,0 +1,16 @@
+{
+  "name": "seldegram",
+  "version": "0.0.1",
+  "private": true,
+  "description": "SeldeGram — E2EE messenger",
+  "workspaces": [
+    "server",
+    "mobile",
+    "shared"
+  ],
+  "scripts": {
+    "dev:server": "npm run start:dev -w server",
+    "dev:infra": "docker compose -f docker/docker-compose.yml up -d",
+    "stop:infra": "docker compose -f docker/docker-compose.yml down"
+  }
+}
