@@ -1,10 +1,14 @@
-import { Controller, Get, NotFoundException, Req, UseGuards } from '@nestjs/common';
+import { Controller, Get, NotFoundException, Query, Req, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { PrismaService } from '../prisma/prisma.service';
+import { UsersService } from './users.service';
 
 @Controller()
 export class UsersController {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly users: UsersService,
+  ) {}
 
   @UseGuards(JwtAuthGuard)
   @Get('me')
@@ -22,5 +26,11 @@ export class UsersController {
     });
     if (!user) throw new NotFoundException('User not found');
     return user;
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('users/search')
+  search(@Req() req: { user: { userId: string } }, @Query('q') q: string) {
+    return this.users.search(q ?? '', req.user.userId);
   }
 }

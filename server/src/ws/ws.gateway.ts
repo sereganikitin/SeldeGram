@@ -11,6 +11,7 @@ import {
 import { JwtService } from '@nestjs/jwt';
 import { IncomingMessage } from 'http';
 import { Server, WebSocket } from 'ws';
+import { WsHub } from './ws.hub';
 
 interface AuthedSocket extends WebSocket {
   userId?: string;
@@ -23,7 +24,10 @@ export class WsGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
   server!: Server;
 
-  constructor(private readonly jwt: JwtService) {}
+  constructor(
+    private readonly jwt: JwtService,
+    private readonly hub: WsHub,
+  ) {}
 
   async handleConnection(client: AuthedSocket, req: IncomingMessage) {
     try {
@@ -32,6 +36,7 @@ export class WsGateway implements OnGatewayConnection, OnGatewayDisconnect {
       if (!token) throw new Error('no token');
       const payload = await this.jwt.verifyAsync<{ sub: string }>(token);
       client.userId = payload.sub;
+      this.hub.add(payload.sub, client);
       this.logger.log(`WS connected: user=${client.userId}`);
       client.send(JSON.stringify({ type: 'hello', userId: client.userId }));
     } catch (e) {
@@ -41,6 +46,7 @@ export class WsGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   handleDisconnect(client: AuthedSocket) {
+    if (client.userId) this.hub.remove(client.userId, client);
     this.logger.log(`WS disconnected: user=${client.userId ?? 'anon'}`);
   }
 

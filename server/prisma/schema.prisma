@@ -20,6 +20,8 @@ model User {
   emailVerifications EmailVerification[]
   refreshTokens      RefreshToken[]
   devices            Device[]
+  chatMembers        ChatMember[]
+  messages           Message[]
 
   @@map("users")
 }
@@ -64,4 +66,51 @@ model Device {
 
   @@index([userId])
   @@map("devices")
+}
+
+enum ChatType {
+  direct
+  group
+  channel
+}
+
+model Chat {
+  id        String   @id @default(uuid())
+  type      ChatType
+  title     String?
+  createdAt DateTime @default(now())
+
+  members  ChatMember[]
+  messages Message[]
+
+  @@map("chats")
+}
+
+model ChatMember {
+  id       String   @id @default(uuid())
+  chatId   String
+  userId   String
+  role     String   @default("member")
+  joinedAt DateTime @default(now())
+
+  chat Chat @relation(fields: [chatId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([chatId, userId])
+  @@index([userId])
+  @@map("chat_members")
+}
+
+model Message {
+  id        String   @id @default(uuid())
+  chatId    String
+  senderId  String
+  content   String
+  createdAt DateTime @default(now())
+
+  chat   Chat @relation(fields: [chatId], references: [id], onDelete: Cascade)
+  sender User @relation(fields: [senderId], references: [id], onDelete: Cascade)
+
+  @@index([chatId, createdAt])
+  @@map("messages")
 }

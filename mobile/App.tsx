@@ -9,8 +9,11 @@ import { WelcomeScreen } from './src/screens/WelcomeScreen';
 import { RegisterScreen } from './src/screens/RegisterScreen';
 import { VerifyScreen } from './src/screens/VerifyScreen';
 import { LoginScreen } from './src/screens/LoginScreen';
-import { HomeScreen } from './src/screens/HomeScreen';
+import { ChatListScreen } from './src/screens/ChatListScreen';
+import { NewChatScreen } from './src/screens/NewChatScreen';
+import { ChatScreen } from './src/screens/ChatScreen';
 import { useAuth } from './src/store/auth';
+import { useWs } from './src/store/ws';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -18,10 +21,17 @@ export default function App() {
   const hydrate = useAuth((s) => s.hydrate);
   const hydrated = useAuth((s) => s.hydrated);
   const user = useAuth((s) => s.user);
+  const wsConnect = useWs((s) => s.connect);
+  const wsDisconnect = useWs((s) => s.disconnect);
 
   useEffect(() => {
     hydrate();
   }, [hydrate]);
+
+  useEffect(() => {
+    if (user) wsConnect();
+    else wsDisconnect();
+  }, [user, wsConnect, wsDisconnect]);
 
   if (!hydrated) {
     return (
@@ -36,7 +46,15 @@ export default function App() {
       <StatusBar style="auto" />
       <Stack.Navigator>
         {user ? (
-          <Stack.Screen name="Home" component={HomeScreen} options={{ title: 'SeldeGram' }} />
+          <>
+            <Stack.Screen name="ChatList" component={ChatListScreen} options={{ title: 'Чаты' }} />
+            <Stack.Screen name="NewChat" component={NewChatScreen} options={{ title: 'Новый чат' }} />
+            <Stack.Screen
+              name="Chat"
+              component={ChatScreen}
+              options={({ route }) => ({ title: route.params.title })}
+            />
+          </>
         ) : (
           <>
             <Stack.Screen name="Welcome" component={WelcomeScreen} options={{ headerShown: false }} />

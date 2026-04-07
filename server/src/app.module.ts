@@ -6,6 +6,7 @@ import { MailModule } from './mail/mail.module';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { WsModule } from './ws/ws.module';
+import { ChatsModule } from './chats/chats.module';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { WsModule } from './ws/ws.module';
     AuthModule,
     UsersModule,
     WsModule,
+    ChatsModule,
   ],
   controllers: [HealthController],
 })

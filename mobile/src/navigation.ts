@@ -3,5 +3,7 @@ export type RootStackParamList = {
   Register: undefined;
   Verify: { email: string };
   Login: undefined;
-  Home: undefined;
+  ChatList: undefined;
+  NewChat: undefined;
+  Chat: { chatId: string; title: string };
 };
