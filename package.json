@@ -5,7 +5,6 @@
   "description": "SeldeGram — E2EE messenger",
   "workspaces": [
     "server",
-    "mobile",
     "shared"
   ],
   "scripts": {
