@@ -8,6 +8,7 @@ import { UsersModule } from './users/users.module';
 import { WsModule } from './ws/ws.module';
 import { ChatsModule } from './chats/chats.module';
 import { MediaModule } from './media/media.module';
+import { PushModule } from './push/push.module';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { MediaModule } from './media/media.module';
     WsModule,
     ChatsModule,
     MediaModule,
+    PushModule,
   ],
   controllers: [HealthController],
 })

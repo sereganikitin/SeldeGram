@@ -1,9 +1,10 @@
 import 'react-native-gesture-handler';
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { View, ActivityIndicator } from 'react-native';
-import { NavigationContainer } from '@react-navigation/native';
+import { NavigationContainer, NavigationContainerRef } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { StatusBar } from 'expo-status-bar';
+import * as Notifications from 'expo-notifications';
 import { RootStackParamList } from './src/navigation';
 import { WelcomeScreen } from './src/screens/WelcomeScreen';
 import { RegisterScreen } from './src/screens/RegisterScreen';
@@ -14,6 +15,7 @@ import { NewChatScreen } from './src/screens/NewChatScreen';
 import { ChatScreen } from './src/screens/ChatScreen';
 import { useAuth } from './src/store/auth';
 import { useWs } from './src/store/ws';
+import { registerPushToken } from './src/push';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -23,14 +25,29 @@ export default function App() {
   const user = useAuth((s) => s.user);
   const wsConnect = useWs((s) => s.connect);
   const wsDisconnect = useWs((s) => s.disconnect);
+  const navRef = useRef<NavigationContainerRef<RootStackParamList>>(null);
 
   useEffect(() => {
     hydrate();
   }, [hydrate]);
 
   useEffect(() => {
-    if (user) wsConnect();
-    else wsDisconnect();
+    const sub = Notifications.addNotificationResponseReceivedListener((response) => {
+      const data = response.notification.request.content.data as { chatId?: string } | undefined;
+      if (data?.chatId && navRef.current?.isReady()) {
+        navRef.current.navigate('Chat', { chatId: data.chatId, title: 'Чат' });
+      }
+    });
+    return () => sub.remove();
+  }, []);
+
+  useEffect(() => {
+    if (user) {
+      wsConnect();
+      registerPushToken();
+    } else {
+      wsDisconnect();
+    }
   }, [user, wsConnect, wsDisconnect]);
 
   if (!hydrated) {
@@ -42,7 +59,7 @@ export default function App() {
   }
 
   return (
-    <NavigationContainer>
+    <NavigationContainer ref={navRef}>
       <StatusBar style="auto" />
       <Stack.Navigator>
         {user ? (

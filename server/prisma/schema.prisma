@@ -58,7 +58,8 @@ model Device {
   id           String   @id @default(uuid())
   userId       String
   name         String
-  // Публичные ключи для libsignal будут добавлены в Этапе 3
+  pushToken    String?  @unique
+  // Публичные ключи для libsignal будут добавлены в Этапе E2EE
   createdAt    DateTime @default(now())
   lastSeenAt   DateTime @default(now())
 

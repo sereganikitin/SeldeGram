@@ -21,6 +21,7 @@ import { useAuth } from '../store/auth';
 import { useWs } from '../store/ws';
 import { uploadMedia } from '../media';
 import { MediaBubble } from '../ui/MediaBubble';
+import { setActiveChat } from '../push';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Chat'>;
 
@@ -36,6 +37,8 @@ export function ChatScreen({ route }: Props) {
 
   useEffect(() => {
     api.get<Message[]>(`/chats/${chatId}/messages`).then(({ data }) => setMessages(data));
+    setActiveChat(chatId);
+    return () => setActiveChat(null);
   }, [chatId]);
 
   useEffect(() => {

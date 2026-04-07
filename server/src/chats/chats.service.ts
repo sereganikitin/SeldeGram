@@ -1,12 +1,14 @@
 import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { WsHub } from '../ws/ws.hub';
+import { PushService } from '../push/push.service';
 
 @Injectable()
 export class ChatsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly hub: WsHub,
+    private readonly push: PushService,
   ) {}
 
   async createDirect(userId: string, otherUsername: string) {
@@ -96,15 +98,35 @@ export class ChatsService {
       },
     });
 
-    // Рассылаем всем участникам чата
+    // Рассылаем всем участникам чата через WS
     const members = await this.prisma.chatMember.findMany({
       where: { chatId },
       select: { userId: true },
     });
-    this.hub.sendToUsers(
-      members.map((m) => m.userId),
-      { type: 'message:new', payload: message },
-    );
+    const memberIds = members.map((m) => m.userId);
+    this.hub.sendToUsers(memberIds, { type: 'message:new', payload: message });
+
+    // Push всем кроме отправителя
+    const recipientIds = memberIds.filter((id) => id !== userId);
+    if (recipientIds.length > 0) {
+      const sender = await this.prisma.user.findUnique({
+        where: { id: userId },
+        select: { displayName: true },
+      });
+      const chat = await this.prisma.chat.findUnique({
+        where: { id: chatId },
+        select: { type: true, title: true },
+      });
+      const title = chat?.type === 'direct' ? sender?.displayName ?? 'New message' : chat?.title ?? 'New message';
+      const body = payload.content || (payload.mediaType?.startsWith('image/') ? '📷 Фото' : payload.mediaKey ? '📄 Файл' : '');
+      this.push
+        .sendToUsers(recipientIds, {
+          title,
+          body,
+          data: { chatId, messageId: message.id },
+        })
+        .catch(() => undefined);
+    }
 
     return message;
   }
