@@ -35,6 +35,6 @@ export class ChatsController {
     @Param('id') id: string,
     @Body() dto: SendMessageDto,
   ) {
-    return this.chats.sendMessage(id, req.user.userId, dto.content);
+    return this.chats.sendMessage(id, req.user.userId, dto);
   }
 }

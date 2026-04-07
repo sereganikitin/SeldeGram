@@ -4,7 +4,15 @@ import { useFocusEffect } from '@react-navigation/native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation';
 import { api } from '../api';
-import { Chat } from '../types';
+import { Chat, Message } from '../types';
+
+function previewText(msg?: Message | null): string {
+  if (!msg) return 'Нет сообщений';
+  if (msg.content) return msg.content;
+  if (msg.mediaType?.startsWith('image/')) return '📷 Фото';
+  if (msg.mediaKey) return '📄 Файл';
+  return '';
+}
 import { useAuth } from '../store/auth';
 import { useWs } from '../store/ws';
 
@@ -80,7 +88,7 @@ export function ChatListScreen({ navigation }: Props) {
           >
             <Text style={styles.title}>{item.title}</Text>
             <Text style={styles.preview} numberOfLines={1}>
-              {item.lastMessage?.content ?? 'Нет сообщений'}
+              {previewText(item.lastMessage)}
             </Text>
           </Pressable>
         )}

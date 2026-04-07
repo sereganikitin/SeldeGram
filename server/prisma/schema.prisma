@@ -106,6 +106,10 @@ model Message {
   chatId    String
   senderId  String
   content   String
+  mediaKey  String?
+  mediaType String?
+  mediaName String?
+  mediaSize Int?
   createdAt DateTime @default(now())
 
   chat   Chat @relation(fields: [chatId], references: [id], onDelete: Cascade)

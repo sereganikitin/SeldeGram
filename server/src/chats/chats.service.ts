@@ -74,11 +74,26 @@ export class ChatsService {
     return messages.reverse();
   }
 
-  async sendMessage(chatId: string, userId: string, content: string) {
+  async sendMessage(
+    chatId: string,
+    userId: string,
+    payload: { content?: string; mediaKey?: string; mediaType?: string; mediaName?: string; mediaSize?: number },
+  ) {
     await this.assertMember(chatId, userId);
+    if (!payload.content && !payload.mediaKey) {
+      throw new ForbiddenException('Empty message');
+    }
 
     const message = await this.prisma.message.create({
-      data: { chatId, senderId: userId, content },
+      data: {
+        chatId,
+        senderId: userId,
+        content: payload.content ?? '',
+        mediaKey: payload.mediaKey,
+        mediaType: payload.mediaType,
+        mediaName: payload.mediaName,
+        mediaSize: payload.mediaSize,
+      },
     });
 
     // Рассылаем всем участникам чата

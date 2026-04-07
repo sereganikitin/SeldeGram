@@ -7,6 +7,7 @@ import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { WsModule } from './ws/ws.module';
 import { ChatsModule } from './chats/chats.module';
+import { MediaModule } from './media/media.module';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { ChatsModule } from './chats/chats.module';
     UsersModule,
     WsModule,
     ChatsModule,
+    MediaModule,
   ],
   controllers: [HealthController],
 })

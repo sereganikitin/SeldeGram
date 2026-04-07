@@ -18,6 +18,10 @@ export interface Message {
   chatId: string;
   senderId: string;
   content: string;
+  mediaKey?: string | null;
+  mediaType?: string | null;
+  mediaName?: string | null;
+  mediaSize?: number | null;
   createdAt: string;
 }
 

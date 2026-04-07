@@ -8,13 +8,19 @@ import {
   Pressable,
   KeyboardAvoidingView,
   Platform,
+  Alert,
+  ActivityIndicator,
 } from 'react-native';
+import * as ImagePicker from 'expo-image-picker';
+import * as DocumentPicker from 'expo-document-picker';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation';
 import { api } from '../api';
 import { Message } from '../types';
 import { useAuth } from '../store/auth';
 import { useWs } from '../store/ws';
+import { uploadMedia } from '../media';
+import { MediaBubble } from '../ui/MediaBubble';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Chat'>;
 
@@ -23,6 +29,7 @@ export function ChatScreen({ route }: Props) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const meId = useAuth((s) => s.user?.id);
   const onMessage = useWs((s) => s.onMessage);
   const listRef = useRef<FlatList<Message>>(null);
@@ -47,19 +54,80 @@ export function ChatScreen({ route }: Props) {
     }
   }, [messages.length]);
 
-  const send = async () => {
+  const sendText = async () => {
     const text = input.trim();
     if (!text || sending) return;
     setSending(true);
     setInput('');
     try {
       await api.post(`/chats/${chatId}/messages`, { content: text });
-      // сообщение придёт через WS, и мы его отрендерим в effect выше
     } catch (e) {
       setInput(text);
     } finally {
       setSending(false);
     }
+  };
+
+  const pickAndSendImage = async () => {
+    const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!perm.granted) {
+      Alert.alert('Нет доступа', 'Разрешите доступ к фото в настройках');
+      return;
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      quality: 0.85,
+    });
+    if (result.canceled) return;
+    const asset = result.assets[0];
+    setUploading(true);
+    try {
+      const contentType = asset.mimeType ?? 'image/jpeg';
+      const size = asset.fileSize ?? 0;
+      if (size === 0) throw new Error('Cannot read file size');
+      const key = await uploadMedia(asset.uri, contentType, size);
+      await api.post(`/chats/${chatId}/messages`, {
+        mediaKey: key,
+        mediaType: contentType,
+        mediaName: asset.fileName ?? 'image.jpg',
+        mediaSize: size,
+      });
+    } catch (e: any) {
+      Alert.alert('Не получилось', e.message ?? String(e));
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const pickAndSendFile = async () => {
+    const result = await DocumentPicker.getDocumentAsync({ copyToCacheDirectory: true });
+    if (result.canceled) return;
+    const asset = result.assets[0];
+    setUploading(true);
+    try {
+      const contentType = asset.mimeType ?? 'application/octet-stream';
+      const size = asset.size ?? 0;
+      if (size === 0) throw new Error('Cannot read file size');
+      const key = await uploadMedia(asset.uri, contentType, size);
+      await api.post(`/chats/${chatId}/messages`, {
+        mediaKey: key,
+        mediaType: contentType,
+        mediaName: asset.name,
+        mediaSize: size,
+      });
+    } catch (e: any) {
+      Alert.alert('Не получилось', e.message ?? String(e));
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const showAttach = () => {
+    Alert.alert('Прикрепить', undefined, [
+      { text: 'Фото', onPress: pickAndSendImage },
+      { text: 'Файл', onPress: pickAndSendFile },
+      { text: 'Отмена', style: 'cancel' },
+    ]);
   };
 
   return (
@@ -75,14 +143,31 @@ export function ChatScreen({ route }: Props) {
         contentContainerStyle={{ padding: 12 }}
         renderItem={({ item }) => {
           const mine = item.senderId === meId;
+          const hasMedia = !!item.mediaKey && !!item.mediaType;
           return (
             <View style={[styles.bubble, mine ? styles.bubbleMine : styles.bubbleOther]}>
-              <Text style={mine ? styles.textMine : styles.textOther}>{item.content}</Text>
+              {hasMedia && (
+                <MediaBubble
+                  mediaKey={item.mediaKey!}
+                  mediaType={item.mediaType!}
+                  mediaName={item.mediaName}
+                  mediaSize={item.mediaSize}
+                  mine={mine}
+                />
+              )}
+              {item.content ? (
+                <Text style={[mine ? styles.textMine : styles.textOther, hasMedia && { marginTop: 6 }]}>
+                  {item.content}
+                </Text>
+              ) : null}
             </View>
           );
         }}
       />
       <View style={styles.inputBar}>
+        <Pressable onPress={showAttach} style={styles.attachBtn} disabled={uploading}>
+          {uploading ? <ActivityIndicator /> : <Text style={styles.attachText}>📎</Text>}
+        </Pressable>
         <TextInput
           style={styles.input}
           value={input}
@@ -91,7 +176,7 @@ export function ChatScreen({ route }: Props) {
           placeholderTextColor="#999"
           multiline
         />
-        <Pressable onPress={send} disabled={sending || !input.trim()} style={styles.sendBtn}>
+        <Pressable onPress={sendText} disabled={sending || !input.trim()} style={styles.sendBtn}>
           <Text style={styles.sendText}>↑</Text>
         </Pressable>
       </View>
@@ -114,6 +199,8 @@ const styles = StyleSheet.create({
     borderTopColor: '#eee',
     gap: 8,
   },
+  attachBtn: { width: 40, height: 40, justifyContent: 'center', alignItems: 'center' },
+  attachText: { fontSize: 24 },
   input: {
     flex: 1,
     borderWidth: 1,
