@@ -1,6 +1,6 @@
 import 'react-native-gesture-handler';
 import React, { useEffect, useRef } from 'react';
-import { View, ActivityIndicator, Pressable, Text } from 'react-native';
+import { View, ActivityIndicator } from 'react-native';
 import { NavigationContainer, NavigationContainerRef } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { StatusBar } from 'expo-status-bar';
@@ -15,6 +15,8 @@ import { NewChatScreen } from './src/screens/NewChatScreen';
 import { NewGroupScreen } from './src/screens/NewGroupScreen';
 import { ChatScreen } from './src/screens/ChatScreen';
 import { GroupInfoScreen } from './src/screens/GroupInfoScreen';
+import { UserInfoScreen } from './src/screens/UserInfoScreen';
+import { ForwardScreen } from './src/screens/ForwardScreen';
 import { useAuth } from './src/store/auth';
 import { useWs } from './src/store/ws';
 import { registerPushToken } from './src/push';
@@ -72,16 +74,11 @@ export default function App() {
             <Stack.Screen
               name="Chat"
               component={ChatScreen}
-              options={({ route, navigation }) => ({
-                title: route.params.title,
-                headerRight: () => (
-                  <Pressable onPress={() => navigation.navigate('GroupInfo', { chatId: route.params.chatId })}>
-                    <Text style={{ fontSize: 20, color: '#0a84ff', paddingHorizontal: 8 }}>ⓘ</Text>
-                  </Pressable>
-                ),
-              })}
+              options={({ route }) => ({ title: route.params.title })}
             />
             <Stack.Screen name="GroupInfo" component={GroupInfoScreen} options={{ title: 'Информация' }} />
+            <Stack.Screen name="UserInfo" component={UserInfoScreen} options={{ title: 'Профиль' }} />
+            <Stack.Screen name="Forward" component={ForwardScreen} options={{ title: 'Переслать' }} />
           </>
         ) : (
           <>

@@ -23,4 +23,12 @@ export class SendMessageDto {
   @Min(0)
   @Max(50 * 1024 * 1024)
   mediaSize?: number;
+
+  @IsOptional()
+  @IsString()
+  replyToId?: string;
+
+  @IsOptional()
+  @IsString()
+  forwardedFromId?: string;
 }

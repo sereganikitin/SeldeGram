@@ -3,6 +3,7 @@ import { View, Text, FlatList, StyleSheet, Pressable, Alert } from 'react-native
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation';
 import { Input } from '../ui/Input';
+import { Avatar } from '../ui/Avatar';
 import { api } from '../api';
 import { UserSearchResult, Chat } from '../types';
 
@@ -49,8 +50,11 @@ export function NewChatScreen({ navigation }: Props) {
         keyExtractor={(u) => u.id}
         renderItem={({ item }) => (
           <Pressable onPress={() => startChat(item.username)} style={({ pressed }) => [styles.row, pressed && { backgroundColor: '#f0f0f0' }]}>
-            <Text style={styles.name}>{item.displayName}</Text>
-            <Text style={styles.username}>@{item.username}</Text>
+            <Avatar id={item.id} name={item.displayName} size={40} />
+            <View style={{ flex: 1 }}>
+              <Text style={styles.name}>{item.displayName}</Text>
+              <Text style={styles.username}>@{item.username}</Text>
+            </View>
           </Pressable>
         )}
       />
@@ -60,7 +64,7 @@ export function NewChatScreen({ navigation }: Props) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 20, backgroundColor: '#fff' },
-  row: { paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: '#eee' },
+  row: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#eee' },
   name: { fontSize: 16, fontWeight: '600' },
   username: { fontSize: 13, color: '#777', marginTop: 2 },
   groupBtn: {

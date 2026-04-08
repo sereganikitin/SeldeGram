@@ -4,6 +4,7 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation';
 import { Input } from '../ui/Input';
 import { Button } from '../ui/Button';
+import { Avatar } from '../ui/Avatar';
 import { api } from '../api';
 import { Chat, UserSearchResult } from '../types';
 
@@ -85,6 +86,7 @@ export function NewGroupScreen({ navigation }: Props) {
               onPress={() => toggle(item)}
               style={({ pressed }) => [styles.row, pressed && { backgroundColor: '#f0f0f0' }]}
             >
+              <Avatar id={item.id} name={item.displayName} size={40} />
               <View style={{ flex: 1 }}>
                 <Text style={styles.name}>{item.displayName}</Text>
                 <Text style={styles.username}>@{item.username}</Text>
@@ -108,9 +110,10 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 14,
+    paddingVertical: 12,
     borderBottomWidth: 1,
     borderBottomColor: '#eee',
+    gap: 12,
   },
   name: { fontSize: 16, fontWeight: '600' },
   username: { fontSize: 13, color: '#777', marginTop: 2 },

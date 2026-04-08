@@ -4,6 +4,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation';
 import { Button } from '../ui/Button';
+import { Avatar } from '../ui/Avatar';
 import { api } from '../api';
 import { Chat, UserSearchResult } from '../types';
 import { useAuth } from '../store/auth';
@@ -100,6 +101,7 @@ export function GroupInfoScreen({ route, navigation }: Props) {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
+        <Avatar id={chat.id} name={chat.title ?? '?'} size={84} />
         {editingTitle ? (
           <View style={styles.titleEdit}>
             <TextInput
@@ -162,6 +164,7 @@ export function GroupInfoScreen({ route, navigation }: Props) {
           const canRemove = isMe || isAdmin;
           return (
             <View style={styles.memberRow}>
+              <Avatar id={item.id} name={item.displayName} size={40} />
               <View style={{ flex: 1 }}>
                 <Text style={styles.memberName}>
                   {item.displayName} {isMe && <Text style={styles.you}>(вы)</Text>}
@@ -185,7 +188,7 @@ export function GroupInfoScreen({ route, navigation }: Props) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 20, backgroundColor: '#fff' },
-  header: { alignItems: 'center', marginBottom: 20 },
+  header: { alignItems: 'center', marginBottom: 20, gap: 12 },
   title: { fontSize: 24, fontWeight: '700', textAlign: 'center' },
   editHint: { fontSize: 11, color: '#999', textAlign: 'center', marginTop: 2 },
   subtitle: { fontSize: 14, color: '#777', marginTop: 6 },
@@ -205,9 +208,10 @@ const styles = StyleSheet.create({
   memberRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 12,
+    paddingVertical: 10,
     borderBottomWidth: 1,
     borderBottomColor: '#eee',
+    gap: 12,
   },
   memberName: { fontSize: 16, fontWeight: '600' },
   you: { color: '#0a84ff', fontWeight: '400' },

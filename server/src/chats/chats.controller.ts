@@ -1,4 +1,16 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query, Req, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  HttpCode,
+  Param,
+  Patch,
+  Post,
+  Query,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { ChatsService } from './chats.service';
 import { CreateDirectDto } from './dto/create-direct.dto';
@@ -6,6 +18,8 @@ import { CreateGroupDto } from './dto/create-group.dto';
 import { AddMemberDto } from './dto/add-member.dto';
 import { UpdateChatDto } from './dto/update-chat.dto';
 import { SendMessageDto } from './dto/send-message.dto';
+import { EditMessageDto } from './dto/edit-message.dto';
+import { MarkReadDto } from './dto/mark-read.dto';
 
 @UseGuards(JwtAuthGuard)
 @Controller('chats')
@@ -33,20 +47,17 @@ export class ChatsController {
   }
 
   @Patch(':id')
-  update(
-    @Req() req: { user: { userId: string } },
-    @Param('id') id: string,
-    @Body() dto: UpdateChatDto,
-  ) {
+  update(@Req() req: { user: { userId: string } }, @Param('id') id: string, @Body() dto: UpdateChatDto) {
     return this.chats.updateChat(id, req.user.userId, dto.title);
   }
 
+  @Delete(':id')
+  remove(@Req() req: { user: { userId: string } }, @Param('id') id: string) {
+    return this.chats.deleteChat(id, req.user.userId);
+  }
+
   @Post(':id/members')
-  addMember(
-    @Req() req: { user: { userId: string } },
-    @Param('id') id: string,
-    @Body() dto: AddMemberDto,
-  ) {
+  addMember(@Req() req: { user: { userId: string } }, @Param('id') id: string, @Body() dto: AddMemberDto) {
     return this.chats.addMember(id, req.user.userId, dto.username);
   }
 
@@ -70,11 +81,43 @@ export class ChatsController {
   }
 
   @Post(':id/messages')
-  send(
+  send(@Req() req: { user: { userId: string } }, @Param('id') id: string, @Body() dto: SendMessageDto) {
+    return this.chats.sendMessage(id, req.user.userId, dto);
+  }
+
+  @Patch(':id/messages/:msgId')
+  edit(
     @Req() req: { user: { userId: string } },
     @Param('id') id: string,
-    @Body() dto: SendMessageDto,
+    @Param('msgId') msgId: string,
+    @Body() dto: EditMessageDto,
   ) {
-    return this.chats.sendMessage(id, req.user.userId, dto);
+    return this.chats.editMessage(id, req.user.userId, msgId, dto.content);
+  }
+
+  @Delete(':id/messages/:msgId')
+  removeMessage(
+    @Req() req: { user: { userId: string } },
+    @Param('id') id: string,
+    @Param('msgId') msgId: string,
+  ) {
+    return this.chats.deleteMessage(id, req.user.userId, msgId);
+  }
+
+  @Post(':id/read')
+  @HttpCode(200)
+  markRead(@Req() req: { user: { userId: string } }, @Param('id') id: string, @Body() dto: MarkReadDto) {
+    return this.chats.markRead(id, req.user.userId, dto.messageId);
+  }
+
+  @Get(':id/reads')
+  reads(@Req() req: { user: { userId: string } }, @Param('id') id: string) {
+    return this.chats.getChatReads(id, req.user.userId);
+  }
+
+  @Post(':id/typing')
+  @HttpCode(200)
+  typing(@Req() req: { user: { userId: string } }, @Param('id') id: string) {
+    return this.chats.typing(id, req.user.userId);
   }
 }

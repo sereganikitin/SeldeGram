@@ -3,25 +3,54 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { API_BASE_URL } from '../config';
 import { Message } from '../types';
 
-type Listener = (msg: Message) => void;
+type MessageListener = (msg: Message) => void;
+type EditedListener = (msg: Message) => void;
+type DeletedListener = (chatId: string, messageId: string) => void;
 type ChatUpdatedListener = (chatId: string) => void;
+type ChatDeletedListener = (chatId: string) => void;
+type ReadListener = (chatId: string, userId: string, lastReadAt: string) => void;
+type TypingListener = (chatId: string, userId: string) => void;
 
 interface WsState {
   socket: WebSocket | null;
   connected: boolean;
-  listeners: Set<Listener>;
+  msgListeners: Set<MessageListener>;
+  editedListeners: Set<EditedListener>;
+  deletedListeners: Set<DeletedListener>;
   chatListeners: Set<ChatUpdatedListener>;
+  chatDeletedListeners: Set<ChatDeletedListener>;
+  readListeners: Set<ReadListener>;
+  typingListeners: Set<TypingListener>;
   connect: () => Promise<void>;
   disconnect: () => void;
-  onMessage: (l: Listener) => () => void;
+  onMessage: (l: MessageListener) => () => void;
+  onEdited: (l: EditedListener) => () => void;
+  onDeleted: (l: DeletedListener) => () => void;
   onChatUpdated: (l: ChatUpdatedListener) => () => void;
+  onChatDeleted: (l: ChatDeletedListener) => () => void;
+  onRead: (l: ReadListener) => () => void;
+  onTyping: (l: TypingListener) => () => void;
+}
+
+function makeSubscriber<T>(getSet: () => Set<T>) {
+  return (l: T) => {
+    getSet().add(l);
+    return () => {
+      getSet().delete(l);
+    };
+  };
 }
 
 export const useWs = create<WsState>((set, get) => ({
   socket: null,
   connected: false,
-  listeners: new Set(),
+  msgListeners: new Set(),
+  editedListeners: new Set(),
+  deletedListeners: new Set(),
   chatListeners: new Set(),
+  chatDeletedListeners: new Set(),
+  readListeners: new Set(),
+  typingListeners: new Set(),
 
   connect: async () => {
     const token = await AsyncStorage.getItem('accessToken');
@@ -32,19 +61,34 @@ export const useWs = create<WsState>((set, get) => ({
     sock.onopen = () => set({ connected: true });
     sock.onclose = () => {
       set({ connected: false, socket: null });
-      // авто-переподключение через 3с
       setTimeout(() => get().connect(), 3000);
     };
-    sock.onerror = () => {
-      // onclose сработает следом
-    };
+    sock.onerror = () => {};
     sock.onmessage = (event) => {
       try {
         const data = JSON.parse(event.data);
-        if (data.type === 'message:new') {
-          for (const l of get().listeners) l(data.payload);
-        } else if (data.type === 'chat:updated') {
-          for (const l of get().chatListeners) l(data.payload.chatId);
+        switch (data.type) {
+          case 'message:new':
+            for (const l of get().msgListeners) l(data.payload);
+            break;
+          case 'message:edited':
+            for (const l of get().editedListeners) l(data.payload);
+            break;
+          case 'message:deleted':
+            for (const l of get().deletedListeners) l(data.payload.chatId, data.payload.messageId);
+            break;
+          case 'chat:updated':
+            for (const l of get().chatListeners) l(data.payload.chatId);
+            break;
+          case 'chat:deleted':
+            for (const l of get().chatDeletedListeners) l(data.payload.chatId);
+            break;
+          case 'chat:read':
+            for (const l of get().readListeners) l(data.payload.chatId, data.payload.userId, data.payload.lastReadAt);
+            break;
+          case 'chat:typing':
+            for (const l of get().typingListeners) l(data.payload.chatId, data.payload.userId);
+            break;
         }
       } catch {}
     };
@@ -61,17 +105,11 @@ export const useWs = create<WsState>((set, get) => ({
     set({ socket: null, connected: false });
   },
 
-  onMessage: (l) => {
-    get().listeners.add(l);
-    return () => {
-      get().listeners.delete(l);
-    };
-  },
-
-  onChatUpdated: (l) => {
-    get().chatListeners.add(l);
-    return () => {
-      get().chatListeners.delete(l);
-    };
-  },
+  onMessage: makeSubscriber(() => useWs.getState().msgListeners),
+  onEdited: makeSubscriber(() => useWs.getState().editedListeners),
+  onDeleted: makeSubscriber(() => useWs.getState().deletedListeners),
+  onChatUpdated: makeSubscriber(() => useWs.getState().chatListeners),
+  onChatDeleted: makeSubscriber(() => useWs.getState().chatDeletedListeners),
+  onRead: makeSubscriber(() => useWs.getState().readListeners),
+  onTyping: makeSubscriber(() => useWs.getState().typingListeners),
 }));

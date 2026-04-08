@@ -5,14 +5,13 @@ export interface ChatMember {
   role?: 'admin' | 'member';
 }
 
-export interface Chat {
+export interface ReplyPreviewData {
   id: string;
-  type: 'direct' | 'group' | 'channel';
-  title: string | null;
-  createdAt: string;
-  viewerRole?: 'admin' | 'member';
-  members: ChatMember[];
-  lastMessage?: Message | null;
+  senderId: string;
+  content: string;
+  mediaType?: string | null;
+  mediaKey?: string | null;
+  deletedAt?: string | null;
 }
 
 export interface Message {
@@ -24,11 +23,32 @@ export interface Message {
   mediaType?: string | null;
   mediaName?: string | null;
   mediaSize?: number | null;
+  replyToId?: string | null;
+  replyTo?: ReplyPreviewData | null;
+  forwardedFromId?: string | null;
+  editedAt?: string | null;
+  deletedAt?: string | null;
   createdAt: string;
+}
+
+export interface Chat {
+  id: string;
+  type: 'direct' | 'group' | 'channel';
+  title: string | null;
+  createdAt: string;
+  viewerRole?: 'admin' | 'member';
+  members: ChatMember[];
+  lastMessage?: Message | null;
+  unreadCount?: number;
 }
 
 export interface UserSearchResult {
   id: string;
   username: string;
   displayName: string;
+}
+
+export interface ChatRead {
+  userId: string;
+  lastReadAt: string;
 }

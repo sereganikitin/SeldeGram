@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -10,60 +10,191 @@ import {
   Platform,
   Alert,
   ActivityIndicator,
+  ActionSheetIOS,
+  Clipboard,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import * as DocumentPicker from 'expo-document-picker';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation';
 import { api } from '../api';
-import { Message } from '../types';
+import { Chat, ChatRead, Message } from '../types';
 import { useAuth } from '../store/auth';
 import { useWs } from '../store/ws';
-import { uploadMedia } from '../media';
-import { MediaBubble } from '../ui/MediaBubble';
+import { uploadMedia, compressImage } from '../media';
 import { setActiveChat } from '../push';
+import { MessageBubble } from '../ui/MessageBubble';
+import { DateSeparator } from '../ui/DateSeparator';
+import { formatDateLabel, messagePreview } from '../helpers';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Chat'>;
 
-export function ChatScreen({ route }: Props) {
+type ListItem =
+  | { kind: 'msg'; message: Message }
+  | { kind: 'date'; id: string; label: string };
+
+function buildItems(messages: Message[]): ListItem[] {
+  const items: ListItem[] = [];
+  let lastDate = '';
+  for (const m of messages) {
+    const day = new Date(m.createdAt).toDateString();
+    if (day !== lastDate) {
+      items.push({ kind: 'date', id: 'd-' + day, label: formatDateLabel(m.createdAt) });
+      lastDate = day;
+    }
+    items.push({ kind: 'msg', message: m });
+  }
+  return items;
+}
+
+export function ChatScreen({ route, navigation }: Props) {
   const { chatId } = route.params;
   const [messages, setMessages] = useState<Message[]>([]);
+  const [chat, setChat] = useState<Chat | null>(null);
+  const [reads, setReads] = useState<ChatRead[]>([]);
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [replyTo, setReplyTo] = useState<Message | null>(null);
+  const [typingUserId, setTypingUserId] = useState<string | null>(null);
   const meId = useAuth((s) => s.user?.id);
   const onMessage = useWs((s) => s.onMessage);
-  const listRef = useRef<FlatList<Message>>(null);
+  const onEdited = useWs((s) => s.onEdited);
+  const onDeleted = useWs((s) => s.onDeleted);
+  const onRead = useWs((s) => s.onRead);
+  const onTyping = useWs((s) => s.onTyping);
+  const listRef = useRef<FlatList<ListItem>>(null);
+  const typingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastTypingSentRef = useRef(0);
 
+  // Загрузка чата + сообщений + reads
   useEffect(() => {
     api.get<Message[]>(`/chats/${chatId}/messages`).then(({ data }) => setMessages(data));
+    api.get<Chat>(`/chats/${chatId}`).then(({ data }) => setChat(data));
+    api.get<ChatRead[]>(`/chats/${chatId}/reads`).then(({ data }) => setReads(data));
     setActiveChat(chatId);
     return () => setActiveChat(null);
   }, [chatId]);
 
+  // Подмена заголовка
+  useEffect(() => {
+    if (chat?.title) navigation.setOptions({ title: chat.title });
+  }, [chat?.title, navigation]);
+
+  // Обработчик header кнопки info — выбираем экран по типу чата
+  useEffect(() => {
+    if (!chat) return;
+    navigation.setOptions({
+      headerRight: () => (
+        <Pressable
+          onPress={() =>
+            chat.type === 'direct'
+              ? navigation.navigate('UserInfo', { chatId })
+              : navigation.navigate('GroupInfo', { chatId })
+          }
+        >
+          <Text style={{ fontSize: 20, color: '#0a84ff', paddingHorizontal: 8 }}>ⓘ</Text>
+        </Pressable>
+      ),
+    });
+  }, [chat, chatId, navigation]);
+
+  // WS: новые сообщения
   useEffect(() => {
     return onMessage((msg) => {
       if (msg.chatId !== chatId) return;
-      setMessages((prev) => {
-        if (prev.some((m) => m.id === msg.id)) return prev;
-        return [...prev, msg];
-      });
+      setMessages((prev) => (prev.some((m) => m.id === msg.id) ? prev : [...prev, msg]));
     });
   }, [chatId, onMessage]);
 
+  // WS: редактирование
+  useEffect(() => {
+    return onEdited((msg) => {
+      if (msg.chatId !== chatId) return;
+      setMessages((prev) => prev.map((m) => (m.id === msg.id ? msg : m)));
+    });
+  }, [chatId, onEdited]);
+
+  // WS: удаление
+  useEffect(() => {
+    return onDeleted((cid, mid) => {
+      if (cid !== chatId) return;
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.id === mid
+            ? { ...m, content: '', mediaKey: null, mediaType: null, deletedAt: new Date().toISOString() }
+            : m,
+        ),
+      );
+    });
+  }, [chatId, onDeleted]);
+
+  // WS: read receipts
+  useEffect(() => {
+    return onRead((cid, userId, lastReadAt) => {
+      if (cid !== chatId) return;
+      setReads((prev) => {
+        const others = prev.filter((r) => r.userId !== userId);
+        return [...others, { userId, lastReadAt }];
+      });
+    });
+  }, [chatId, onRead]);
+
+  // WS: typing
+  useEffect(() => {
+    return onTyping((cid, userId) => {
+      if (cid !== chatId || userId === meId) return;
+      setTypingUserId(userId);
+      if (typingTimerRef.current) clearTimeout(typingTimerRef.current);
+      typingTimerRef.current = setTimeout(() => setTypingUserId(null), 3000);
+    });
+  }, [chatId, meId, onTyping]);
+
+  // Скролл вниз при новых сообщениях
   useEffect(() => {
     if (messages.length > 0) {
       setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 50);
     }
   }, [messages.length]);
 
-  const sendText = async () => {
+  // Отметить прочитанным самое последнее сообщение
+  useEffect(() => {
+    if (messages.length === 0) return;
+    const last = messages[messages.length - 1];
+    if (last.senderId === meId) return; // своё не отмечаем
+    api.post(`/chats/${chatId}/read`, { messageId: last.id }).catch(() => undefined);
+  }, [chatId, meId, messages]);
+
+  const items = useMemo(() => buildItems(messages), [messages]);
+
+  // Минимум lastReadAt среди других участников — нужно чтобы показать ✓✓ на своих сообщениях
+  const minOtherLastRead = useMemo(() => {
+    const others = reads.filter((r) => r.userId !== meId);
+    if (others.length === 0) return 0;
+    return Math.min(...others.map((r) => new Date(r.lastReadAt).getTime()));
+  }, [reads, meId]);
+
+  const senderNameById = useMemo(() => {
+    const map = new Map<string, string>();
+    chat?.members.forEach((m) => map.set(m.id, m.displayName));
+    return map;
+  }, [chat]);
+
+  const send = async () => {
     const text = input.trim();
     if (!text || sending) return;
     setSending(true);
     setInput('');
+    const replyId = replyTo?.id;
+    setReplyTo(null);
     try {
-      await api.post(`/chats/${chatId}/messages`, { content: text });
+      if (editingId) {
+        await api.patch(`/chats/${chatId}/messages/${editingId}`, { content: text });
+        setEditingId(null);
+      } else {
+        await api.post(`/chats/${chatId}/messages`, { content: text, replyToId: replyId });
+      }
     } catch (e) {
       setInput(text);
     } finally {
@@ -71,7 +202,16 @@ export function ChatScreen({ route }: Props) {
     }
   };
 
-  const pickAndSendImage = async () => {
+  const onInputChange = (text: string) => {
+    setInput(text);
+    const now = Date.now();
+    if (now - lastTypingSentRef.current > 1500) {
+      lastTypingSentRef.current = now;
+      api.post(`/chats/${chatId}/typing`, {}).catch(() => undefined);
+    }
+  };
+
+  const pickImage = async () => {
     const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!perm.granted) {
       Alert.alert('Нет доступа', 'Разрешите доступ к фото в настройках');
@@ -79,22 +219,22 @@ export function ChatScreen({ route }: Props) {
     }
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      quality: 0.85,
+      quality: 1,
     });
     if (result.canceled) return;
     const asset = result.assets[0];
     setUploading(true);
     try {
-      const contentType = asset.mimeType ?? 'image/jpeg';
-      const size = asset.fileSize ?? 0;
-      if (size === 0) throw new Error('Cannot read file size');
-      const key = await uploadMedia(asset.uri, contentType, size);
+      const compressed = await compressImage(asset.uri);
+      const key = await uploadMedia(compressed.uri, compressed.contentType, compressed.size);
       await api.post(`/chats/${chatId}/messages`, {
         mediaKey: key,
-        mediaType: contentType,
+        mediaType: compressed.contentType,
         mediaName: asset.fileName ?? 'image.jpg',
-        mediaSize: size,
+        mediaSize: compressed.size,
+        replyToId: replyTo?.id,
       });
+      setReplyTo(null);
     } catch (e: any) {
       Alert.alert('Не получилось', e.message ?? String(e));
     } finally {
@@ -102,7 +242,7 @@ export function ChatScreen({ route }: Props) {
     }
   };
 
-  const pickAndSendFile = async () => {
+  const pickFile = async () => {
     const result = await DocumentPicker.getDocumentAsync({ copyToCacheDirectory: true });
     if (result.canceled) return;
     const asset = result.assets[0];
@@ -117,7 +257,9 @@ export function ChatScreen({ route }: Props) {
         mediaType: contentType,
         mediaName: asset.name,
         mediaSize: size,
+        replyToId: replyTo?.id,
       });
+      setReplyTo(null);
     } catch (e: any) {
       Alert.alert('Не получилось', e.message ?? String(e));
     } finally {
@@ -127,11 +269,72 @@ export function ChatScreen({ route }: Props) {
 
   const showAttach = () => {
     Alert.alert('Прикрепить', undefined, [
-      { text: 'Фото', onPress: pickAndSendImage },
-      { text: 'Файл', onPress: pickAndSendFile },
+      { text: 'Фото', onPress: pickImage },
+      { text: 'Файл', onPress: pickFile },
       { text: 'Отмена', style: 'cancel' },
     ]);
   };
+
+  const onMessageLongPress = (msg: Message) => {
+    const mine = msg.senderId === meId;
+    const options: { text: string; onPress?: () => void; style?: 'destructive' | 'cancel' }[] = [
+      { text: 'Ответить', onPress: () => setReplyTo(msg) },
+      { text: 'Переслать', onPress: () => navigation.navigate('Forward', { messageId: msg.id }) },
+    ];
+    if (msg.content) {
+      options.push({
+        text: 'Копировать',
+        onPress: () => {
+          // @ts-ignore Clipboard deprecated but works
+          Clipboard.setString(msg.content);
+        },
+      });
+    }
+    if (mine && msg.content && !msg.deletedAt) {
+      options.push({
+        text: 'Изменить',
+        onPress: () => {
+          setEditingId(msg.id);
+          setInput(msg.content);
+        },
+      });
+    }
+    if (mine && !msg.deletedAt) {
+      options.push({
+        text: 'Удалить',
+        style: 'destructive',
+        onPress: () =>
+          api.delete(`/chats/${chatId}/messages/${msg.id}`).catch((e) =>
+            Alert.alert('Не получилось', e.response?.data?.message ?? e.message),
+          ),
+      });
+    }
+    options.push({ text: 'Отмена', style: 'cancel' });
+    Alert.alert('Действия', undefined, options);
+  };
+
+  const renderItem = useCallback(
+    ({ item }: { item: ListItem }) => {
+      if (item.kind === 'date') return <DateSeparator label={item.label} />;
+      const msg = item.message;
+      const mine = msg.senderId === meId;
+      const isRead = mine && new Date(msg.createdAt).getTime() <= minOtherLastRead;
+      const showSenderName = chat?.type !== 'direct';
+      return (
+        <MessageBubble
+          message={msg}
+          mine={mine}
+          showSenderName={showSenderName}
+          senderName={senderNameById.get(msg.senderId)}
+          isRead={isRead}
+          onLongPress={() => onMessageLongPress(msg)}
+        />
+      );
+    },
+    [chat?.type, meId, minOtherLastRead, senderNameById],
+  );
+
+  const typingName = typingUserId ? senderNameById.get(typingUserId) : null;
 
   return (
     <KeyboardAvoidingView
@@ -139,48 +342,53 @@ export function ChatScreen({ route }: Props) {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       keyboardVerticalOffset={90}
     >
+      {typingName && (
+        <View style={styles.typingBar}>
+          <Text style={styles.typingText}>{typingName} печатает...</Text>
+        </View>
+      )}
       <FlatList
         ref={listRef}
-        data={messages}
-        keyExtractor={(m) => m.id}
+        data={items}
+        keyExtractor={(item) => (item.kind === 'msg' ? item.message.id : item.id)}
         contentContainerStyle={{ padding: 12 }}
-        renderItem={({ item }) => {
-          const mine = item.senderId === meId;
-          const hasMedia = !!item.mediaKey && !!item.mediaType;
-          return (
-            <View style={[styles.bubble, mine ? styles.bubbleMine : styles.bubbleOther]}>
-              {hasMedia && (
-                <MediaBubble
-                  mediaKey={item.mediaKey!}
-                  mediaType={item.mediaType!}
-                  mediaName={item.mediaName}
-                  mediaSize={item.mediaSize}
-                  mine={mine}
-                />
-              )}
-              {item.content ? (
-                <Text style={[mine ? styles.textMine : styles.textOther, hasMedia && { marginTop: 6 }]}>
-                  {item.content}
-                </Text>
-              ) : null}
-            </View>
-          );
-        }}
+        renderItem={renderItem}
       />
+
+      {(replyTo || editingId) && (
+        <View style={styles.replyBar}>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.replyLabel}>{editingId ? 'Изменение' : 'Ответ'}</Text>
+            <Text style={styles.replyContent} numberOfLines={1}>
+              {editingId ? input : messagePreview(replyTo!)}
+            </Text>
+          </View>
+          <Pressable
+            onPress={() => {
+              setReplyTo(null);
+              setEditingId(null);
+              if (editingId) setInput('');
+            }}
+          >
+            <Text style={styles.replyClose}>✕</Text>
+          </Pressable>
+        </View>
+      )}
+
       <View style={styles.inputBar}>
-        <Pressable onPress={showAttach} style={styles.attachBtn} disabled={uploading}>
+        <Pressable onPress={showAttach} style={styles.attachBtn} disabled={uploading || !!editingId}>
           {uploading ? <ActivityIndicator /> : <Text style={styles.attachText}>📎</Text>}
         </Pressable>
         <TextInput
           style={styles.input}
           value={input}
-          onChangeText={setInput}
-          placeholder="Сообщение..."
+          onChangeText={onInputChange}
+          placeholder={editingId ? 'Изменить сообщение...' : 'Сообщение...'}
           placeholderTextColor="#999"
           multiline
         />
-        <Pressable onPress={sendText} disabled={sending || !input.trim()} style={styles.sendBtn}>
-          <Text style={styles.sendText}>↑</Text>
+        <Pressable onPress={send} disabled={sending || !input.trim()} style={styles.sendBtn}>
+          <Text style={styles.sendText}>{editingId ? '✓' : '↑'}</Text>
         </Pressable>
       </View>
     </KeyboardAvoidingView>
@@ -189,11 +397,21 @@ export function ChatScreen({ route }: Props) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
-  bubble: { maxWidth: '75%', paddingHorizontal: 14, paddingVertical: 10, borderRadius: 16, marginVertical: 4 },
-  bubbleMine: { backgroundColor: '#0a84ff', alignSelf: 'flex-end' },
-  bubbleOther: { backgroundColor: '#eee', alignSelf: 'flex-start' },
-  textMine: { color: '#fff', fontSize: 16 },
-  textOther: { color: '#000', fontSize: 16 },
+  typingBar: { paddingHorizontal: 16, paddingVertical: 4, backgroundColor: '#f5f5f5' },
+  typingText: { fontSize: 12, color: '#0a84ff', fontStyle: 'italic' },
+  replyBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    backgroundColor: '#f5f5f5',
+    borderTopWidth: 1,
+    borderTopColor: '#ddd',
+    gap: 12,
+  },
+  replyLabel: { fontSize: 12, color: '#0a84ff', fontWeight: '600' },
+  replyContent: { fontSize: 13, color: '#555', marginTop: 2 },
+  replyClose: { fontSize: 18, color: '#888', paddingHorizontal: 8 },
   inputBar: {
     flexDirection: 'row',
     alignItems: 'flex-end',

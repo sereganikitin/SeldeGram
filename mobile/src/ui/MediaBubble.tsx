@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, Image, StyleSheet, ActivityIndicator, Pressable, Linking } from 'react-native';
 import { getMediaUrl } from '../media';
+import { formatFileSize } from '../helpers';
 
 interface Props {
   mediaKey: string;
@@ -25,6 +26,7 @@ export function MediaBubble({ mediaKey, mediaType, mediaName, mediaSize, mine }:
   }, [mediaKey]);
 
   const isImage = mediaType.startsWith('image/');
+  const isVideo = mediaType.startsWith('video/');
 
   if (error) {
     return <Text style={mine ? styles.errorMine : styles.errorOther}>Ошибка загрузки</Text>;
@@ -41,7 +43,18 @@ export function MediaBubble({ mediaKey, mediaType, mediaName, mediaSize, mine }:
     return <Image source={{ uri: url }} style={styles.image} resizeMode="cover" />;
   }
 
-  // Файл
+  if (isVideo) {
+    return (
+      <Pressable onPress={() => url && Linking.openURL(url)} style={styles.videoBox}>
+        <Text style={styles.videoIcon}>▶</Text>
+        <Text style={mine ? styles.fileNameMine : styles.fileNameOther}>{mediaName ?? 'Видео'}</Text>
+        {mediaSize != null && (
+          <Text style={mine ? styles.fileSizeMine : styles.fileSizeOther}>{formatFileSize(mediaSize)}</Text>
+        )}
+      </Pressable>
+    );
+  }
+
   return (
     <Pressable onPress={() => url && Linking.openURL(url)} style={styles.fileRow}>
       <Text style={styles.fileIcon}>📄</Text>
@@ -50,22 +63,33 @@ export function MediaBubble({ mediaKey, mediaType, mediaName, mediaSize, mine }:
           {mediaName ?? 'Файл'}
         </Text>
         {mediaSize != null && (
-          <Text style={mine ? styles.fileSizeMine : styles.fileSizeOther}>{formatSize(mediaSize)}</Text>
+          <Text style={mine ? styles.fileSizeMine : styles.fileSizeOther}>{formatFileSize(mediaSize)}</Text>
         )}
       </View>
     </Pressable>
   );
 }
 
-function formatSize(bytes: number) {
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-  return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
-}
-
 const styles = StyleSheet.create({
   image: { width: 220, height: 220, borderRadius: 12, backgroundColor: '#0002' },
-  imagePlaceholder: { width: 220, height: 220, borderRadius: 12, backgroundColor: '#0001', justifyContent: 'center', alignItems: 'center' },
+  imagePlaceholder: {
+    width: 220,
+    height: 220,
+    borderRadius: 12,
+    backgroundColor: '#0001',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  videoBox: {
+    width: 220,
+    height: 130,
+    borderRadius: 12,
+    backgroundColor: '#000a',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 12,
+  },
+  videoIcon: { color: '#fff', fontSize: 40, marginBottom: 6 },
   fileRow: { flexDirection: 'row', alignItems: 'center', gap: 10, minWidth: 200 },
   fileIcon: { fontSize: 28 },
   fileNameMine: { color: '#fff', fontSize: 15, fontWeight: '600' },

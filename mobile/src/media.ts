@@ -1,3 +1,5 @@
+import * as ImageManipulator from 'expo-image-manipulator';
+import * as FileSystem from 'expo-file-system/legacy';
 import { api } from './api';
 
 interface PresignResp {
@@ -28,6 +30,22 @@ export async function uploadMedia(fileUri: string, contentType: string, size: nu
 
 // Получает временный URL для скачивания/просмотра.
 const urlCache = new Map<string, { url: string; expires: number }>();
+
+// Сжимает изображение до max 1280px по длинной стороне, jpeg quality 0.8.
+// Возвращает { uri, size, contentType }.
+export async function compressImage(uri: string): Promise<{ uri: string; size: number; contentType: string }> {
+  const result = await ImageManipulator.manipulateAsync(
+    uri,
+    [{ resize: { width: 1280 } }],
+    { compress: 0.8, format: ImageManipulator.SaveFormat.JPEG },
+  );
+  let size = 0;
+  try {
+    const info = await FileSystem.getInfoAsync(result.uri);
+    size = (info as any).size ?? 0;
+  } catch {}
+  return { uri: result.uri, size, contentType: 'image/jpeg' };
+}
 
 export async function getMediaUrl(key: string): Promise<string> {
   const cached = urlCache.get(key);

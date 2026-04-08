@@ -3,6 +3,19 @@ import { PrismaService } from '../prisma/prisma.service';
 import { WsHub } from '../ws/ws.hub';
 import { PushService } from '../push/push.service';
 
+const messageInclude = {
+  replyTo: {
+    select: {
+      id: true,
+      senderId: true,
+      content: true,
+      mediaType: true,
+      mediaKey: true,
+      deletedAt: true,
+    },
+  },
+} as const;
+
 @Injectable()
 export class ChatsService {
   constructor(
@@ -16,7 +29,6 @@ export class ChatsService {
     if (!other) throw new NotFoundException('User not found');
     if (other.id === userId) throw new ForbiddenException('Cannot chat with yourself');
 
-    // Ищем существующий direct-чат между этими двумя
     const existing = await this.prisma.chat.findFirst({
       where: {
         type: 'direct',
@@ -32,12 +44,11 @@ export class ChatsService {
     const chat = await this.prisma.chat.create({
       data: {
         type: 'direct',
-        members: {
-          create: [{ userId }, { userId: other.id }],
-        },
+        members: { create: [{ userId }, { userId: other.id }] },
       },
       include: { members: { include: { user: { select: { id: true, username: true, displayName: true } } } } },
     });
+    this.hub.sendToUsers([userId, other.id], { type: 'chat:updated', payload: { chatId: chat.id } });
     return this.serializeChat(chat, userId);
   }
 
@@ -47,13 +58,37 @@ export class ChatsService {
       include: {
         members: { include: { user: { select: { id: true, username: true, displayName: true } } } },
         messages: { orderBy: { createdAt: 'desc' }, take: 1 },
+        reads: { where: { userId } },
       },
       orderBy: { createdAt: 'desc' },
     });
-    return chats.map((c) => ({
-      ...this.serializeChat(c, userId),
-      lastMessage: c.messages[0] ?? null,
-    }));
+
+    // unread count для каждого чата
+    const result = await Promise.all(
+      chats.map(async (c) => {
+        const lastRead = c.reads[0]?.lastReadAt ?? new Date(0);
+        const unreadCount = await this.prisma.message.count({
+          where: {
+            chatId: c.id,
+            createdAt: { gt: lastRead },
+            senderId: { not: userId },
+            deletedAt: null,
+          },
+        });
+        return {
+          ...this.serializeChat(c, userId),
+          lastMessage: c.messages[0] ?? null,
+          unreadCount,
+        };
+      }),
+    );
+    // сортируем: чаты с lastMessage по дате, без него — по createdAt
+    result.sort((a, b) => {
+      const at = (a.lastMessage?.createdAt ?? a.createdAt) as Date;
+      const bt = (b.lastMessage?.createdAt ?? b.createdAt) as Date;
+      return new Date(bt).getTime() - new Date(at).getTime();
+    });
+    return result;
   }
 
   async assertMember(chatId: string, userId: string) {
@@ -99,22 +134,14 @@ export class ChatsService {
     ];
 
     const chat = await this.prisma.chat.create({
-      data: {
-        type: 'group',
-        title,
-        members: { create: memberData },
-      },
-      include: {
-        members: { include: { user: { select: { id: true, username: true, displayName: true } } } },
-      },
+      data: { type: 'group', title, members: { create: memberData } },
+      include: { members: { include: { user: { select: { id: true, username: true, displayName: true } } } } },
     });
 
-    // Уведомляем всех участников, что у них новый чат
     this.hub.sendToUsers(
       memberData.map((m) => m.userId),
       { type: 'chat:updated', payload: { chatId: chat.id } },
     );
-
     return this.serializeChat(chat, creatorId);
   }
 
@@ -126,22 +153,14 @@ export class ChatsService {
 
     const user = await this.prisma.user.findUnique({ where: { username } });
     if (!user) throw new NotFoundException('User not found');
-
     const existing = await this.prisma.chatMember.findUnique({
       where: { chatId_userId: { chatId, userId: user.id } },
     });
     if (existing) throw new ForbiddenException('Already a member');
 
-    await this.prisma.chatMember.create({
-      data: { chatId, userId: user.id, role: 'member' },
-    });
-
+    await this.prisma.chatMember.create({ data: { chatId, userId: user.id, role: 'member' } });
     const members = await this.prisma.chatMember.findMany({ where: { chatId }, select: { userId: true } });
-    this.hub.sendToUsers(
-      members.map((m) => m.userId),
-      { type: 'chat:updated', payload: { chatId } },
-    );
-
+    this.hub.sendToUsers(members.map((m) => m.userId), { type: 'chat:updated', payload: { chatId } });
     return this.getChat(chatId, actorId);
   }
 
@@ -150,28 +169,19 @@ export class ChatsService {
     if (!chat) throw new NotFoundException('Chat not found');
     if (chat.type === 'direct') throw new ForbiddenException('Cannot remove members from direct chat');
 
-    // Сам себя выйти может любой; других — только админ
     if (targetUserId !== actorId) {
       await this.assertAdmin(chatId, actorId);
     } else {
       await this.assertMember(chatId, actorId);
     }
-
     const target = await this.prisma.chatMember.findUnique({
       where: { chatId_userId: { chatId, userId: targetUserId } },
     });
     if (!target) throw new NotFoundException('Member not found');
 
-    // Запрашиваем список всех участников ДО удаления (чтобы вышедший тоже получил уведомление)
     const members = await this.prisma.chatMember.findMany({ where: { chatId }, select: { userId: true } });
-
     await this.prisma.chatMember.delete({ where: { id: target.id } });
-
-    this.hub.sendToUsers(
-      members.map((m) => m.userId),
-      { type: 'chat:updated', payload: { chatId } },
-    );
-
+    this.hub.sendToUsers(members.map((m) => m.userId), { type: 'chat:updated', payload: { chatId } });
     return { ok: true };
   }
 
@@ -182,25 +192,27 @@ export class ChatsService {
     await this.assertAdmin(chatId, actorId);
 
     await this.prisma.chat.update({ where: { id: chatId }, data: { title } });
-
     const members = await this.prisma.chatMember.findMany({ where: { chatId }, select: { userId: true } });
-    this.hub.sendToUsers(
-      members.map((m) => m.userId),
-      { type: 'chat:updated', payload: { chatId } },
-    );
-
+    this.hub.sendToUsers(members.map((m) => m.userId), { type: 'chat:updated', payload: { chatId } });
     return this.getChat(chatId, actorId);
+  }
+
+  // Удалить чат целиком (для direct — для обоих)
+  async deleteChat(chatId: string, actorId: string) {
+    await this.assertMember(chatId, actorId);
+    const members = await this.prisma.chatMember.findMany({ where: { chatId }, select: { userId: true } });
+    await this.prisma.chat.delete({ where: { id: chatId } });
+    this.hub.sendToUsers(members.map((m) => m.userId), { type: 'chat:deleted', payload: { chatId } });
+    return { ok: true };
   }
 
   async listMessages(chatId: string, userId: string, before: string | undefined, limit: number) {
     await this.assertMember(chatId, userId);
     const messages = await this.prisma.message.findMany({
-      where: {
-        chatId,
-        ...(before ? { createdAt: { lt: new Date(before) } } : {}),
-      },
+      where: { chatId, ...(before ? { createdAt: { lt: new Date(before) } } : {}) },
       orderBy: { createdAt: 'desc' },
       take: Math.min(limit, 100),
+      include: messageInclude,
     });
     return messages.reverse();
   }
@@ -208,34 +220,66 @@ export class ChatsService {
   async sendMessage(
     chatId: string,
     userId: string,
-    payload: { content?: string; mediaKey?: string; mediaType?: string; mediaName?: string; mediaSize?: number },
+    payload: {
+      content?: string;
+      mediaKey?: string;
+      mediaType?: string;
+      mediaName?: string;
+      mediaSize?: number;
+      replyToId?: string;
+      forwardedFromId?: string;
+    },
   ) {
     await this.assertMember(chatId, userId);
-    if (!payload.content && !payload.mediaKey) {
+    if (!payload.content && !payload.mediaKey && !payload.forwardedFromId) {
       throw new ForbiddenException('Empty message');
+    }
+
+    // Если форвард — копируем содержимое исходного сообщения, чтобы в чате-получателе оно отображалось
+    let copiedContent = payload.content ?? '';
+    let copiedMediaKey = payload.mediaKey;
+    let copiedMediaType = payload.mediaType;
+    let copiedMediaName = payload.mediaName;
+    let copiedMediaSize = payload.mediaSize;
+
+    if (payload.forwardedFromId) {
+      const src = await this.prisma.message.findUnique({ where: { id: payload.forwardedFromId } });
+      if (!src || src.deletedAt) throw new NotFoundException('Source message not found');
+      // Можно ли видеть исходное сообщение?
+      await this.assertMember(src.chatId, userId);
+      copiedContent = src.content;
+      copiedMediaKey = src.mediaKey ?? undefined;
+      copiedMediaType = src.mediaType ?? undefined;
+      copiedMediaName = src.mediaName ?? undefined;
+      copiedMediaSize = src.mediaSize ?? undefined;
+    }
+
+    if (payload.replyToId) {
+      const reply = await this.prisma.message.findUnique({ where: { id: payload.replyToId } });
+      if (!reply || reply.chatId !== chatId) {
+        throw new NotFoundException('Reply target not found');
+      }
     }
 
     const message = await this.prisma.message.create({
       data: {
         chatId,
         senderId: userId,
-        content: payload.content ?? '',
-        mediaKey: payload.mediaKey,
-        mediaType: payload.mediaType,
-        mediaName: payload.mediaName,
-        mediaSize: payload.mediaSize,
+        content: copiedContent,
+        mediaKey: copiedMediaKey,
+        mediaType: copiedMediaType,
+        mediaName: copiedMediaName,
+        mediaSize: copiedMediaSize,
+        replyToId: payload.replyToId,
+        forwardedFromId: payload.forwardedFromId,
       },
+      include: messageInclude,
     });
 
-    // Рассылаем всем участникам чата через WS
-    const members = await this.prisma.chatMember.findMany({
-      where: { chatId },
-      select: { userId: true },
-    });
+    const members = await this.prisma.chatMember.findMany({ where: { chatId }, select: { userId: true } });
     const memberIds = members.map((m) => m.userId);
     this.hub.sendToUsers(memberIds, { type: 'message:new', payload: message });
 
-    // Push всем кроме отправителя
     const recipientIds = memberIds.filter((id) => id !== userId);
     if (recipientIds.length > 0) {
       const sender = await this.prisma.user.findUnique({
@@ -247,17 +291,88 @@ export class ChatsService {
         select: { type: true, title: true },
       });
       const title = chat?.type === 'direct' ? sender?.displayName ?? 'New message' : chat?.title ?? 'New message';
-      const body = payload.content || (payload.mediaType?.startsWith('image/') ? '📷 Фото' : payload.mediaKey ? '📄 Файл' : '');
+      const body =
+        message.content || (message.mediaType?.startsWith('image/') ? '📷 Фото' : message.mediaKey ? '📄 Файл' : '');
       this.push
-        .sendToUsers(recipientIds, {
-          title,
-          body,
-          data: { chatId, messageId: message.id },
-        })
+        .sendToUsers(recipientIds, { title, body, data: { chatId, messageId: message.id } })
         .catch(() => undefined);
     }
 
     return message;
+  }
+
+  async editMessage(chatId: string, userId: string, messageId: string, content: string) {
+    await this.assertMember(chatId, userId);
+    const msg = await this.prisma.message.findUnique({ where: { id: messageId } });
+    if (!msg || msg.chatId !== chatId) throw new NotFoundException('Message not found');
+    if (msg.senderId !== userId) throw new ForbiddenException('Not your message');
+    if (msg.deletedAt) throw new ForbiddenException('Already deleted');
+
+    const updated = await this.prisma.message.update({
+      where: { id: messageId },
+      data: { content, editedAt: new Date() },
+      include: messageInclude,
+    });
+
+    const members = await this.prisma.chatMember.findMany({ where: { chatId }, select: { userId: true } });
+    this.hub.sendToUsers(members.map((m) => m.userId), { type: 'message:edited', payload: updated });
+    return updated;
+  }
+
+  async deleteMessage(chatId: string, userId: string, messageId: string) {
+    await this.assertMember(chatId, userId);
+    const msg = await this.prisma.message.findUnique({ where: { id: messageId } });
+    if (!msg || msg.chatId !== chatId) throw new NotFoundException('Message not found');
+    if (msg.senderId !== userId) throw new ForbiddenException('Not your message');
+
+    const updated = await this.prisma.message.update({
+      where: { id: messageId },
+      data: { content: '', mediaKey: null, mediaType: null, mediaName: null, mediaSize: null, deletedAt: new Date() },
+      include: messageInclude,
+    });
+
+    const members = await this.prisma.chatMember.findMany({ where: { chatId }, select: { userId: true } });
+    this.hub.sendToUsers(members.map((m) => m.userId), { type: 'message:deleted', payload: { chatId, messageId } });
+    return updated;
+  }
+
+  async markRead(chatId: string, userId: string, messageId: string) {
+    await this.assertMember(chatId, userId);
+    const msg = await this.prisma.message.findUnique({ where: { id: messageId } });
+    if (!msg || msg.chatId !== chatId) throw new NotFoundException('Message not found');
+
+    await this.prisma.chatRead.upsert({
+      where: { chatId_userId: { chatId, userId } },
+      create: { chatId, userId, lastReadAt: msg.createdAt },
+      update: { lastReadAt: msg.createdAt },
+    });
+
+    // Уведомляем других участников, что мы прочитали (для галочек)
+    const members = await this.prisma.chatMember.findMany({ where: { chatId }, select: { userId: true } });
+    this.hub.sendToUsers(
+      members.map((m) => m.userId),
+      { type: 'chat:read', payload: { chatId, userId, lastReadAt: msg.createdAt } },
+    );
+    return { ok: true };
+  }
+
+  async typing(chatId: string, userId: string) {
+    await this.assertMember(chatId, userId);
+    const members = await this.prisma.chatMember.findMany({ where: { chatId }, select: { userId: true } });
+    this.hub.sendToUsers(
+      members.map((m) => m.userId).filter((id) => id !== userId),
+      { type: 'chat:typing', payload: { chatId, userId } },
+    );
+    return { ok: true };
+  }
+
+  async getChatReads(chatId: string, userId: string) {
+    await this.assertMember(chatId, userId);
+    const reads = await this.prisma.chatRead.findMany({
+      where: { chatId },
+      select: { userId: true, lastReadAt: true },
+    });
+    return reads;
   }
 
   private serializeChat(

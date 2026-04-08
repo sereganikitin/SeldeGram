@@ -22,6 +22,7 @@ model User {
   devices            Device[]
   chatMembers        ChatMember[]
   messages           Message[]
+  chatReads          ChatRead[]
 
   @@map("users")
 }
@@ -83,6 +84,7 @@ model Chat {
 
   members  ChatMember[]
   messages Message[]
+  reads    ChatRead[]
 
   @@map("chats")
 }
@@ -103,19 +105,41 @@ model ChatMember {
 }
 
 model Message {
-  id        String   @id @default(uuid())
-  chatId    String
-  senderId  String
-  content   String
-  mediaKey  String?
-  mediaType String?
-  mediaName String?
-  mediaSize Int?
-  createdAt DateTime @default(now())
+  id              String    @id @default(uuid())
+  chatId          String
+  senderId        String
+  content         String
+  mediaKey        String?
+  mediaType       String?
+  mediaName       String?
+  mediaSize       Int?
+  replyToId       String?
+  forwardedFromId String?
+  editedAt        DateTime?
+  deletedAt       DateTime?
+  createdAt       DateTime  @default(now())
 
-  chat   Chat @relation(fields: [chatId], references: [id], onDelete: Cascade)
-  sender User @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  chat          Chat      @relation(fields: [chatId], references: [id], onDelete: Cascade)
+  sender        User      @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  replyTo       Message?  @relation("MessageReply", fields: [replyToId], references: [id], onDelete: SetNull)
+  replies       Message[] @relation("MessageReply")
+  forwardedFrom Message?  @relation("MessageForward", fields: [forwardedFromId], references: [id], onDelete: SetNull)
+  forwardedAs   Message[] @relation("MessageForward")
 
   @@index([chatId, createdAt])
   @@map("messages")
+}
+
+model ChatRead {
+  id         String   @id @default(uuid())
+  chatId     String
+  userId     String
+  lastReadAt DateTime @default(now())
+
+  chat Chat @relation(fields: [chatId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([chatId, userId])
+  @@index([userId])
+  @@map("chat_reads")
 }
