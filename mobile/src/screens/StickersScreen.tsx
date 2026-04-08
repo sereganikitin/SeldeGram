@@ -124,7 +124,7 @@ const styles = StyleSheet.create({
   coverPh: { width: 50, height: 50, backgroundColor: '#eee', borderRadius: 8 },
   name: { fontSize: 16, fontWeight: '600' },
   meta: { fontSize: 13, color: '#777', marginTop: 2 },
-  installBtn: { color: '#0a84ff', fontWeight: '600' },
+  installBtn: { color: '#5fe3d4', fontWeight: '600' },
   empty: { color: '#aaa', textAlign: 'center', padding: 12 },
   searchInput: { borderWidth: 1, borderColor: '#ddd', borderRadius: 10, padding: 12, fontSize: 16 },
 });

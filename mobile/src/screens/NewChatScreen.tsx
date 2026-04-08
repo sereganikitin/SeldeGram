@@ -82,11 +82,11 @@ const styles = StyleSheet.create({
   groupBtn: {
     backgroundColor: '#eef',
     borderWidth: 1,
-    borderColor: '#0a84ff',
+    borderColor: '#5fe3d4',
     borderRadius: 12,
     paddingVertical: 14,
     alignItems: 'center',
     marginBottom: 16,
   },
-  groupBtnText: { color: '#0a84ff', fontSize: 16, fontWeight: '600' },
+  groupBtnText: { color: '#5fe3d4', fontSize: 16, fontWeight: '600' },
 });

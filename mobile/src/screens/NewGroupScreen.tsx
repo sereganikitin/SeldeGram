@@ -105,7 +105,7 @@ export function NewGroupScreen({ navigation }: Props) {
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 20, backgroundColor: '#fff' },
   chips: { flexGrow: 0, marginBottom: 12 },
-  chip: { backgroundColor: '#0a84ff', borderRadius: 16, paddingHorizontal: 12, paddingVertical: 6, marginRight: 6 },
+  chip: { backgroundColor: '#5fe3d4', borderRadius: 16, paddingHorizontal: 12, paddingVertical: 6, marginRight: 6 },
   chipText: { color: '#fff', fontSize: 14 },
   row: {
     flexDirection: 'row',
@@ -117,5 +117,5 @@ const styles = StyleSheet.create({
   },
   name: { fontSize: 16, fontWeight: '600' },
   username: { fontSize: 13, color: '#777', marginTop: 2 },
-  check: { fontSize: 22, color: '#0a84ff', width: 30, textAlign: 'right' },
+  check: { fontSize: 22, color: '#5fe3d4', width: 30, textAlign: 'right' },
 });

@@ -99,7 +99,7 @@ export function ChatScreen({ route, navigation }: Props) {
             else navigation.navigate('GroupInfo', { chatId });
           }}
         >
-          <Text style={{ fontSize: 20, color: '#0a84ff', paddingHorizontal: 8 }}>ⓘ</Text>
+          <Text style={{ fontSize: 20, color: '#5fe3d4', paddingHorizontal: 8 }}>ⓘ</Text>
         </Pressable>
       ),
     });
@@ -432,7 +432,7 @@ export function ChatScreen({ route, navigation }: Props) {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   typingBar: { paddingHorizontal: 16, paddingVertical: 4, backgroundColor: '#f5f5f5' },
-  typingText: { fontSize: 12, color: '#0a84ff', fontStyle: 'italic' },
+  typingText: { fontSize: 12, color: '#5fe3d4', fontStyle: 'italic' },
   replyBar: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -443,7 +443,7 @@ const styles = StyleSheet.create({
     borderTopColor: '#ddd',
     gap: 12,
   },
-  replyLabel: { fontSize: 12, color: '#0a84ff', fontWeight: '600' },
+  replyLabel: { fontSize: 12, color: '#5fe3d4', fontWeight: '600' },
   replyContent: { fontSize: 13, color: '#555', marginTop: 2 },
   replyClose: { fontSize: 18, color: '#888', paddingHorizontal: 8 },
   inputBar: {
@@ -470,7 +470,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#0a84ff',
+    backgroundColor: '#5fe3d4',
     justifyContent: 'center',
     alignItems: 'center',
   },

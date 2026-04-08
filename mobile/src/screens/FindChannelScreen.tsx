@@ -70,5 +70,5 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#eee' },
   name: { fontSize: 16, fontWeight: '600' },
   meta: { fontSize: 13, color: '#777', marginTop: 2 },
-  joinBtn: { color: '#0a84ff', fontSize: 14, fontWeight: '600' },
+  joinBtn: { color: '#5fe3d4', fontSize: 14, fontWeight: '600' },
 });

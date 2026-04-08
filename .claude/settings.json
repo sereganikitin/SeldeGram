@@ -3,7 +3,8 @@
     "allow": [
       "Bash(curl -s https://api.github.com/repos/nextlevelbuilder/ui-ux-pro-max-skill)",
       "Bash(curl -s https://api.github.com/repos/nextlevelbuilder/ui-ux-pro-max-skill/contents/)",
-      "Bash(curl -s https://raw.githubusercontent.com/nextlevelbuilder/ui-ux-pro-max-skill/main/skill.json)"
+      "Bash(curl -s https://raw.githubusercontent.com/nextlevelbuilder/ui-ux-pro-max-skill/main/skill.json)",
+      "Bash(xargs sed:*)"
     ]
   }
 }
