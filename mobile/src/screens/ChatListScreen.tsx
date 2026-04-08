@@ -23,6 +23,7 @@ export function ChatListScreen({ navigation }: Props) {
   const onChatDeleted = useWs((s) => s.onChatDeleted);
   const onDeleted = useWs((s) => s.onDeleted);
   const onEdited = useWs((s) => s.onEdited);
+  const onRead = useWs((s) => s.onRead);
 
   const load = async () => {
     const { data } = await api.get<Chat[]>('/chats');
@@ -76,6 +77,13 @@ export function ChatListScreen({ navigation }: Props) {
       );
     });
   }, [onEdited]);
+
+  useEffect(() => {
+    return onRead((chatId, userId) => {
+      if (userId !== meId) return;
+      setChats((prev) => prev.map((c) => (c.id === chatId ? { ...c, unreadCount: 0 } : c)));
+    });
+  }, [meId, onRead]);
 
   useEffect(() => {
     return onDeleted((chatId, messageId) => {
