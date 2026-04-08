@@ -6,6 +6,8 @@ export type RootStackParamList = {
   ChatList: undefined;
   NewChat: undefined;
   NewGroup: undefined;
+  NewChannel: undefined;
+  FindChannel: undefined;
   Chat: { chatId: string; title: string };
   GroupInfo: { chatId: string };
   UserInfo: { chatId: string };

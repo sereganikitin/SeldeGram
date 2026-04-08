@@ -44,6 +44,18 @@ export function NewChatScreen({ navigation }: Props) {
       >
         <Text style={styles.groupBtnText}>👥 Создать группу</Text>
       </Pressable>
+      <Pressable
+        onPress={() => navigation.navigate('NewChannel')}
+        style={({ pressed }) => [styles.groupBtn, pressed && { opacity: 0.7 }]}
+      >
+        <Text style={styles.groupBtnText}>📢 Создать канал</Text>
+      </Pressable>
+      <Pressable
+        onPress={() => navigation.navigate('FindChannel')}
+        style={({ pressed }) => [styles.groupBtn, pressed && { opacity: 0.7 }]}
+      >
+        <Text style={styles.groupBtnText}>🔎 Найти канал</Text>
+      </Pressable>
       <Input label="Поиск по username или имени" value={query} onChangeText={setQuery} autoFocus />
       <FlatList
         data={results}

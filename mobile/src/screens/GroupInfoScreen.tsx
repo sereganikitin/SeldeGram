@@ -124,10 +124,14 @@ export function GroupInfoScreen({ route, navigation }: Props) {
             {isAdmin && <Text style={styles.editHint}>нажмите для редактирования</Text>}
           </Pressable>
         )}
-        <Text style={styles.subtitle}>{chat.members.length} участников</Text>
+        {chat.slug && <Text style={styles.slug}>@{chat.slug}</Text>}
+        <Text style={styles.subtitle}>
+          {chat.memberCount ?? chat.members.length}{' '}
+          {chat.type === 'channel' ? 'подписчиков' : 'участников'}
+        </Text>
       </View>
 
-      {isAdmin && !adding && (
+      {isAdmin && chat.type !== 'channel' && !adding && (
         <Button title="+ Добавить участника" variant="secondary" onPress={() => setAdding(true)} />
       )}
 
@@ -192,6 +196,7 @@ const styles = StyleSheet.create({
   title: { fontSize: 24, fontWeight: '700', textAlign: 'center' },
   editHint: { fontSize: 11, color: '#999', textAlign: 'center', marginTop: 2 },
   subtitle: { fontSize: 14, color: '#777', marginTop: 6 },
+  slug: { fontSize: 14, color: '#0a84ff', marginTop: 4 },
   titleEdit: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   titleInput: {
     fontSize: 22,

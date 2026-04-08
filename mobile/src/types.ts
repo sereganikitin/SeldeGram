@@ -35,11 +35,20 @@ export interface Chat {
   id: string;
   type: 'direct' | 'group' | 'channel';
   title: string | null;
+  slug?: string | null;
   createdAt: string;
   viewerRole?: 'admin' | 'member';
+  memberCount?: number;
   members: ChatMember[];
   lastMessage?: Message | null;
   unreadCount?: number;
+}
+
+export interface ChannelSearchResult {
+  id: string;
+  title: string | null;
+  slug: string | null;
+  memberCount: number;
 }
 
 export interface UserSearchResult {

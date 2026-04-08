@@ -129,6 +129,8 @@ export function ChatListScreen({ navigation }: Props) {
             <View style={styles.rowMain}>
               <View style={styles.rowTop}>
                 <Text style={styles.title} numberOfLines={1}>
+                  {item.type === 'channel' ? '📢 ' : ''}
+                  {item.type === 'group' ? '👥 ' : ''}
                   {item.title}
                 </Text>
                 {item.lastMessage && (

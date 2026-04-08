@@ -15,6 +15,7 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { ChatsService } from './chats.service';
 import { CreateDirectDto } from './dto/create-direct.dto';
 import { CreateGroupDto } from './dto/create-group.dto';
+import { CreateChannelDto } from './dto/create-channel.dto';
 import { AddMemberDto } from './dto/add-member.dto';
 import { UpdateChatDto } from './dto/update-chat.dto';
 import { SendMessageDto } from './dto/send-message.dto';
@@ -34,6 +35,22 @@ export class ChatsController {
   @Post('group')
   createGroup(@Req() req: { user: { userId: string } }, @Body() dto: CreateGroupDto) {
     return this.chats.createGroup(req.user.userId, dto.title, dto.memberUsernames);
+  }
+
+  @Post('channel')
+  createChannel(@Req() req: { user: { userId: string } }, @Body() dto: CreateChannelDto) {
+    return this.chats.createChannel(req.user.userId, dto.title, dto.slug);
+  }
+
+  @Post('channel/:slug/join')
+  @HttpCode(200)
+  joinChannel(@Req() req: { user: { userId: string } }, @Param('slug') slug: string) {
+    return this.chats.joinChannel(req.user.userId, slug);
+  }
+
+  @Get('channels/search')
+  searchChannels(@Query('q') q: string) {
+    return this.chats.searchChannels(q ?? '');
   }
 
   @Get()

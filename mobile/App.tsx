@@ -13,6 +13,8 @@ import { LoginScreen } from './src/screens/LoginScreen';
 import { ChatListScreen } from './src/screens/ChatListScreen';
 import { NewChatScreen } from './src/screens/NewChatScreen';
 import { NewGroupScreen } from './src/screens/NewGroupScreen';
+import { NewChannelScreen } from './src/screens/NewChannelScreen';
+import { FindChannelScreen } from './src/screens/FindChannelScreen';
 import { ChatScreen } from './src/screens/ChatScreen';
 import { GroupInfoScreen } from './src/screens/GroupInfoScreen';
 import { UserInfoScreen } from './src/screens/UserInfoScreen';
@@ -71,6 +73,8 @@ export default function App() {
             <Stack.Screen name="ChatList" component={ChatListScreen} options={{ title: 'Чаты' }} />
             <Stack.Screen name="NewChat" component={NewChatScreen} options={{ title: 'Новый чат' }} />
             <Stack.Screen name="NewGroup" component={NewGroupScreen} options={{ title: 'Новая группа' }} />
+            <Stack.Screen name="NewChannel" component={NewChannelScreen} options={{ title: 'Новый канал' }} />
+            <Stack.Screen name="FindChannel" component={FindChannelScreen} options={{ title: 'Найти канал' }} />
             <Stack.Screen
               name="Chat"
               component={ChatScreen}

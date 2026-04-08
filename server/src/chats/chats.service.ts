@@ -120,6 +120,74 @@ export class ChatsService {
     return this.serializeChat(chat, userId);
   }
 
+  async createChannel(creatorId: string, title: string, slug: string) {
+    const slugLower = slug.toLowerCase();
+    const existing = await this.prisma.chat.findUnique({ where: { slug: slugLower } });
+    if (existing) throw new ForbiddenException('Slug already taken');
+
+    const chat = await this.prisma.chat.create({
+      data: {
+        type: 'channel',
+        title,
+        slug: slugLower,
+        members: { create: [{ userId: creatorId, role: 'admin' }] },
+      },
+      include: {
+        members: { include: { user: { select: { id: true, username: true, displayName: true } } } },
+      },
+    });
+    this.hub.sendToUsers([creatorId], { type: 'chat:updated', payload: { chatId: chat.id } });
+    return this.serializeChat(chat, creatorId);
+  }
+
+  async joinChannel(userId: string, slug: string) {
+    const chat = await this.prisma.chat.findUnique({
+      where: { slug: slug.toLowerCase() },
+      include: {
+        members: { include: { user: { select: { id: true, username: true, displayName: true } } } },
+      },
+    });
+    if (!chat || chat.type !== 'channel') throw new NotFoundException('Channel not found');
+
+    const existing = await this.prisma.chatMember.findUnique({
+      where: { chatId_userId: { chatId: chat.id, userId } },
+    });
+    if (!existing) {
+      await this.prisma.chatMember.create({ data: { chatId: chat.id, userId, role: 'member' } });
+    }
+
+    const updated = await this.prisma.chat.findUnique({
+      where: { id: chat.id },
+      include: {
+        members: { include: { user: { select: { id: true, username: true, displayName: true } } } },
+      },
+    });
+    this.hub.sendToUsers([userId], { type: 'chat:updated', payload: { chatId: chat.id } });
+    return this.serializeChat(updated!, userId);
+  }
+
+  async searchChannels(query: string) {
+    const q = query.trim().toLowerCase();
+    if (!q) return [];
+    const chats = await this.prisma.chat.findMany({
+      where: {
+        type: 'channel',
+        OR: [
+          { slug: { contains: q } },
+          { title: { contains: q, mode: 'insensitive' } },
+        ],
+      },
+      include: { _count: { select: { members: true } } },
+      take: 20,
+    });
+    return chats.map((c) => ({
+      id: c.id,
+      title: c.title,
+      slug: c.slug,
+      memberCount: c._count.members,
+    }));
+  }
+
   async createGroup(creatorId: string, title: string, memberUsernames: string[]) {
     const uniqueUsernames = Array.from(new Set(memberUsernames));
     const users = await this.prisma.user.findMany({
@@ -230,7 +298,11 @@ export class ChatsService {
       forwardedFromId?: string;
     },
   ) {
-    await this.assertMember(chatId, userId);
+    const member = await this.assertMember(chatId, userId);
+    const chatRow = await this.prisma.chat.findUnique({ where: { id: chatId }, select: { type: true } });
+    if (chatRow?.type === 'channel' && member.role !== 'admin') {
+      throw new ForbiddenException('Only admins can post to channel');
+    }
     if (!payload.content && !payload.mediaKey && !payload.forwardedFromId) {
       throw new ForbiddenException('Empty message');
     }
@@ -391,13 +463,20 @@ export class ChatsService {
       title = other?.user.displayName ?? 'Chat';
     }
     const viewerRole = chat.members.find((m) => m.user.id === viewerId)?.role ?? 'member';
+    // В каналах не-админ видит только себя в списке участников + общий счётчик
+    let visibleMembers = chat.members.map((m) => ({ ...m.user, role: m.role ?? 'member' }));
+    if (chat.type === 'channel' && viewerRole !== 'admin') {
+      visibleMembers = visibleMembers.filter((m) => m.id === viewerId);
+    }
     return {
       id: chat.id,
       type: chat.type,
       title,
+      slug: (chat as { slug?: string | null }).slug ?? null,
       createdAt: chat.createdAt,
       viewerRole,
-      members: chat.members.map((m) => ({ ...m.user, role: m.role ?? 'member' })),
+      memberCount: chat.members.length,
+      members: visibleMembers,
     };
   }
 }

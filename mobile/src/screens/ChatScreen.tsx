@@ -88,11 +88,10 @@ export function ChatScreen({ route, navigation }: Props) {
     navigation.setOptions({
       headerRight: () => (
         <Pressable
-          onPress={() =>
-            chat.type === 'direct'
-              ? navigation.navigate('UserInfo', { chatId })
-              : navigation.navigate('GroupInfo', { chatId })
-          }
+          onPress={() => {
+            if (chat.type === 'direct') navigation.navigate('UserInfo', { chatId });
+            else navigation.navigate('GroupInfo', { chatId });
+          }}
         >
           <Text style={{ fontSize: 20, color: '#0a84ff', paddingHorizontal: 8 }}>ⓘ</Text>
         </Pressable>
@@ -374,22 +373,28 @@ export function ChatScreen({ route, navigation }: Props) {
         </View>
       )}
 
-      <View style={styles.inputBar}>
-        <Pressable onPress={showAttach} style={styles.attachBtn} disabled={uploading || !!editingId}>
-          {uploading ? <ActivityIndicator /> : <Text style={styles.attachText}>📎</Text>}
-        </Pressable>
-        <TextInput
-          style={styles.input}
-          value={input}
-          onChangeText={onInputChange}
-          placeholder={editingId ? 'Изменить сообщение...' : 'Сообщение...'}
-          placeholderTextColor="#999"
-          multiline
-        />
-        <Pressable onPress={send} disabled={sending || !input.trim()} style={styles.sendBtn}>
-          <Text style={styles.sendText}>{editingId ? '✓' : '↑'}</Text>
-        </Pressable>
-      </View>
+      {chat?.type === 'channel' && chat.viewerRole !== 'admin' ? (
+        <View style={styles.readOnlyBar}>
+          <Text style={styles.readOnlyText}>Только админы могут писать в канал</Text>
+        </View>
+      ) : (
+        <View style={styles.inputBar}>
+          <Pressable onPress={showAttach} style={styles.attachBtn} disabled={uploading || !!editingId}>
+            {uploading ? <ActivityIndicator /> : <Text style={styles.attachText}>📎</Text>}
+          </Pressable>
+          <TextInput
+            style={styles.input}
+            value={input}
+            onChangeText={onInputChange}
+            placeholder={editingId ? 'Изменить сообщение...' : 'Сообщение...'}
+            placeholderTextColor="#999"
+            multiline
+          />
+          <Pressable onPress={send} disabled={sending || !input.trim()} style={styles.sendBtn}>
+            <Text style={styles.sendText}>{editingId ? '✓' : '↑'}</Text>
+          </Pressable>
+        </View>
+      )}
     </KeyboardAvoidingView>
   );
 }
@@ -440,4 +445,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   sendText: { color: '#fff', fontSize: 22, fontWeight: '700' },
+  readOnlyBar: { padding: 14, borderTopWidth: 1, borderTopColor: '#eee', alignItems: 'center' },
+  readOnlyText: { color: '#888', fontSize: 14 },
 });
