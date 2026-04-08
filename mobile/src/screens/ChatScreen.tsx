@@ -158,13 +158,12 @@ export function ChatScreen({ route, navigation }: Props) {
     }
   }, [messages.length]);
 
-  // Отметить прочитанным самое последнее сообщение
+  // Отметить прочитанным самое последнее сообщение (независимо от отправителя)
   useEffect(() => {
     if (messages.length === 0) return;
     const last = messages[messages.length - 1];
-    if (last.senderId === meId) return; // своё не отмечаем
     api.post(`/chats/${chatId}/read`, { messageId: last.id }).catch(() => undefined);
-  }, [chatId, meId, messages]);
+  }, [chatId, messages]);
 
   const items = useMemo(() => buildItems(messages), [messages]);
 
