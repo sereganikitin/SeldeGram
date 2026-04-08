@@ -9,10 +9,12 @@ import { useAuth } from '../store/auth';
 import { useWs } from '../store/ws';
 import { Avatar } from '../ui/Avatar';
 import { messagePreview, formatTime } from '../helpers';
+import { useColors } from '../theme';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'ChatList'>;
 
 export function ChatListScreen({ navigation }: Props) {
+  const colors = useColors();
   const [chats, setChats] = useState<Chat[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const meId = useAuth((s) => s.user?.id);
@@ -107,59 +109,67 @@ export function ChatListScreen({ navigation }: Props) {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.bg }]}>
       <FlatList
         data={chats}
         keyExtractor={(c) => c.id}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.text} />}
         ListEmptyComponent={
           <View style={styles.empty}>
-            <Text style={styles.emptyText}>Нет чатов</Text>
-            <Text style={styles.emptyHint}>Нажмите "Новый чат" внизу</Text>
+            <Text style={[styles.emptyText, { color: colors.textMuted }]}>Нет чатов</Text>
+            <Text style={[styles.emptyHint, { color: colors.textMuted }]}>Нажмите "Новый чат" внизу</Text>
           </View>
         }
-        renderItem={({ item }) => (
-          <Pressable
-            onPress={() =>
-              navigation.navigate('Chat', { chatId: item.id, title: item.title ?? 'Chat' })
-            }
-            style={({ pressed }) => [styles.row, pressed && { backgroundColor: '#f0f0f0' }]}
-          >
-            <Avatar id={item.id} name={item.title ?? '?'} size={48} />
-            <View style={styles.rowMain}>
-              <View style={styles.rowTop}>
-                <Text style={styles.title} numberOfLines={1}>
-                  {item.type === 'channel' ? '📢 ' : ''}
-                  {item.type === 'group' ? '👥 ' : ''}
-                  {item.title}
-                </Text>
-                {item.lastMessage && (
-                  <Text style={styles.time}>{formatTime(item.lastMessage.createdAt)}</Text>
-                )}
+        renderItem={({ item }) => {
+          // Для direct берём avatarKey второго участника
+          const other = item.type === 'direct' ? item.members.find((m) => m.id !== meId) : null;
+          const avatarKey = other?.avatarKey ?? null;
+          const avatarId = other?.id ?? item.id;
+          return (
+            <Pressable
+              onPress={() => navigation.navigate('Chat', { chatId: item.id, title: item.title ?? 'Chat' })}
+              style={({ pressed }) => [
+                styles.row,
+                { borderBottomColor: colors.border },
+                pressed && { backgroundColor: colors.surfaceAlt },
+              ]}
+            >
+              <Avatar id={avatarId} name={item.title ?? '?'} avatarKey={avatarKey} size={48} />
+              <View style={styles.rowMain}>
+                <View style={styles.rowTop}>
+                  <Text style={[styles.title, { color: colors.text }]} numberOfLines={1}>
+                    {item.type === 'channel' ? '📢 ' : ''}
+                    {item.type === 'group' ? '👥 ' : ''}
+                    {item.title}
+                  </Text>
+                  {item.lastMessage && (
+                    <Text style={[styles.time, { color: colors.textMuted }]}>{formatTime(item.lastMessage.createdAt)}</Text>
+                  )}
+                </View>
+                <View style={styles.rowBottom}>
+                  <Text style={[styles.preview, { color: colors.textMuted }]} numberOfLines={1}>
+                    {previewLine(item.lastMessage, item.lastMessage?.senderId === meId)}
+                  </Text>
+                  {!!item.unreadCount && item.unreadCount > 0 && (
+                    <View style={[styles.badge, { backgroundColor: colors.primary }]}>
+                      <Text style={styles.badgeText}>{item.unreadCount}</Text>
+                    </View>
+                  )}
+                </View>
               </View>
-              <View style={styles.rowBottom}>
-                <Text style={styles.preview} numberOfLines={1}>
-                  {previewLine(item.lastMessage, item.lastMessage?.senderId === meId)}
-                </Text>
-                {!!item.unreadCount && item.unreadCount > 0 && (
-                  <View style={styles.badge}>
-                    <Text style={styles.badgeText}>{item.unreadCount}</Text>
-                  </View>
-                )}
-              </View>
-            </View>
-          </Pressable>
-        )}
+            </Pressable>
+          );
+        }}
       />
-      <View style={styles.bottomBar}>
-        <Pressable onPress={() => navigation.navigate('NewChat')} style={styles.newBtn}>
+      <View style={[styles.bottomBar, { borderTopColor: colors.border }]}>
+        <Pressable onPress={() => navigation.navigate('NewChat')} style={[styles.newBtn, { backgroundColor: colors.primary }]}>
           <Text style={styles.newBtnText}>+ Новый чат</Text>
         </Pressable>
-        <Pressable onPress={() => navigation.navigate('Stickers')} style={styles.logoutBtn}>
-          <Text style={styles.logoutText}>😀</Text>
+        <Pressable onPress={() => navigation.navigate('Stickers')} style={[styles.iconBtn, { borderColor: colors.border }]}>
+          <Text style={{ fontSize: 20 }}>😀</Text>
         </Pressable>
-        <Pressable onPress={logout} style={styles.logoutBtn}>
-          <Text style={styles.logoutText}>Выйти</Text>
+        <Pressable onPress={() => navigation.navigate('Profile')} style={[styles.iconBtn, { borderColor: colors.border }]}>
+          <Text style={{ fontSize: 18, color: colors.text }}>👤</Text>
         </Pressable>
       </View>
     </View>
@@ -173,13 +183,12 @@ function previewLine(msg: Message | null | undefined, mine: boolean): string {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff' },
+  container: { flex: 1 },
   row: {
     flexDirection: 'row',
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#eee',
     alignItems: 'center',
     gap: 12,
   },
@@ -187,10 +196,9 @@ const styles = StyleSheet.create({
   rowTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   rowBottom: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 4 },
   title: { fontSize: 16, fontWeight: '600', flex: 1 },
-  time: { fontSize: 12, color: '#888', marginLeft: 8 },
-  preview: { fontSize: 14, color: '#777', flex: 1 },
+  time: { fontSize: 12, marginLeft: 8 },
+  preview: { fontSize: 14, flex: 1 },
   badge: {
-    backgroundColor: '#0a84ff',
     borderRadius: 12,
     minWidth: 22,
     height: 22,
@@ -201,11 +209,10 @@ const styles = StyleSheet.create({
   },
   badgeText: { color: '#fff', fontSize: 12, fontWeight: '700' },
   empty: { alignItems: 'center', marginTop: 80 },
-  emptyText: { fontSize: 18, color: '#888', marginBottom: 8 },
-  emptyHint: { fontSize: 14, color: '#aaa' },
-  bottomBar: { flexDirection: 'row', borderTopWidth: 1, borderTopColor: '#eee', padding: 12, gap: 12 },
-  newBtn: { flex: 1, backgroundColor: '#0a84ff', paddingVertical: 14, borderRadius: 12, alignItems: 'center' },
+  emptyText: { fontSize: 18, marginBottom: 8 },
+  emptyHint: { fontSize: 14 },
+  bottomBar: { flexDirection: 'row', borderTopWidth: 1, padding: 12, gap: 12 },
+  newBtn: { flex: 1, paddingVertical: 14, borderRadius: 12, alignItems: 'center' },
   newBtnText: { color: '#fff', fontSize: 16, fontWeight: '600' },
-  logoutBtn: { paddingVertical: 14, paddingHorizontal: 18, borderRadius: 12, borderWidth: 1, borderColor: '#ddd' },
-  logoutText: { color: '#666', fontSize: 14 },
+  iconBtn: { paddingVertical: 14, paddingHorizontal: 18, borderRadius: 12, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
 });

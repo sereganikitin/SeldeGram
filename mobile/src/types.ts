@@ -2,6 +2,7 @@ export interface ChatMember {
   id: string;
   username: string;
   displayName: string;
+  avatarKey?: string | null;
   role?: 'admin' | 'member';
 }
 
@@ -64,6 +65,7 @@ export interface Chat {
   slug?: string | null;
   createdAt: string;
   viewerRole?: 'admin' | 'member';
+  viewerWallpaper?: string | null;
   memberCount?: number;
   members: ChatMember[];
   lastMessage?: Message | null;
@@ -81,6 +83,7 @@ export interface UserSearchResult {
   id: string;
   username: string;
   displayName: string;
+  avatarKey?: string | null;
 }
 
 export interface ChatRead {

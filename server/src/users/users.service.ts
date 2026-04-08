@@ -17,7 +17,7 @@ export class UsersService {
           { displayName: { contains: q, mode: 'insensitive' } },
         ],
       },
-      select: { id: true, username: true, displayName: true },
+      select: { id: true, username: true, displayName: true, avatarKey: true },
       take: limit,
     });
   }

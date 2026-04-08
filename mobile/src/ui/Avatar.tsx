@@ -1,14 +1,39 @@
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, StyleSheet, Image } from 'react-native';
 import { avatarColor, initials } from '../helpers';
+import { getMediaUrl } from '../media';
 
 interface Props {
   id: string;
   name: string;
+  avatarKey?: string | null;
   size?: number;
 }
 
-export function Avatar({ id, name, size = 44 }: Props) {
+export function Avatar({ id, name, avatarKey, size = 44 }: Props) {
+  const [url, setUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!avatarKey) {
+      setUrl(null);
+      return;
+    }
+    let cancelled = false;
+    getMediaUrl(avatarKey).then((u) => !cancelled && setUrl(u)).catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [avatarKey]);
+
+  if (url) {
+    return (
+      <Image
+        source={{ uri: url }}
+        style={{ width: size, height: size, borderRadius: size / 2, backgroundColor: '#0001' }}
+      />
+    );
+  }
+
   return (
     <View
       style={[

@@ -8,14 +8,16 @@ datasource db {
 }
 
 model User {
-  id           String   @id @default(uuid())
-  email        String   @unique
-  username     String   @unique
-  displayName  String
-  passwordHash String
-  isVerified   Boolean  @default(false)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id               String   @id @default(uuid())
+  email            String   @unique
+  username         String   @unique
+  displayName      String
+  passwordHash     String
+  isVerified       Boolean  @default(false)
+  avatarKey        String?
+  defaultWallpaper String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 
   emailVerifications EmailVerification[]
   refreshTokens      RefreshToken[]
@@ -94,11 +96,12 @@ model Chat {
 }
 
 model ChatMember {
-  id       String   @id @default(uuid())
-  chatId   String
-  userId   String
-  role     String   @default("member")
-  joinedAt DateTime @default(now())
+  id        String   @id @default(uuid())
+  chatId    String
+  userId    String
+  role      String   @default("member")
+  wallpaper String?
+  joinedAt  DateTime @default(now())
 
   chat Chat @relation(fields: [chatId], references: [id], onDelete: Cascade)
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)

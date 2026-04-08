@@ -8,6 +8,8 @@ export interface User {
   username: string;
   displayName: string;
   isVerified: boolean;
+  avatarKey?: string | null;
+  defaultWallpaper?: string | null;
   createdAt: string;
 }
 
@@ -17,6 +19,7 @@ interface AuthState {
   hydrate: () => Promise<void>;
   setTokens: (accessToken: string, refreshToken: string) => Promise<void>;
   fetchMe: () => Promise<void>;
+  patchMe: (changes: Partial<User>) => void;
   logout: () => Promise<void>;
 }
 
@@ -45,6 +48,10 @@ export const useAuth = create<AuthState>((set) => ({
   fetchMe: async () => {
     const { data } = await api.get<User>('/me');
     set({ user: data });
+  },
+
+  patchMe: (changes) => {
+    set((state) => (state.user ? { user: { ...state.user, ...changes } } : state));
   },
 
   logout: async () => {

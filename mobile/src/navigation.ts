@@ -15,4 +15,6 @@ export type RootStackParamList = {
   Stickers: undefined;
   CreateStickerPack: undefined;
   StickerPack: { packId: string };
+  Profile: undefined;
+  WallpaperPicker: { chatId?: string };
 };

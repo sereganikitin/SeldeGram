@@ -56,6 +56,12 @@ export function UserInfoScreen({ route, navigation }: Props) {
         <Text style={styles.name}>{other.displayName}</Text>
         <Text style={styles.username}>@{other.username}</Text>
       </View>
+      <Button
+        title="🖼 Обои чата"
+        variant="secondary"
+        onPress={() => navigation.navigate('WallpaperPicker', { chatId })}
+      />
+      <View style={{ height: 10 }} />
       <Button title="Удалить чат" variant="secondary" onPress={deleteChat} />
     </View>
   );

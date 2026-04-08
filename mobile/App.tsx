@@ -1,9 +1,10 @@
 import 'react-native-gesture-handler';
 import React, { useEffect, useRef } from 'react';
 import { View, ActivityIndicator } from 'react-native';
-import { NavigationContainer, NavigationContainerRef } from '@react-navigation/native';
+import { NavigationContainer, NavigationContainerRef, DefaultTheme, DarkTheme } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { StatusBar } from 'expo-status-bar';
+import { useTheme, useColors, useIsDark } from './src/theme';
 import * as Notifications from 'expo-notifications';
 import { RootStackParamList } from './src/navigation';
 import { WelcomeScreen } from './src/screens/WelcomeScreen';
@@ -22,6 +23,8 @@ import { ForwardScreen } from './src/screens/ForwardScreen';
 import { StickersScreen } from './src/screens/StickersScreen';
 import { CreateStickerPackScreen } from './src/screens/CreateStickerPackScreen';
 import { StickerPackScreen } from './src/screens/StickerPackScreen';
+import { ProfileScreen } from './src/screens/ProfileScreen';
+import { WallpaperPickerScreen } from './src/screens/WallpaperPickerScreen';
 import { useAuth } from './src/store/auth';
 import { useWs } from './src/store/ws';
 import { registerPushToken } from './src/push';
@@ -34,11 +37,16 @@ export default function App() {
   const user = useAuth((s) => s.user);
   const wsConnect = useWs((s) => s.connect);
   const wsDisconnect = useWs((s) => s.disconnect);
+  const hydrateTheme = useTheme((s) => s.hydrate);
+  const themeHydrated = useTheme((s) => s.hydrated);
+  const colors = useColors();
+  const isDark = useIsDark();
   const navRef = useRef<NavigationContainerRef<RootStackParamList>>(null);
 
   useEffect(() => {
     hydrate();
-  }, [hydrate]);
+    hydrateTheme();
+  }, [hydrate, hydrateTheme]);
 
   useEffect(() => {
     const sub = Notifications.addNotificationResponseReceivedListener((response) => {
@@ -59,17 +67,21 @@ export default function App() {
     }
   }, [user, wsConnect, wsDisconnect]);
 
-  if (!hydrated) {
+  if (!hydrated || !themeHydrated) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.bg }}>
         <ActivityIndicator />
       </View>
     );
   }
 
+  const navTheme = isDark
+    ? { ...DarkTheme, colors: { ...DarkTheme.colors, background: colors.bg, card: colors.surface, text: colors.text, border: colors.border, primary: colors.primary } }
+    : { ...DefaultTheme, colors: { ...DefaultTheme.colors, background: colors.bg, card: colors.surface, text: colors.text, border: colors.border, primary: colors.primary } };
+
   return (
-    <NavigationContainer ref={navRef}>
-      <StatusBar style="auto" />
+    <NavigationContainer ref={navRef} theme={navTheme}>
+      <StatusBar style={isDark ? 'light' : 'dark'} />
       <Stack.Navigator>
         {user ? (
           <>
@@ -89,6 +101,8 @@ export default function App() {
             <Stack.Screen name="Stickers" component={StickersScreen} options={{ title: 'Стикеры' }} />
             <Stack.Screen name="CreateStickerPack" component={CreateStickerPackScreen} options={{ title: 'Новый пак' }} />
             <Stack.Screen name="StickerPack" component={StickerPackScreen} options={{ title: 'Пак' }} />
+            <Stack.Screen name="Profile" component={ProfileScreen} options={{ title: 'Профиль' }} />
+            <Stack.Screen name="WallpaperPicker" component={WallpaperPickerScreen} options={{ title: 'Обои' }} />
           </>
         ) : (
           <>

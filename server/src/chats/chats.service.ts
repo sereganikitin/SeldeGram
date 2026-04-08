@@ -39,7 +39,7 @@ export class ChatsService {
           { members: { some: { userId: other.id } } },
         ],
       },
-      include: { members: { include: { user: { select: { id: true, username: true, displayName: true } } } } },
+      include: { members: { include: { user: { select: { id: true, username: true, displayName: true, avatarKey: true } } } } },
     });
     if (existing) return this.serializeChat(existing, userId);
 
@@ -48,7 +48,7 @@ export class ChatsService {
         type: 'direct',
         members: { create: [{ userId }, { userId: other.id }] },
       },
-      include: { members: { include: { user: { select: { id: true, username: true, displayName: true } } } } },
+      include: { members: { include: { user: { select: { id: true, username: true, displayName: true, avatarKey: true } } } } },
     });
     this.hub.sendToUsers([userId, other.id], { type: 'chat:updated', payload: { chatId: chat.id } });
     return this.serializeChat(chat, userId);
@@ -58,7 +58,7 @@ export class ChatsService {
     const chats = await this.prisma.chat.findMany({
       where: { members: { some: { userId } } },
       include: {
-        members: { include: { user: { select: { id: true, username: true, displayName: true } } } },
+        members: { include: { user: { select: { id: true, username: true, displayName: true, avatarKey: true } } } },
         messages: { orderBy: { createdAt: 'desc' }, take: 1 },
         reads: { where: { userId } },
       },
@@ -113,7 +113,7 @@ export class ChatsService {
       where: { id: chatId },
       include: {
         members: {
-          include: { user: { select: { id: true, username: true, displayName: true } } },
+          include: { user: { select: { id: true, username: true, displayName: true, avatarKey: true } } },
           orderBy: { joinedAt: 'asc' },
         },
       },
@@ -135,7 +135,7 @@ export class ChatsService {
         members: { create: [{ userId: creatorId, role: 'admin' }] },
       },
       include: {
-        members: { include: { user: { select: { id: true, username: true, displayName: true } } } },
+        members: { include: { user: { select: { id: true, username: true, displayName: true, avatarKey: true } } } },
       },
     });
     this.hub.sendToUsers([creatorId], { type: 'chat:updated', payload: { chatId: chat.id } });
@@ -146,7 +146,7 @@ export class ChatsService {
     const chat = await this.prisma.chat.findUnique({
       where: { slug: slug.toLowerCase() },
       include: {
-        members: { include: { user: { select: { id: true, username: true, displayName: true } } } },
+        members: { include: { user: { select: { id: true, username: true, displayName: true, avatarKey: true } } } },
       },
     });
     if (!chat || chat.type !== 'channel') throw new NotFoundException('Channel not found');
@@ -161,7 +161,7 @@ export class ChatsService {
     const updated = await this.prisma.chat.findUnique({
       where: { id: chat.id },
       include: {
-        members: { include: { user: { select: { id: true, username: true, displayName: true } } } },
+        members: { include: { user: { select: { id: true, username: true, displayName: true, avatarKey: true } } } },
       },
     });
     this.hub.sendToUsers([userId], { type: 'chat:updated', payload: { chatId: chat.id } });
@@ -205,7 +205,7 @@ export class ChatsService {
 
     const chat = await this.prisma.chat.create({
       data: { type: 'group', title, members: { create: memberData } },
-      include: { members: { include: { user: { select: { id: true, username: true, displayName: true } } } } },
+      include: { members: { include: { user: { select: { id: true, username: true, displayName: true, avatarKey: true } } } } },
     });
 
     this.hub.sendToUsers(
@@ -470,7 +470,11 @@ export class ChatsService {
       type: string;
       title: string | null;
       createdAt: Date;
-      members: Array<{ role?: string; user: { id: string; username: string; displayName: string } }>;
+      members: Array<{
+        role?: string;
+        wallpaper?: string | null;
+        user: { id: string; username: string; displayName: string; avatarKey?: string | null };
+      }>;
     },
     viewerId: string,
   ) {
@@ -479,8 +483,8 @@ export class ChatsService {
       const other = chat.members.find((m) => m.user.id !== viewerId);
       title = other?.user.displayName ?? 'Chat';
     }
-    const viewerRole = chat.members.find((m) => m.user.id === viewerId)?.role ?? 'member';
-    // В каналах не-админ видит только себя в списке участников + общий счётчик
+    const viewerMember = chat.members.find((m) => m.user.id === viewerId);
+    const viewerRole = viewerMember?.role ?? 'member';
     let visibleMembers = chat.members.map((m) => ({ ...m.user, role: m.role ?? 'member' }));
     if (chat.type === 'channel' && viewerRole !== 'admin') {
       visibleMembers = visibleMembers.filter((m) => m.id === viewerId);
@@ -492,8 +496,18 @@ export class ChatsService {
       slug: (chat as { slug?: string | null }).slug ?? null,
       createdAt: chat.createdAt,
       viewerRole,
+      viewerWallpaper: viewerMember?.wallpaper ?? null,
       memberCount: chat.members.length,
       members: visibleMembers,
     };
+  }
+
+  async setWallpaper(chatId: string, userId: string, wallpaper: string | null) {
+    const member = await this.assertMember(chatId, userId);
+    await this.prisma.chatMember.update({
+      where: { id: member.id },
+      data: { wallpaper },
+    });
+    return { ok: true };
   }
 }

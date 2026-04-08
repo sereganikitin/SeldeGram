@@ -135,6 +135,13 @@ export function GroupInfoScreen({ route, navigation }: Props) {
         <Button title="+ Добавить участника" variant="secondary" onPress={() => setAdding(true)} />
       )}
 
+      <View style={{ height: 10 }} />
+      <Button
+        title="🖼 Обои чата"
+        variant="secondary"
+        onPress={() => navigation.navigate('WallpaperPicker', { chatId })}
+      />
+
       {adding && (
         <View style={styles.addBox}>
           <TextInput

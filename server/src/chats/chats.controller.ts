@@ -68,6 +68,15 @@ export class ChatsController {
     return this.chats.updateChat(id, req.user.userId, dto.title);
   }
 
+  @Patch(':id/wallpaper')
+  setWallpaper(
+    @Req() req: { user: { userId: string } },
+    @Param('id') id: string,
+    @Body() dto: { wallpaper: string | null },
+  ) {
+    return this.chats.setWallpaper(id, req.user.userId, dto.wallpaper);
+  }
+
   @Delete(':id')
   remove(@Req() req: { user: { userId: string } }, @Param('id') id: string) {
     return this.chats.deleteChat(id, req.user.userId);

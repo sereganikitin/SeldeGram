@@ -26,6 +26,8 @@ import { setActiveChat } from '../push';
 import { MessageBubble } from '../ui/MessageBubble';
 import { DateSeparator } from '../ui/DateSeparator';
 import { StickerPicker } from '../ui/StickerPicker';
+import { ChatBackground } from '../ui/ChatBackground';
+import { useColors } from '../theme';
 import { formatDateLabel, messagePreview } from '../helpers';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Chat'>;
@@ -60,6 +62,8 @@ export function ChatScreen({ route, navigation }: Props) {
   const [replyTo, setReplyTo] = useState<Message | null>(null);
   const [typingUserId, setTypingUserId] = useState<string | null>(null);
   const [stickersOpen, setStickersOpen] = useState(false);
+  const colors = useColors();
+  const myUser = useAuth((s) => s.user);
   const meId = useAuth((s) => s.user?.id);
   const onMessage = useWs((s) => s.onMessage);
   const onEdited = useWs((s) => s.onEdited);
@@ -345,15 +349,18 @@ export function ChatScreen({ route, navigation }: Props) {
 
   const typingName = typingUserId ? senderNameById.get(typingUserId) : null;
 
+  const wallpaper = chat?.viewerWallpaper ?? myUser?.defaultWallpaper ?? null;
+
   return (
     <KeyboardAvoidingView
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       keyboardVerticalOffset={90}
     >
+      <ChatBackground wallpaper={wallpaper}>
       {typingName && (
-        <View style={styles.typingBar}>
-          <Text style={styles.typingText}>{typingName} печатает...</Text>
+        <View style={[styles.typingBar, { backgroundColor: colors.surfaceAlt }]}>
+          <Text style={[styles.typingText, { color: colors.primary }]}>{typingName} печатает...</Text>
         </View>
       )}
       <FlatList
@@ -417,12 +424,13 @@ export function ChatScreen({ route, navigation }: Props) {
           {stickersOpen && <StickerPicker onPick={sendSticker} onClose={() => setStickersOpen(false)} />}
         </>
       )}
+      </ChatBackground>
     </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff' },
+  container: { flex: 1 },
   typingBar: { paddingHorizontal: 16, paddingVertical: 4, backgroundColor: '#f5f5f5' },
   typingText: { fontSize: 12, color: '#0a84ff', fontStyle: 'italic' },
   replyBar: {
