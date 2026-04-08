@@ -9,10 +9,11 @@ export class MailService {
   private readonly from: string;
 
   constructor(config: ConfigService) {
+    const port = parseInt(config.get<string>('SMTP_PORT', '1025'), 10);
     this.transporter = nodemailer.createTransport({
       host: config.get<string>('SMTP_HOST', 'localhost'),
-      port: parseInt(config.get<string>('SMTP_PORT', '1025'), 10),
-      secure: false,
+      port,
+      secure: port === 465, // SSL для 465, STARTTLS для 587
       auth: config.get<string>('SMTP_USER')
         ? {
             user: config.get<string>('SMTP_USER'),
