@@ -37,6 +37,12 @@ export function NewChatScreen({ navigation }: Props) {
 
   return (
     <View style={styles.container}>
+      <Pressable
+        onPress={() => navigation.navigate('NewGroup')}
+        style={({ pressed }) => [styles.groupBtn, pressed && { opacity: 0.7 }]}
+      >
+        <Text style={styles.groupBtnText}>👥 Создать группу</Text>
+      </Pressable>
       <Input label="Поиск по username или имени" value={query} onChangeText={setQuery} autoFocus />
       <FlatList
         data={results}
@@ -57,4 +63,14 @@ const styles = StyleSheet.create({
   row: { paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: '#eee' },
   name: { fontSize: 16, fontWeight: '600' },
   username: { fontSize: 13, color: '#777', marginTop: 2 },
+  groupBtn: {
+    backgroundColor: '#eef',
+    borderWidth: 1,
+    borderColor: '#0a84ff',
+    borderRadius: 12,
+    paddingVertical: 14,
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  groupBtnText: { color: '#0a84ff', fontSize: 16, fontWeight: '600' },
 });

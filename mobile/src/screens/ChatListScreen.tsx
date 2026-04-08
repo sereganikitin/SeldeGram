@@ -24,6 +24,7 @@ export function ChatListScreen({ navigation }: Props) {
   const logout = useAuth((s) => s.logout);
   const connect = useWs((s) => s.connect);
   const onMessage = useWs((s) => s.onMessage);
+  const onChatUpdated = useWs((s) => s.onChatUpdated);
 
   const load = async () => {
     const { data } = await api.get<Chat[]>('/chats');
@@ -41,6 +42,13 @@ export function ChatListScreen({ navigation }: Props) {
       load();
     }, []),
   );
+
+  // Перезагружаем список при изменении чата (новый участник, переименование и т.п.)
+  useEffect(() => {
+    return onChatUpdated(() => {
+      load();
+    });
+  }, [onChatUpdated]);
 
   // Если в фоне приходит сообщение — поднимаем чат вверх и обновляем lastMessage
   useEffect(() => {

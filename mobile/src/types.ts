@@ -2,6 +2,7 @@ export interface ChatMember {
   id: string;
   username: string;
   displayName: string;
+  role?: 'admin' | 'member';
 }
 
 export interface Chat {
@@ -9,6 +10,7 @@ export interface Chat {
   type: 'direct' | 'group' | 'channel';
   title: string | null;
   createdAt: string;
+  viewerRole?: 'admin' | 'member';
   members: ChatMember[];
   lastMessage?: Message | null;
 }

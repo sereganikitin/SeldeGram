@@ -4,20 +4,24 @@ import { API_BASE_URL } from '../config';
 import { Message } from '../types';
 
 type Listener = (msg: Message) => void;
+type ChatUpdatedListener = (chatId: string) => void;
 
 interface WsState {
   socket: WebSocket | null;
   connected: boolean;
   listeners: Set<Listener>;
+  chatListeners: Set<ChatUpdatedListener>;
   connect: () => Promise<void>;
   disconnect: () => void;
   onMessage: (l: Listener) => () => void;
+  onChatUpdated: (l: ChatUpdatedListener) => () => void;
 }
 
 export const useWs = create<WsState>((set, get) => ({
   socket: null,
   connected: false,
   listeners: new Set(),
+  chatListeners: new Set(),
 
   connect: async () => {
     const token = await AsyncStorage.getItem('accessToken');
@@ -39,6 +43,8 @@ export const useWs = create<WsState>((set, get) => ({
         const data = JSON.parse(event.data);
         if (data.type === 'message:new') {
           for (const l of get().listeners) l(data.payload);
+        } else if (data.type === 'chat:updated') {
+          for (const l of get().chatListeners) l(data.payload.chatId);
         }
       } catch {}
     };
@@ -59,6 +65,13 @@ export const useWs = create<WsState>((set, get) => ({
     get().listeners.add(l);
     return () => {
       get().listeners.delete(l);
+    };
+  },
+
+  onChatUpdated: (l) => {
+    get().chatListeners.add(l);
+    return () => {
+      get().chatListeners.delete(l);
     };
   },
 }));

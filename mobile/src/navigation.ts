@@ -5,5 +5,7 @@ export type RootStackParamList = {
   Login: undefined;
   ChatList: undefined;
   NewChat: undefined;
+  NewGroup: undefined;
   Chat: { chatId: string; title: string };
+  GroupInfo: { chatId: string };
 };

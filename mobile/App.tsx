@@ -1,6 +1,6 @@
 import 'react-native-gesture-handler';
 import React, { useEffect, useRef } from 'react';
-import { View, ActivityIndicator } from 'react-native';
+import { View, ActivityIndicator, Pressable, Text } from 'react-native';
 import { NavigationContainer, NavigationContainerRef } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { StatusBar } from 'expo-status-bar';
@@ -12,7 +12,9 @@ import { VerifyScreen } from './src/screens/VerifyScreen';
 import { LoginScreen } from './src/screens/LoginScreen';
 import { ChatListScreen } from './src/screens/ChatListScreen';
 import { NewChatScreen } from './src/screens/NewChatScreen';
+import { NewGroupScreen } from './src/screens/NewGroupScreen';
 import { ChatScreen } from './src/screens/ChatScreen';
+import { GroupInfoScreen } from './src/screens/GroupInfoScreen';
 import { useAuth } from './src/store/auth';
 import { useWs } from './src/store/ws';
 import { registerPushToken } from './src/push';
@@ -66,11 +68,20 @@ export default function App() {
           <>
             <Stack.Screen name="ChatList" component={ChatListScreen} options={{ title: 'Чаты' }} />
             <Stack.Screen name="NewChat" component={NewChatScreen} options={{ title: 'Новый чат' }} />
+            <Stack.Screen name="NewGroup" component={NewGroupScreen} options={{ title: 'Новая группа' }} />
             <Stack.Screen
               name="Chat"
               component={ChatScreen}
-              options={({ route }) => ({ title: route.params.title })}
+              options={({ route, navigation }) => ({
+                title: route.params.title,
+                headerRight: () => (
+                  <Pressable onPress={() => navigation.navigate('GroupInfo', { chatId: route.params.chatId })}>
+                    <Text style={{ fontSize: 20, color: '#0a84ff', paddingHorizontal: 8 }}>ⓘ</Text>
+                  </Pressable>
+                ),
+              })}
             />
+            <Stack.Screen name="GroupInfo" component={GroupInfoScreen} options={{ title: 'Информация' }} />
           </>
         ) : (
           <>
