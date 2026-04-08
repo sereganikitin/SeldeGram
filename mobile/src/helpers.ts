@@ -48,8 +48,15 @@ export function formatDateLabel(iso: string): string {
 }
 
 // Возвращает короткое превью сообщения (для списка чатов и для reply quote)
-export function messagePreview(msg: { content: string; mediaType?: string | null; mediaKey?: string | null; deletedAt?: string | null }): string {
+export function messagePreview(msg: {
+  content: string;
+  mediaType?: string | null;
+  mediaKey?: string | null;
+  isSticker?: boolean;
+  deletedAt?: string | null;
+}): string {
   if (msg.deletedAt) return 'удалено';
+  if (msg.isSticker) return `${msg.content || ''} Стикер`.trim();
   if (msg.content) return msg.content;
   if (msg.mediaType?.startsWith('image/')) return '📷 Фото';
   if (msg.mediaType?.startsWith('video/')) return '📹 Видео';

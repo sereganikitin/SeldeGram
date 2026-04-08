@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { Message, ChatMember } from '../types';
 import { MediaBubble } from './MediaBubble';
+import { StickerImage } from './StickerImage';
 import { formatTime, messagePreview } from '../helpers';
 
 interface Props {
@@ -25,6 +26,26 @@ export function MessageBubble({
 }: Props) {
   const hasMedia = !!message.mediaKey && !!message.mediaType;
   const isDeleted = !!message.deletedAt;
+  const isSticker = !!message.isSticker && !isDeleted;
+
+  if (isSticker) {
+    return (
+      <Pressable
+        onLongPress={onLongPress}
+        delayLongPress={300}
+        style={[styles.stickerWrap, mine ? { alignSelf: 'flex-end' } : { alignSelf: 'flex-start' }]}
+      >
+        {showSenderName && !mine && (
+          <Text style={[styles.senderName, { marginLeft: 4 }]}>{senderName}</Text>
+        )}
+        <StickerImage mediaKey={message.mediaKey!} size={150} />
+        <View style={styles.stickerMeta}>
+          <Text style={styles.stickerTime}>{formatTime(message.createdAt)}</Text>
+          {mine && <Text style={styles.stickerChecks}>{isRead ? '✓✓' : '✓'}</Text>}
+        </View>
+      </Pressable>
+    );
+  }
 
   return (
     <Pressable
@@ -114,4 +135,8 @@ const styles = StyleSheet.create({
   editedMine: { color: '#cce4ff', fontSize: 11, fontStyle: 'italic' },
   editedOther: { color: '#888', fontSize: 11, fontStyle: 'italic' },
   checks: { color: '#cce4ff', fontSize: 12, marginLeft: 2 },
+  stickerWrap: { marginVertical: 4 },
+  stickerMeta: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2, paddingHorizontal: 4 },
+  stickerTime: { color: '#888', fontSize: 11 },
+  stickerChecks: { color: '#0a84ff', fontSize: 12 },
 });

@@ -2,6 +2,7 @@ import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/commo
 import { PrismaService } from '../prisma/prisma.service';
 import { WsHub } from '../ws/ws.hub';
 import { PushService } from '../push/push.service';
+import { StickersService } from '../stickers/stickers.service';
 
 const messageInclude = {
   replyTo: {
@@ -22,6 +23,7 @@ export class ChatsService {
     private readonly prisma: PrismaService,
     private readonly hub: WsHub,
     private readonly push: PushService,
+    private readonly stickers: StickersService,
   ) {}
 
   async createDirect(userId: string, otherUsername: string) {
@@ -296,6 +298,7 @@ export class ChatsService {
       mediaSize?: number;
       replyToId?: string;
       forwardedFromId?: string;
+      stickerId?: string;
     },
   ) {
     const member = await this.assertMember(chatId, userId);
@@ -303,7 +306,7 @@ export class ChatsService {
     if (chatRow?.type === 'channel' && member.role !== 'admin') {
       throw new ForbiddenException('Only admins can post to channel');
     }
-    if (!payload.content && !payload.mediaKey && !payload.forwardedFromId) {
+    if (!payload.content && !payload.mediaKey && !payload.forwardedFromId && !payload.stickerId) {
       throw new ForbiddenException('Empty message');
     }
 
@@ -313,6 +316,18 @@ export class ChatsService {
     let copiedMediaType = payload.mediaType;
     let copiedMediaName = payload.mediaName;
     let copiedMediaSize = payload.mediaSize;
+    let isSticker = false;
+
+    // Если стикер — берём mediaKey из БД
+    if (payload.stickerId) {
+      const sticker = await this.prisma.sticker.findUnique({ where: { id: payload.stickerId } });
+      if (!sticker) throw new NotFoundException('Sticker not found');
+      copiedMediaKey = sticker.mediaKey;
+      copiedMediaType = 'image/webp';
+      copiedContent = sticker.emoji;
+      isSticker = true;
+      this.stickers.markUsed(userId, sticker.id).catch(() => undefined);
+    }
 
     if (payload.forwardedFromId) {
       const src = await this.prisma.message.findUnique({ where: { id: payload.forwardedFromId } });
@@ -342,6 +357,7 @@ export class ChatsService {
         mediaType: copiedMediaType,
         mediaName: copiedMediaName,
         mediaSize: copiedMediaSize,
+        isSticker,
         replyToId: payload.replyToId,
         forwardedFromId: payload.forwardedFromId,
       },
@@ -363,8 +379,9 @@ export class ChatsService {
         select: { type: true, title: true },
       });
       const title = chat?.type === 'direct' ? sender?.displayName ?? 'New message' : chat?.title ?? 'New message';
-      const body =
-        message.content || (message.mediaType?.startsWith('image/') ? '📷 Фото' : message.mediaKey ? '📄 Файл' : '');
+      const body = message.isSticker
+        ? `${message.content} Стикер`
+        : message.content || (message.mediaType?.startsWith('image/') ? '📷 Фото' : message.mediaKey ? '📄 Файл' : '');
       this.push
         .sendToUsers(recipientIds, { title, body, data: { chatId, messageId: message.id } })
         .catch(() => undefined);

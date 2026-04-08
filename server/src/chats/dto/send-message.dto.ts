@@ -31,4 +31,8 @@ export class SendMessageDto {
   @IsOptional()
   @IsString()
   forwardedFromId?: string;
+
+  @IsOptional()
+  @IsString()
+  stickerId?: string;
 }

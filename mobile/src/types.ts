@@ -23,12 +23,38 @@ export interface Message {
   mediaType?: string | null;
   mediaName?: string | null;
   mediaSize?: number | null;
+  isSticker?: boolean;
   replyToId?: string | null;
   replyTo?: ReplyPreviewData | null;
   forwardedFromId?: string | null;
   editedAt?: string | null;
   deletedAt?: string | null;
   createdAt: string;
+}
+
+export interface Sticker {
+  id: string;
+  packId: string;
+  mediaKey: string;
+  emoji: string;
+  order: number;
+}
+
+export interface StickerPack {
+  id: string;
+  authorId: string;
+  name: string;
+  slug: string;
+  coverKey: string | null;
+  stickers: Sticker[];
+}
+
+export interface StickerPackSearchResult {
+  id: string;
+  name: string;
+  slug: string;
+  coverKey: string | null;
+  _count: { stickers: number };
 }
 
 export interface Chat {

@@ -19,6 +19,9 @@ import { ChatScreen } from './src/screens/ChatScreen';
 import { GroupInfoScreen } from './src/screens/GroupInfoScreen';
 import { UserInfoScreen } from './src/screens/UserInfoScreen';
 import { ForwardScreen } from './src/screens/ForwardScreen';
+import { StickersScreen } from './src/screens/StickersScreen';
+import { CreateStickerPackScreen } from './src/screens/CreateStickerPackScreen';
+import { StickerPackScreen } from './src/screens/StickerPackScreen';
 import { useAuth } from './src/store/auth';
 import { useWs } from './src/store/ws';
 import { registerPushToken } from './src/push';
@@ -83,6 +86,9 @@ export default function App() {
             <Stack.Screen name="GroupInfo" component={GroupInfoScreen} options={{ title: 'Информация' }} />
             <Stack.Screen name="UserInfo" component={UserInfoScreen} options={{ title: 'Профиль' }} />
             <Stack.Screen name="Forward" component={ForwardScreen} options={{ title: 'Переслать' }} />
+            <Stack.Screen name="Stickers" component={StickersScreen} options={{ title: 'Стикеры' }} />
+            <Stack.Screen name="CreateStickerPack" component={CreateStickerPackScreen} options={{ title: 'Новый пак' }} />
+            <Stack.Screen name="StickerPack" component={StickerPackScreen} options={{ title: 'Пак' }} />
           </>
         ) : (
           <>

@@ -12,4 +12,7 @@ export type RootStackParamList = {
   GroupInfo: { chatId: string };
   UserInfo: { chatId: string };
   Forward: { messageId: string };
+  Stickers: undefined;
+  CreateStickerPack: undefined;
+  StickerPack: { packId: string };
 };

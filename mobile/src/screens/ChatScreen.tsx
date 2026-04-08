@@ -25,6 +25,7 @@ import { uploadMedia, compressImage } from '../media';
 import { setActiveChat } from '../push';
 import { MessageBubble } from '../ui/MessageBubble';
 import { DateSeparator } from '../ui/DateSeparator';
+import { StickerPicker } from '../ui/StickerPicker';
 import { formatDateLabel, messagePreview } from '../helpers';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Chat'>;
@@ -58,6 +59,7 @@ export function ChatScreen({ route, navigation }: Props) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [replyTo, setReplyTo] = useState<Message | null>(null);
   const [typingUserId, setTypingUserId] = useState<string | null>(null);
+  const [stickersOpen, setStickersOpen] = useState(false);
   const meId = useAuth((s) => s.user?.id);
   const onMessage = useWs((s) => s.onMessage);
   const onEdited = useWs((s) => s.onEdited);
@@ -265,6 +267,15 @@ export function ChatScreen({ route, navigation }: Props) {
     }
   };
 
+  const sendSticker = async (stickerId: string) => {
+    setStickersOpen(false);
+    try {
+      await api.post(`/chats/${chatId}/messages`, { stickerId });
+    } catch (e: any) {
+      Alert.alert('Не получилось', e.response?.data?.message ?? e.message);
+    }
+  };
+
   const showAttach = () => {
     Alert.alert('Прикрепить', undefined, [
       { text: 'Фото', onPress: pickImage },
@@ -378,22 +389,33 @@ export function ChatScreen({ route, navigation }: Props) {
           <Text style={styles.readOnlyText}>Только админы могут писать в канал</Text>
         </View>
       ) : (
-        <View style={styles.inputBar}>
-          <Pressable onPress={showAttach} style={styles.attachBtn} disabled={uploading || !!editingId}>
-            {uploading ? <ActivityIndicator /> : <Text style={styles.attachText}>📎</Text>}
-          </Pressable>
-          <TextInput
-            style={styles.input}
-            value={input}
-            onChangeText={onInputChange}
-            placeholder={editingId ? 'Изменить сообщение...' : 'Сообщение...'}
-            placeholderTextColor="#999"
-            multiline
-          />
-          <Pressable onPress={send} disabled={sending || !input.trim()} style={styles.sendBtn}>
-            <Text style={styles.sendText}>{editingId ? '✓' : '↑'}</Text>
-          </Pressable>
-        </View>
+        <>
+          <View style={styles.inputBar}>
+            <Pressable onPress={showAttach} style={styles.attachBtn} disabled={uploading || !!editingId}>
+              {uploading ? <ActivityIndicator /> : <Text style={styles.attachText}>📎</Text>}
+            </Pressable>
+            <Pressable
+              onPress={() => setStickersOpen((v) => !v)}
+              style={styles.attachBtn}
+              disabled={!!editingId}
+            >
+              <Text style={styles.attachText}>{stickersOpen ? '⌨' : '😀'}</Text>
+            </Pressable>
+            <TextInput
+              style={styles.input}
+              value={input}
+              onChangeText={onInputChange}
+              placeholder={editingId ? 'Изменить сообщение...' : 'Сообщение...'}
+              placeholderTextColor="#999"
+              multiline
+              onFocus={() => setStickersOpen(false)}
+            />
+            <Pressable onPress={send} disabled={sending || !input.trim()} style={styles.sendBtn}>
+              <Text style={styles.sendText}>{editingId ? '✓' : '↑'}</Text>
+            </Pressable>
+          </View>
+          {stickersOpen && <StickerPicker onPick={sendSticker} onClose={() => setStickersOpen(false)} />}
+        </>
       )}
     </KeyboardAvoidingView>
   );

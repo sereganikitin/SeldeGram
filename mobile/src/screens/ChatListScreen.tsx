@@ -155,6 +155,9 @@ export function ChatListScreen({ navigation }: Props) {
         <Pressable onPress={() => navigation.navigate('NewChat')} style={styles.newBtn}>
           <Text style={styles.newBtnText}>+ Новый чат</Text>
         </Pressable>
+        <Pressable onPress={() => navigation.navigate('Stickers')} style={styles.logoutBtn}>
+          <Text style={styles.logoutText}>😀</Text>
+        </Pressable>
         <Pressable onPress={logout} style={styles.logoutBtn}>
           <Text style={styles.logoutText}>Выйти</Text>
         </Pressable>
