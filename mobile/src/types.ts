@@ -63,6 +63,7 @@ export interface Chat {
   type: 'direct' | 'group' | 'channel';
   title: string | null;
   slug?: string | null;
+  pinnedMessageId?: string | null;
   createdAt: string;
   viewerRole?: 'admin' | 'member';
   viewerWallpaper?: string | null;

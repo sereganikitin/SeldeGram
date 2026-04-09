@@ -10,7 +10,7 @@ interface Props {
   showSenderName: boolean;
   senderName?: string;
   isRead: boolean;
-  onAction: (action: "reply" | "edit" | "delete" | "copy") => void;
+  onAction: (action: "reply" | "edit" | "delete" | "copy" | "pin") => void;
 }
 
 function MediaContent({ message }: { message: Message }) {
@@ -148,6 +148,9 @@ function ActionMenu({
       <div className="absolute z-50 bottom-full mb-1 right-0 bg-white dark:bg-slate-800 dark:text-white shadow-xl rounded-lg border border-slate-200 dark:border-slate-700 py-1 min-w-[160px]">
         <button onClick={() => onAction("reply")} className="w-full text-left px-3 py-2 text-sm hover:bg-slate-50 dark:hover:bg-slate-700">
           ↩ Ответить
+        </button>
+        <button onClick={() => onAction("pin")} className="w-full text-left px-3 py-2 text-sm hover:bg-slate-50 dark:hover:bg-slate-700">
+          📌 Закрепить
         </button>
         {hasContent && (
           <button onClick={() => onAction("copy")} className="w-full text-left px-3 py-2 text-sm hover:bg-slate-50 dark:hover:bg-slate-700">

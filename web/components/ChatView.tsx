@@ -38,7 +38,12 @@ export function ChatView({ chat, onBack, onChatGone, onOpenStickers }: Props) {
   const [infoOpen, setInfoOpen] = useState(false);
   const [wallpaperOpen, setWallpaperOpen] = useState(false);
   const [wallpaper, setWallpaper] = useState<string | null>(chat.viewerWallpaper ?? null);
+  const [pinnedMsg, setPinnedMsg] = useState<Message | null>(null);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQ, setSearchQ] = useState("");
+  const [searchResults, setSearchResults] = useState<Message[]>([]);
   const me = useAuth((s) => s.user);
+  const onPinned = useWs((s: WsState) => s.onPinned);
   const [uploading, setUploading] = useState(false);
   const [dragOver, setDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -51,10 +56,35 @@ export function ChatView({ chat, onBack, onChatGone, onOpenStickers }: Props) {
     api.get<Message[]>(`/chats/${chat.id}/messages`).then(({ data }) => setMessages(data));
     api.get<{ userId: string; lastReadAt: string }[]>(`/chats/${chat.id}/reads`).then(({ data }) => setReads(data));
     api.get<Chat>(`/chats/${chat.id}`).then(({ data }) => setWallpaper(data.viewerWallpaper ?? null));
+    api.get<Message | null>(`/chats/${chat.id}/pinned`).then(({ data }) => setPinnedMsg(data));
     setEditingId(null);
     setReplyTo(null);
     setInput("");
+    setSearchOpen(false);
+    setSearchQ("");
   }, [chat.id]);
+
+  useEffect(() => {
+    return onPinned((cid, messageId) => {
+      if (cid !== chat.id) return;
+      if (!messageId) return setPinnedMsg(null);
+      api.get<Message | null>(`/chats/${chat.id}/pinned`).then(({ data }) => setPinnedMsg(data));
+    });
+  }, [chat.id, onPinned]);
+
+  useEffect(() => {
+    if (!searchOpen || !searchQ.trim()) {
+      setSearchResults([]);
+      return;
+    }
+    const t = setTimeout(async () => {
+      try {
+        const { data } = await api.get<Message[]>(`/chats/${chat.id}/search`, { params: { q: searchQ } });
+        setSearchResults(data);
+      } catch {}
+    }, 300);
+    return () => clearTimeout(t);
+  }, [chat.id, searchOpen, searchQ]);
 
   // WS
   useEffect(
@@ -220,7 +250,7 @@ export function ChatView({ chat, onBack, onChatGone, onOpenStickers }: Props) {
     [chat.id],
   );
 
-  const handleAction = (msg: Message) => (action: "reply" | "edit" | "delete" | "copy") => {
+  const handleAction = (msg: Message) => (action: "reply" | "edit" | "delete" | "copy" | "pin") => {
     if (action === "reply") setReplyTo(msg);
     else if (action === "copy") navigator.clipboard?.writeText(msg.content).catch(() => {});
     else if (action === "edit") {
@@ -229,6 +259,12 @@ export function ChatView({ chat, onBack, onChatGone, onOpenStickers }: Props) {
     } else if (action === "delete") {
       if (confirm("Удалить сообщение?")) {
         api.delete(`/chats/${chat.id}/messages/${msg.id}`).catch(() => {});
+      }
+    } else if (action === "pin") {
+      if (pinnedMsg?.id === msg.id) {
+        api.delete(`/chats/${chat.id}/pin`).catch(() => {});
+      } else {
+        api.post(`/chats/${chat.id}/pin/${msg.id}`).catch(() => {});
       }
     }
   };
@@ -281,6 +317,13 @@ export function ChatView({ chat, onBack, onChatGone, onOpenStickers }: Props) {
           </div>
         </button>
         <button
+          onClick={() => setSearchOpen((v) => !v)}
+          className="text-brand-dark text-lg px-2"
+          title="Поиск"
+        >
+          🔎
+        </button>
+        <button
           onClick={() => setInfoOpen(true)}
           className="text-brand-dark text-xl px-2"
           title="Информация"
@@ -288,6 +331,57 @@ export function ChatView({ chat, onBack, onChatGone, onOpenStickers }: Props) {
           ⓘ
         </button>
       </header>
+
+      {pinnedMsg && !pinnedMsg.deletedAt && (
+        <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur border-b border-slate-200 dark:border-slate-800 px-4 py-2 flex items-center gap-2">
+          <span className="text-brand-dark">📌</span>
+          <div className="flex-1 min-w-0">
+            <div className="text-xs text-brand-dark font-semibold">Закреплённое</div>
+            <div className="text-sm text-slate-700 dark:text-slate-300 truncate">
+              {pinnedMsg.content || "📷 Медиа"}
+            </div>
+          </div>
+          {(chat.type === "direct" || chat.viewerRole === "admin") && (
+            <button
+              onClick={() => api.delete(`/chats/${chat.id}/pin`).catch(() => {})}
+              className="text-slate-400 hover:text-slate-700 dark:hover:text-white text-lg px-2"
+              title="Открепить"
+            >
+              ✕
+            </button>
+          )}
+        </div>
+      )}
+
+      {searchOpen && (
+        <div className="bg-white dark:bg-slate-950 border-b border-slate-200 dark:border-slate-800 p-3">
+          <input
+            value={searchQ}
+            onChange={(e) => setSearchQ(e.target.value)}
+            autoFocus
+            placeholder="Поиск по сообщениям"
+            className="w-full px-3 py-2 bg-slate-100 dark:bg-slate-800 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-brand"
+          />
+          {searchResults.length > 0 && (
+            <div className="mt-2 max-h-60 overflow-y-auto border border-slate-200 dark:border-slate-800 rounded-lg">
+              {searchResults.map((m) => (
+                <button
+                  key={m.id}
+                  onClick={() => {
+                    setSearchOpen(false);
+                    setSearchQ("");
+                    document.getElementById(`msg-${m.id}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
+                  }}
+                  className="w-full text-left px-3 py-2 border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-900 last:border-b-0"
+                >
+                  <div className="text-sm dark:text-white truncate">{m.content}</div>
+                  <div className="text-xs text-slate-500">{senderNameById.get(m.senderId) ?? ""}</div>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       <div ref={scrollRef} className="flex-1 overflow-y-auto p-4">
         {items.map((item) => {
@@ -304,15 +398,16 @@ export function ChatView({ chat, onBack, onChatGone, onOpenStickers }: Props) {
           const mine = m.senderId === meId;
           const isRead = mine && new Date(m.createdAt).getTime() <= minOtherLastRead;
           return (
-            <MessageBubble
-              key={m.id}
-              message={m}
-              mine={mine}
-              showSenderName={chat.type !== "direct"}
-              senderName={senderNameById.get(m.senderId)}
-              isRead={isRead}
-              onAction={handleAction(m)}
-            />
+            <div id={`msg-${m.id}`} key={m.id}>
+              <MessageBubble
+                message={m}
+                mine={mine}
+                showSenderName={chat.type !== "direct"}
+                senderName={senderNameById.get(m.senderId)}
+                isRead={isRead}
+                onAction={handleAction(m)}
+              />
+            </div>
           );
         })}
       </div>

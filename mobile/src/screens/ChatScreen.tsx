@@ -63,6 +63,10 @@ export function ChatScreen({ route, navigation }: Props) {
   const [replyTo, setReplyTo] = useState<Message | null>(null);
   const [typingUserId, setTypingUserId] = useState<string | null>(null);
   const [stickersOpen, setStickersOpen] = useState(false);
+  const [pinnedMsg, setPinnedMsg] = useState<Message | null>(null);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQ, setSearchQ] = useState('');
+  const [searchResults, setSearchResults] = useState<Message[]>([]);
   const colors = useColors();
   const myUser = useAuth((s) => s.user);
   const meId = useAuth((s) => s.user?.id);
@@ -71,18 +75,32 @@ export function ChatScreen({ route, navigation }: Props) {
   const onDeleted = useWs((s) => s.onDeleted);
   const onRead = useWs((s) => s.onRead);
   const onTyping = useWs((s) => s.onTyping);
+  const onPinned = useWs((s) => s.onPinned);
   const listRef = useRef<FlatList<ListItem>>(null);
   const typingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastTypingSentRef = useRef(0);
 
-  // Загрузка чата + сообщений + reads
+  // Загрузка чата + сообщений + reads + pinned
   useEffect(() => {
     api.get<Message[]>(`/chats/${chatId}/messages`).then(({ data }) => setMessages(data));
     api.get<Chat>(`/chats/${chatId}`).then(({ data }) => setChat(data));
     api.get<ChatRead[]>(`/chats/${chatId}/reads`).then(({ data }) => setReads(data));
+    api.get<Message | null>(`/chats/${chatId}/pinned`).then(({ data }) => setPinnedMsg(data));
     setActiveChat(chatId);
     return () => setActiveChat(null);
   }, [chatId]);
+
+  // WS: pin/unpin
+  useEffect(() => {
+    return onPinned((cid, messageId) => {
+      if (cid !== chatId) return;
+      if (!messageId) {
+        setPinnedMsg(null);
+        return;
+      }
+      api.get<Message | null>(`/chats/${chatId}/pinned`).then(({ data }) => setPinnedMsg(data));
+    });
+  }, [chatId, onPinned]);
 
   // Подмена заголовка
   useEffect(() => {
@@ -94,14 +112,19 @@ export function ChatScreen({ route, navigation }: Props) {
     if (!chat) return;
     navigation.setOptions({
       headerRight: () => (
-        <Pressable
-          onPress={() => {
-            if (chat.type === 'direct') navigation.navigate('UserInfo', { chatId });
-            else navigation.navigate('GroupInfo', { chatId });
-          }}
-        >
-          <Text style={{ fontSize: 20, color: '#5fe3d4', paddingHorizontal: 8 }}>ⓘ</Text>
-        </Pressable>
+        <View style={{ flexDirection: 'row' }}>
+          <Pressable onPress={() => setSearchOpen((v) => !v)}>
+            <Text style={{ fontSize: 18, color: '#5fe3d4', paddingHorizontal: 8 }}>🔎</Text>
+          </Pressable>
+          <Pressable
+            onPress={() => {
+              if (chat.type === 'direct') navigation.navigate('UserInfo', { chatId });
+              else navigation.navigate('GroupInfo', { chatId });
+            }}
+          >
+            <Text style={{ fontSize: 20, color: '#5fe3d4', paddingHorizontal: 8 }}>ⓘ</Text>
+          </Pressable>
+        </View>
       ),
     });
   }, [chat, chatId, navigation]);
@@ -163,6 +186,21 @@ export function ChatScreen({ route, navigation }: Props) {
       setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 50);
     }
   }, [messages.length]);
+
+  // Поиск с debounce
+  useEffect(() => {
+    if (!searchOpen || !searchQ.trim()) {
+      setSearchResults([]);
+      return;
+    }
+    const t = setTimeout(async () => {
+      try {
+        const { data } = await api.get<Message[]>(`/chats/${chatId}/search`, { params: { q: searchQ } });
+        setSearchResults(data);
+      } catch {}
+    }, 300);
+    return () => clearTimeout(t);
+  }, [chatId, searchOpen, searchQ]);
 
   // Отметить прочитанным самое последнее сообщение (независимо от отправителя)
   useEffect(() => {
@@ -291,10 +329,27 @@ export function ChatScreen({ route, navigation }: Props) {
 
   const onMessageLongPress = (msg: Message) => {
     const mine = msg.senderId === meId;
+    const canPin = chat?.type === 'direct' || chat?.viewerRole === 'admin';
     const options: { text: string; onPress?: () => void; style?: 'destructive' | 'cancel' }[] = [
       { text: 'Ответить', onPress: () => setReplyTo(msg) },
       { text: 'Переслать', onPress: () => navigation.navigate('Forward', { messageId: msg.id }) },
     ];
+    if (canPin) {
+      options.push({
+        text: pinnedMsg?.id === msg.id ? 'Открепить' : 'Закрепить',
+        onPress: () => {
+          if (pinnedMsg?.id === msg.id) {
+            api.delete(`/chats/${chatId}/pin`).catch((e) =>
+              Alert.alert('Не получилось', e.response?.data?.message ?? e.message),
+            );
+          } else {
+            api.post(`/chats/${chatId}/pin/${msg.id}`).catch((e) =>
+              Alert.alert('Не получилось', e.response?.data?.message ?? e.message),
+            );
+          }
+        },
+      });
+    }
     if (msg.content) {
       options.push({
         text: 'Копировать',
@@ -359,6 +414,60 @@ export function ChatScreen({ route, navigation }: Props) {
       keyboardVerticalOffset={90}
     >
       <ChatBackground wallpaper={wallpaper}>
+      {pinnedMsg && !pinnedMsg.deletedAt && (
+        <Pressable
+          style={[styles.pinnedBar, { backgroundColor: colors.surfaceAlt, borderBottomColor: colors.border }]}
+          onPress={() => {
+            const idx = messages.findIndex((m) => m.id === pinnedMsg.id);
+            if (idx !== -1) {
+              const itemIdx = items.findIndex((it) => it.kind === 'msg' && it.message.id === pinnedMsg.id);
+              if (itemIdx !== -1) listRef.current?.scrollToIndex({ index: itemIdx, animated: true });
+            }
+          }}
+        >
+          <Text style={[styles.pinnedLabel, { color: colors.primary }]}>📌 Закреплённое</Text>
+          <Text style={[styles.pinnedText, { color: colors.text }]} numberOfLines={1}>
+            {pinnedMsg.content || '📷 Медиа'}
+          </Text>
+        </Pressable>
+      )}
+      {searchOpen && (
+        <View style={[styles.searchBar, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
+          <TextInput
+            value={searchQ}
+            onChangeText={setSearchQ}
+            placeholder="Поиск по сообщениям"
+            placeholderTextColor={colors.textMuted}
+            style={[styles.searchInput, { color: colors.text, backgroundColor: colors.surfaceAlt }]}
+            autoFocus
+          />
+          {searchResults.length > 0 && (
+            <FlatList
+              data={searchResults}
+              keyExtractor={(m) => m.id}
+              style={styles.searchResults}
+              renderItem={({ item }) => (
+                <Pressable
+                  style={styles.searchResultRow}
+                  onPress={() => {
+                    setSearchOpen(false);
+                    setSearchQ('');
+                    const itemIdx = items.findIndex((it) => it.kind === 'msg' && it.message.id === item.id);
+                    if (itemIdx !== -1) listRef.current?.scrollToIndex({ index: itemIdx, animated: true });
+                  }}
+                >
+                  <Text style={{ color: colors.text }} numberOfLines={2}>
+                    {item.content}
+                  </Text>
+                  <Text style={{ color: colors.textMuted, fontSize: 11 }}>
+                    {senderNameById.get(item.senderId) ?? ''}
+                  </Text>
+                </Pressable>
+              )}
+            />
+          )}
+        </View>
+      )}
       {typingName && (
         <View style={[styles.typingBar, { backgroundColor: colors.surfaceAlt }]}>
           <Text style={[styles.typingText, { color: colors.primary }]}>{typingName} печатает...</Text>
@@ -478,4 +587,11 @@ const styles = StyleSheet.create({
   sendText: { color: '#fff', fontSize: 22, fontWeight: '700' },
   readOnlyBar: { padding: 14, borderTopWidth: 1, borderTopColor: '#eee', alignItems: 'center' },
   readOnlyText: { color: '#888', fontSize: 14 },
+  pinnedBar: { paddingHorizontal: 14, paddingVertical: 8, borderBottomWidth: 1 },
+  pinnedLabel: { fontSize: 11, fontWeight: '700' },
+  pinnedText: { fontSize: 13, marginTop: 2 },
+  searchBar: { borderBottomWidth: 1, padding: 10 },
+  searchInput: { borderRadius: 10, paddingHorizontal: 12, paddingVertical: 8, fontSize: 15 },
+  searchResults: { maxHeight: 200, marginTop: 8 },
+  searchResultRow: { paddingVertical: 8, paddingHorizontal: 6, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: '#0001' },
 });

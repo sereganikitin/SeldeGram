@@ -82,11 +82,12 @@ enum ChatType {
 }
 
 model Chat {
-  id        String   @id @default(uuid())
-  type      ChatType
-  title     String?
-  slug      String?  @unique
-  createdAt DateTime @default(now())
+  id              String   @id @default(uuid())
+  type            ChatType
+  title           String?
+  slug            String?  @unique
+  pinnedMessageId String?
+  createdAt       DateTime @default(now())
 
   members  ChatMember[]
   messages Message[]

@@ -10,6 +10,7 @@ type ChatUpdatedListener = (chatId: string) => void;
 type ChatDeletedListener = (chatId: string) => void;
 type ReadListener = (chatId: string, userId: string, lastReadAt: string) => void;
 type TypingListener = (chatId: string, userId: string) => void;
+type PinnedListener = (chatId: string, messageId: string | null) => void;
 
 interface WsState {
   socket: WebSocket | null;
@@ -21,6 +22,7 @@ interface WsState {
   chatDeletedListeners: Set<ChatDeletedListener>;
   readListeners: Set<ReadListener>;
   typingListeners: Set<TypingListener>;
+  pinnedListeners: Set<PinnedListener>;
   connect: () => Promise<void>;
   disconnect: () => void;
   onMessage: (l: MessageListener) => () => void;
@@ -30,6 +32,7 @@ interface WsState {
   onChatDeleted: (l: ChatDeletedListener) => () => void;
   onRead: (l: ReadListener) => () => void;
   onTyping: (l: TypingListener) => () => void;
+  onPinned: (l: PinnedListener) => () => void;
 }
 
 function makeSubscriber<T>(getSet: () => Set<T>) {
@@ -51,6 +54,7 @@ export const useWs = create<WsState>((set, get) => ({
   chatDeletedListeners: new Set(),
   readListeners: new Set(),
   typingListeners: new Set(),
+  pinnedListeners: new Set(),
 
   connect: async () => {
     const token = await AsyncStorage.getItem('accessToken');
@@ -89,6 +93,9 @@ export const useWs = create<WsState>((set, get) => ({
           case 'chat:typing':
             for (const l of get().typingListeners) l(data.payload.chatId, data.payload.userId);
             break;
+          case 'chat:pinned':
+            for (const l of get().pinnedListeners) l(data.payload.chatId, data.payload.messageId);
+            break;
         }
       } catch {}
     };
@@ -112,4 +119,5 @@ export const useWs = create<WsState>((set, get) => ({
   onChatDeleted: makeSubscriber(() => useWs.getState().chatDeletedListeners),
   onRead: makeSubscriber(() => useWs.getState().readListeners),
   onTyping: makeSubscriber(() => useWs.getState().typingListeners),
+  onPinned: makeSubscriber(() => useWs.getState().pinnedListeners),
 }));

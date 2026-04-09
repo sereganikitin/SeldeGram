@@ -96,6 +96,36 @@ export class ChatsController {
     return this.chats.removeMember(id, req.user.userId, targetUserId);
   }
 
+  @Get(':id/search')
+  search(
+    @Req() req: { user: { userId: string } },
+    @Param('id') id: string,
+    @Query('q') q: string,
+    @Query('limit') limit?: string,
+  ) {
+    return this.chats.searchMessages(id, req.user.userId, q ?? '', limit ? parseInt(limit, 10) : 50);
+  }
+
+  @Get(':id/pinned')
+  getPinned(@Req() req: { user: { userId: string } }, @Param('id') id: string) {
+    return this.chats.getPinnedMessage(id, req.user.userId);
+  }
+
+  @Post(':id/pin/:msgId')
+  @HttpCode(200)
+  pin(
+    @Req() req: { user: { userId: string } },
+    @Param('id') id: string,
+    @Param('msgId') msgId: string,
+  ) {
+    return this.chats.pinMessage(id, req.user.userId, msgId);
+  }
+
+  @Delete(':id/pin')
+  unpin(@Req() req: { user: { userId: string } }, @Param('id') id: string) {
+    return this.chats.unpinMessage(id, req.user.userId);
+  }
+
   @Get(':id/messages')
   messages(
     @Req() req: { user: { userId: string } },

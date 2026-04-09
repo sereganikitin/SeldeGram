@@ -494,12 +494,73 @@ export class ChatsService {
       type: chat.type,
       title,
       slug: (chat as { slug?: string | null }).slug ?? null,
+      pinnedMessageId: (chat as { pinnedMessageId?: string | null }).pinnedMessageId ?? null,
       createdAt: chat.createdAt,
       viewerRole,
       viewerWallpaper: viewerMember?.wallpaper ?? null,
       memberCount: chat.members.length,
       members: visibleMembers,
     };
+  }
+
+  async searchMessages(chatId: string, userId: string, query: string, limit = 50) {
+    await this.assertMember(chatId, userId);
+    const q = query.trim();
+    if (!q) return [];
+    return this.prisma.message.findMany({
+      where: {
+        chatId,
+        deletedAt: null,
+        content: { contains: q, mode: 'insensitive' },
+      },
+      orderBy: { createdAt: 'desc' },
+      take: Math.min(limit, 100),
+      include: messageInclude,
+    });
+  }
+
+  async pinMessage(chatId: string, userId: string, messageId: string) {
+    const member = await this.assertMember(chatId, userId);
+    const chat = await this.prisma.chat.findUnique({ where: { id: chatId }, select: { type: true } });
+    if (!chat) throw new NotFoundException('Chat not found');
+    // В group/channel пинить может только админ. В direct — оба участника.
+    if (chat.type !== 'direct' && member.role !== 'admin') {
+      throw new ForbiddenException('Admin only');
+    }
+    const msg = await this.prisma.message.findUnique({ where: { id: messageId } });
+    if (!msg || msg.chatId !== chatId || msg.deletedAt) {
+      throw new NotFoundException('Message not found');
+    }
+    await this.prisma.chat.update({ where: { id: chatId }, data: { pinnedMessageId: messageId } });
+    const members = await this.prisma.chatMember.findMany({ where: { chatId }, select: { userId: true } });
+    this.hub.sendToUsers(members.map((m) => m.userId), { type: 'chat:pinned', payload: { chatId, messageId } });
+    return { ok: true };
+  }
+
+  async unpinMessage(chatId: string, userId: string) {
+    const member = await this.assertMember(chatId, userId);
+    const chat = await this.prisma.chat.findUnique({ where: { id: chatId }, select: { type: true } });
+    if (!chat) throw new NotFoundException('Chat not found');
+    if (chat.type !== 'direct' && member.role !== 'admin') {
+      throw new ForbiddenException('Admin only');
+    }
+    await this.prisma.chat.update({ where: { id: chatId }, data: { pinnedMessageId: null } });
+    const members = await this.prisma.chatMember.findMany({ where: { chatId }, select: { userId: true } });
+    this.hub.sendToUsers(members.map((m) => m.userId), { type: 'chat:pinned', payload: { chatId, messageId: null } });
+    return { ok: true };
+  }
+
+  async getPinnedMessage(chatId: string, userId: string) {
+    await this.assertMember(chatId, userId);
+    const chat = await this.prisma.chat.findUnique({
+      where: { id: chatId },
+      select: { pinnedMessageId: true },
+    });
+    if (!chat?.pinnedMessageId) return null;
+    return this.prisma.message.findUnique({
+      where: { id: chat.pinnedMessageId },
+      include: messageInclude,
+    });
   }
 
   async setWallpaper(chatId: string, userId: string, wallpaper: string | null) {
