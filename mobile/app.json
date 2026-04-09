@@ -33,6 +33,9 @@
         "projectId": "11f00aa2-3763-4b54-857d-52093def981e"
       }
     },
-    "owner": "seldegram"
+    "owner": "seldegram",
+    "plugins": [
+      "expo-video"
+    ]
   }
 }

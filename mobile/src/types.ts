@@ -37,6 +37,7 @@ export interface Sticker {
   id: string;
   packId: string;
   mediaKey: string;
+  mediaType?: string;
   emoji: string;
   order: number;
 }

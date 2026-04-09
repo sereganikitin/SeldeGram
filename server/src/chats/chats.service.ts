@@ -323,7 +323,7 @@ export class ChatsService {
       const sticker = await this.prisma.sticker.findUnique({ where: { id: payload.stickerId } });
       if (!sticker) throw new NotFoundException('Sticker not found');
       copiedMediaKey = sticker.mediaKey;
-      copiedMediaType = 'image/webp';
+      copiedMediaType = sticker.mediaType ?? 'image/png';
       copiedContent = sticker.emoji;
       isSticker = true;
       this.stickers.markUsed(userId, sticker.id).catch(() => undefined);

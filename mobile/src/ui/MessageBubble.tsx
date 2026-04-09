@@ -38,7 +38,7 @@ export function MessageBubble({
         {showSenderName && !mine && (
           <Text style={[styles.senderName, { marginLeft: 4 }]}>{senderName}</Text>
         )}
-        <StickerImage mediaKey={message.mediaKey!} size={150} />
+        <StickerImage mediaKey={message.mediaKey!} mediaType={message.mediaType ?? undefined} size={150} />
         <View style={styles.stickerMeta}>
           <Text style={styles.stickerTime}>{formatTime(message.createdAt)}</Text>
           {mine && <Text style={styles.stickerChecks}>{isRead ? '✓✓' : '✓'}</Text>}

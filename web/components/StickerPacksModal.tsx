@@ -217,7 +217,8 @@ function PackView({ packId, meId, onBack }: { packId: string; meId: string | und
     setBusy(true);
     try {
       const key = await uploadStickerFile(pendingFile);
-      await api.post(`/stickers/packs/${packId}/stickers`, { mediaKey: key, emoji });
+      const mediaType = pendingFile.type || (pendingFile.name.toLowerCase().endsWith(".webm") ? "video/webm" : "image/png");
+      await api.post(`/stickers/packs/${packId}/stickers`, { mediaKey: key, mediaType, emoji });
       setPendingFile(null);
       setEmoji("");
       await load();
@@ -262,7 +263,7 @@ function PackView({ packId, meId, onBack }: { packId: string; meId: string | und
       <div className="grid grid-cols-4 gap-2 mb-4">
         {pack.stickers.map((s) => (
           <div key={s.id} className="relative group">
-            <StickerImage mediaKey={s.mediaKey} size={70} />
+            <StickerImage mediaKey={s.mediaKey} mediaType={s.mediaType} size={70} />
             {isAuthor && (
               <button
                 onClick={() => removeSticker(s.id)}
@@ -278,7 +279,7 @@ function PackView({ packId, meId, onBack }: { packId: string; meId: string | und
       {isAuthor && (
         <label className="block bg-brand hover:bg-brand-dark text-white text-center py-2 rounded-lg font-semibold cursor-pointer mb-2">
           + Добавить стикер
-          <input type="file" accept="image/png,image/webp" hidden onChange={onPickFile} />
+          <input type="file" accept="image/png,image/webp,image/jpeg,video/webm" hidden onChange={onPickFile} />
         </label>
       )}
 

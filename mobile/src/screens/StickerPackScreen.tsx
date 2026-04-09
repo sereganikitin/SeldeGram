@@ -1,7 +1,7 @@
 import React, { useCallback, useState } from 'react';
 import { View, Text, StyleSheet, FlatList, Pressable, Alert, TextInput, Modal } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
-import * as ImagePicker from 'expo-image-picker';
+import * as DocumentPicker from 'expo-document-picker';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation';
 import { api } from '../api';
@@ -19,7 +19,7 @@ export function StickerPackScreen({ route, navigation }: Props) {
   const [pack, setPack] = useState<StickerPack | null>(null);
   const [installed, setInstalled] = useState(false);
   const [uploading, setUploading] = useState(false);
-  const [emojiModal, setEmojiModal] = useState<{ uri: string; size: number } | null>(null);
+  const [emojiModal, setEmojiModal] = useState<{ uri: string; size: number; mimeType: string } | null>(null);
   const [emoji, setEmoji] = useState('');
 
   const load = useCallback(async () => {
@@ -43,15 +43,15 @@ export function StickerPackScreen({ route, navigation }: Props) {
   };
 
   const pickAndUpload = async () => {
-    const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!perm.granted) return;
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      quality: 1,
+    const result = await DocumentPicker.getDocumentAsync({
+      type: ['image/png', 'image/webp', 'image/jpeg', 'video/webm'],
+      copyToCacheDirectory: true,
     });
     if (result.canceled) return;
     const asset = result.assets[0];
-    setEmojiModal({ uri: asset.uri, size: asset.fileSize ?? 0 });
+    let mimeType = asset.mimeType ?? 'image/png';
+    if (!asset.mimeType && asset.name?.toLowerCase().endsWith('.webm')) mimeType = 'video/webm';
+    setEmojiModal({ uri: asset.uri, size: asset.size ?? 0, mimeType });
     setEmoji('');
   };
 
@@ -59,9 +59,12 @@ export function StickerPackScreen({ route, navigation }: Props) {
     if (!emojiModal || !emoji) return;
     setUploading(true);
     try {
-      const contentType = 'image/png';
-      const key = await uploadMedia(emojiModal.uri, contentType, emojiModal.size);
-      await api.post(`/stickers/packs/${packId}/stickers`, { mediaKey: key, emoji });
+      const key = await uploadMedia(emojiModal.uri, emojiModal.mimeType, emojiModal.size);
+      await api.post(`/stickers/packs/${packId}/stickers`, {
+        mediaKey: key,
+        mediaType: emojiModal.mimeType,
+        emoji,
+      });
       setEmojiModal(null);
       setEmoji('');
       await load();
@@ -118,7 +121,7 @@ export function StickerPackScreen({ route, navigation }: Props) {
             onLongPress={isAuthor ? () => removeSticker(item.id) : undefined}
             style={styles.cell}
           >
-            <StickerImage mediaKey={item.mediaKey} size={90} />
+            <StickerImage mediaKey={item.mediaKey} mediaType={item.mediaType} size={90} />
             <Text style={styles.cellEmoji}>{item.emoji}</Text>
           </Pressable>
         )}

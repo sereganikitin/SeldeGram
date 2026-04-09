@@ -26,7 +26,7 @@ export class StickersService {
     return { ok: true };
   }
 
-  async addSticker(authorId: string, packId: string, mediaKey: string, emoji: string) {
+  async addSticker(authorId: string, packId: string, mediaKey: string, emoji: string, mediaType?: string) {
     const pack = await this.prisma.stickerPack.findUnique({ where: { id: packId } });
     if (!pack) throw new NotFoundException('Pack not found');
     if (pack.authorId !== authorId) throw new ForbiddenException('Not your pack');
@@ -38,7 +38,7 @@ export class StickersService {
     const order = (last?.order ?? -1) + 1;
 
     const sticker = await this.prisma.sticker.create({
-      data: { packId, mediaKey, emoji, order },
+      data: { packId, mediaKey, mediaType: mediaType ?? 'image/png', emoji, order },
     });
 
     // Если у пака ещё нет обложки — ставим первый стикер

@@ -159,6 +159,7 @@ model Sticker {
   id        String   @id @default(uuid())
   packId    String
   mediaKey  String
+  mediaType String   @default("image/png")
   emoji     String
   order     Int      @default(0)
   createdAt DateTime @default(now())

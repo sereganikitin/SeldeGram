@@ -35,7 +35,7 @@ export class StickersController {
     @Param('id') packId: string,
     @Body() dto: AddStickerDto,
   ) {
-    return this.stickers.addSticker(req.user.userId, packId, dto.mediaKey, dto.emoji);
+    return this.stickers.addSticker(req.user.userId, packId, dto.mediaKey, dto.emoji, dto.mediaType);
   }
 
   @Delete('packs/:id/stickers/:stickerId')

@@ -64,7 +64,7 @@ export function StickerPicker({ onPick, onOpenManage }: Props) {
             onClick={() => onPick(s.id)}
             className="flex items-center justify-center hover:bg-slate-100 rounded p-1"
           >
-            <StickerImage mediaKey={s.mediaKey} size={64} />
+            <StickerImage mediaKey={s.mediaKey} mediaType={s.mediaType} size={64} />
           </button>
         ))}
       </div>

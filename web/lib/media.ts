@@ -64,8 +64,11 @@ export async function uploadFile(file: File): Promise<{ key: string; contentType
   return { key, contentType: file.type || "application/octet-stream", name: file.name, size: file.size };
 }
 
-// Для стикеров — без сжатия (PNG с прозрачностью).
+// Для стикеров — без сжатия. Поддерживаются image/* и video/webm (анимированные).
 export async function uploadStickerFile(file: File): Promise<string> {
-  const ct = file.type.startsWith("image/") ? file.type : "image/png";
+  let ct = file.type;
+  if (!ct) {
+    ct = file.name.toLowerCase().endsWith(".webm") ? "video/webm" : "image/png";
+  }
   return uploadBlob(file, ct, file.size);
 }

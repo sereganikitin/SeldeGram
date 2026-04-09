@@ -27,6 +27,9 @@ function MediaContent({ message }: { message: Message }) {
   if (!message.mediaKey || !message.mediaType) return null;
 
   if (message.isSticker && url) {
+    if (message.mediaType?.startsWith("video/")) {
+      return <video src={url} className="w-36 h-36 object-contain" autoPlay loop muted playsInline />;
+    }
     // eslint-disable-next-line @next/next/no-img-element
     return <img src={url} alt="" className="w-36 h-36 object-contain" />;
   }

@@ -72,7 +72,7 @@ export function StickerPicker({ onPick, onClose }: Props) {
         numColumns={4}
         renderItem={({ item }) => (
           <Pressable onPress={() => onPick(item.id)} style={styles.cell}>
-            <StickerImage mediaKey={item.mediaKey} size={70} />
+            <StickerImage mediaKey={item.mediaKey} mediaType={item.mediaType} size={70} />
           </Pressable>
         )}
         ListEmptyComponent={<Text style={styles.empty}>Нет стикеров</Text>}
