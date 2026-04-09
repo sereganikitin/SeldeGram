@@ -92,7 +92,7 @@ export default function Home() {
             Остаемся на связи{" "}
             <span className="text-brand-dark">не смотря ни на что!</span>
           </h1>
-          <p className="mt-6 text-lg text-slate-600 leading-relaxed">
+          <p className="mt-6 text-lg text-slate-300 leading-relaxed">
             SeldeGram — простой и быстрый мессенджер. Пишите друзьям, создавайте группы и каналы,
             делитесь фото, видео и стикерами. Всё это с push-уведомлениями и тёмной темой.
           </p>
@@ -103,7 +103,7 @@ export default function Home() {
             >
               Открыть в браузере
             </a>
-            <span className="inline-flex items-center px-7 py-4 rounded-full font-medium text-slate-500 border border-slate-200">
+            <span className="inline-flex items-center px-7 py-4 rounded-full font-medium text-slate-400 border border-slate-700">
               📱 Скоро в App Store
             </span>
           </div>
@@ -116,21 +116,21 @@ export default function Home() {
       </section>
 
       {/* Features */}
-      <section className="bg-slate-50 px-6 md:px-10 py-24">
+      <section className="bg-slate-950 px-6 md:px-10 py-24">
         <div className="max-w-6xl mx-auto">
           <h2 className="text-3xl md:text-4xl font-bold text-center">Что умеет SeldeGram</h2>
-          <p className="mt-4 text-center text-slate-600 max-w-2xl mx-auto">
+          <p className="mt-4 text-center text-slate-400 max-w-2xl mx-auto">
             Всё необходимое для общения — без лишнего, но с заботой о деталях.
           </p>
           <div className="mt-16 grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {FEATURES.map((f) => (
               <div
                 key={f.title}
-                className="bg-white p-8 rounded-2xl border border-slate-100 hover:border-brand/40 hover:shadow-lg transition"
+                className="bg-slate-900 p-8 rounded-2xl border border-slate-800 hover:border-brand/40 hover:shadow-lg hover:shadow-brand/10 transition"
               >
                 <div className="text-4xl mb-4">{f.icon}</div>
                 <h3 className="text-xl font-bold mb-2">{f.title}</h3>
-                <p className="text-slate-600 leading-relaxed">{f.text}</p>
+                <p className="text-slate-400 leading-relaxed">{f.text}</p>
               </div>
             ))}
           </div>
@@ -141,7 +141,7 @@ export default function Home() {
       <section className="px-6 md:px-10 py-24">
         <div className="max-w-3xl mx-auto text-center">
           <h2 className="text-3xl md:text-4xl font-bold">Готовы попробовать?</h2>
-          <p className="mt-4 text-slate-600 text-lg">
+          <p className="mt-4 text-slate-400 text-lg">
             Регистрация занимает 30 секунд. Никаких номеров телефонов — только email.
           </p>
           <a
@@ -154,7 +154,7 @@ export default function Home() {
       </section>
 
       {/* Footer */}
-      <footer className="px-6 md:px-10 py-10 border-t border-slate-100">
+      <footer className="px-6 md:px-10 py-10 border-t border-slate-800">
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4 text-slate-500 text-sm">
           <div className="flex items-center gap-2">
             <div className="w-7 h-7 rounded-lg bg-brand flex items-center justify-center text-white font-bold">
