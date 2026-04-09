@@ -12,9 +12,10 @@ interface Props {
   open: boolean;
   onClose: () => void;
   onChatGone: () => void;
+  onOpenWallpaper?: () => void;
 }
 
-export function ChatInfoModal({ chatId, open, onClose, onChatGone }: Props) {
+export function ChatInfoModal({ chatId, open, onClose, onChatGone, onOpenWallpaper }: Props) {
   const meId = useAuth((s) => s.user?.id);
   const [chat, setChat] = useState<Chat | null>(null);
   const [titleDraft, setTitleDraft] = useState("");
@@ -192,6 +193,14 @@ export function ChatInfoModal({ chatId, open, onClose, onChatGone }: Props) {
           })}
         </div>
 
+        {onOpenWallpaper && (
+          <button
+            onClick={onOpenWallpaper}
+            className="w-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-white font-semibold py-3 rounded-lg mb-2"
+          >
+            🖼 Обои чата
+          </button>
+        )}
         {isDirect && (
           <button
             onClick={deleteChat}

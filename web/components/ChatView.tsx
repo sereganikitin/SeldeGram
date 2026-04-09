@@ -9,6 +9,8 @@ import { Avatar } from "./Avatar";
 import { MessageBubble } from "./MessageBubble";
 import { StickerPicker } from "./StickerPicker";
 import { ChatInfoModal } from "./ChatInfoModal";
+import { ChatBackground } from "./ChatBackground";
+import { WallpaperPickerModal } from "./WallpaperPickerModal";
 import { formatDateLabel, messagePreview } from "@/lib/helpers";
 import { uploadFile } from "@/lib/media";
 
@@ -34,6 +36,9 @@ export function ChatView({ chat, onBack, onChatGone, onOpenStickers }: Props) {
   const [typingUserId, setTypingUserId] = useState<string | null>(null);
   const [stickersOpen, setStickersOpen] = useState(false);
   const [infoOpen, setInfoOpen] = useState(false);
+  const [wallpaperOpen, setWallpaperOpen] = useState(false);
+  const [wallpaper, setWallpaper] = useState<string | null>(chat.viewerWallpaper ?? null);
+  const me = useAuth((s) => s.user);
   const [uploading, setUploading] = useState(false);
   const [dragOver, setDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -45,6 +50,7 @@ export function ChatView({ chat, onBack, onChatGone, onOpenStickers }: Props) {
   useEffect(() => {
     api.get<Message[]>(`/chats/${chat.id}/messages`).then(({ data }) => setMessages(data));
     api.get<{ userId: string; lastReadAt: string }[]>(`/chats/${chat.id}/reads`).then(({ data }) => setReads(data));
+    api.get<Chat>(`/chats/${chat.id}`).then(({ data }) => setWallpaper(data.viewerWallpaper ?? null));
     setEditingId(null);
     setReplyTo(null);
     setInput("");
@@ -230,10 +236,12 @@ export function ChatView({ chat, onBack, onChatGone, onOpenStickers }: Props) {
   const canPost = !(chat.type === "channel" && chat.viewerRole !== "admin");
   const other = chat.type === "direct" ? chat.members.find((m) => m.id !== meId) : null;
   const typingName = typingUserId ? senderNameById.get(typingUserId) : null;
+  const effectiveWallpaper = wallpaper ?? me?.defaultWallpaper ?? null;
 
   return (
+    <ChatBackground wallpaper={effectiveWallpaper}>
     <section
-      className="flex-1 flex flex-col bg-slate-50 min-h-0 relative"
+      className="flex-1 flex flex-col min-h-0 relative"
       onDragOver={(e) => {
         e.preventDefault();
         setDragOver(true);
@@ -246,7 +254,7 @@ export function ChatView({ chat, onBack, onChatGone, onOpenStickers }: Props) {
           <div className="text-brand-dark text-2xl font-bold">Отпустите файл для отправки</div>
         </div>
       )}
-      <header className="bg-white border-b border-slate-200 px-4 py-3 flex items-center gap-3">
+      <header className="bg-white dark:bg-slate-950 border-b border-slate-200 dark:border-slate-800 px-4 py-3 flex items-center gap-3">
         {onBack && (
           <button onClick={onBack} className="md:hidden text-slate-500 mr-1">
             ←
@@ -254,11 +262,11 @@ export function ChatView({ chat, onBack, onChatGone, onOpenStickers }: Props) {
         )}
         <button
           onClick={() => setInfoOpen(true)}
-          className="flex items-center gap-3 flex-1 min-w-0 text-left hover:bg-slate-50 -mx-2 px-2 py-1 rounded-lg"
+          className="flex items-center gap-3 flex-1 min-w-0 text-left hover:bg-slate-50 dark:hover:bg-slate-900 -mx-2 px-2 py-1 rounded-lg"
         >
           <Avatar id={other?.id ?? chat.id} name={chat.title ?? "?"} avatarKey={other?.avatarKey} size={40} />
           <div className="flex-1 min-w-0">
-            <div className="font-semibold truncate">
+            <div className="font-semibold truncate dark:text-white">
               {chat.type === "channel" && "📢 "}
               {chat.type === "group" && "👥 "}
               {chat.title}
@@ -266,7 +274,7 @@ export function ChatView({ chat, onBack, onChatGone, onOpenStickers }: Props) {
             {typingName ? (
               <div className="text-xs text-brand-dark italic">{typingName} печатает...</div>
             ) : (
-              <div className="text-xs text-slate-500">
+              <div className="text-xs text-slate-500 dark:text-slate-400">
                 {chat.type === "direct" ? "был в сети" : `${chat.memberCount ?? chat.members.length} участников`}
               </div>
             )}
@@ -310,7 +318,7 @@ export function ChatView({ chat, onBack, onChatGone, onOpenStickers }: Props) {
       </div>
 
       {(replyTo || editingId) && (
-        <div className="flex items-center gap-3 px-4 py-2 bg-slate-100 border-t border-slate-200">
+        <div className="flex items-center gap-3 px-4 py-2 bg-slate-100 dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800">
           <div className="flex-1 min-w-0">
             <div className="text-xs text-brand-dark font-semibold">{editingId ? "Изменение" : "Ответ"}</div>
             <div className="text-sm text-slate-600 truncate">{editingId ? input : messagePreview(replyTo!)}</div>
@@ -330,7 +338,7 @@ export function ChatView({ chat, onBack, onChatGone, onOpenStickers }: Props) {
 
       {canPost ? (
         <>
-          <div className="flex items-end gap-2 p-3 bg-white border-t border-slate-200">
+          <div className="flex items-end gap-2 p-3 bg-white dark:bg-slate-950 border-t border-slate-200 dark:border-slate-800">
             <input
               ref={fileInputRef}
               type="file"
@@ -369,7 +377,7 @@ export function ChatView({ chat, onBack, onChatGone, onOpenStickers }: Props) {
               onFocus={() => setStickersOpen(false)}
               placeholder={editingId ? "Изменить..." : "Сообщение..."}
               rows={1}
-              className="flex-1 resize-none px-4 py-2 bg-slate-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-brand max-h-32"
+              className="flex-1 resize-none px-4 py-2 bg-slate-100 dark:bg-slate-800 dark:text-white dark:placeholder:text-slate-500 rounded-2xl focus:outline-none focus:ring-2 focus:ring-brand max-h-32"
             />
             <button
               onClick={send}
@@ -387,7 +395,23 @@ export function ChatView({ chat, onBack, onChatGone, onOpenStickers }: Props) {
         </div>
       )}
 
-      <ChatInfoModal chatId={chat.id} open={infoOpen} onClose={() => setInfoOpen(false)} onChatGone={onChatGone} />
+      <ChatInfoModal
+        chatId={chat.id}
+        open={infoOpen}
+        onClose={() => setInfoOpen(false)}
+        onChatGone={onChatGone}
+        onOpenWallpaper={() => {
+          setInfoOpen(false);
+          setWallpaperOpen(true);
+        }}
+      />
+      <WallpaperPickerModal
+        open={wallpaperOpen}
+        onClose={() => setWallpaperOpen(false)}
+        chatId={chat.id}
+        onApplied={() => api.get<Chat>(`/chats/${chat.id}`).then(({ data }) => setWallpaper(data.viewerWallpaper ?? null))}
+      />
     </section>
+    </ChatBackground>
   );
 }

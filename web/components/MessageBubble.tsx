@@ -87,7 +87,7 @@ export function MessageBubble({ message, mine, showSenderName, senderName, isRea
       <div
         onContextMenu={handleContext}
         className={`relative max-w-[78%] px-3 py-2 rounded-2xl ${
-          mine ? "bg-brand text-white" : "bg-slate-200 text-slate-900"
+          mine ? "bg-brand text-white" : "bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm"
         }`}
       >
         {showSenderName && !mine && !isDeleted && (
@@ -145,24 +145,24 @@ function ActionMenu({
   return (
     <>
       <div className="fixed inset-0 z-40" onClick={onClose} />
-      <div className="absolute z-50 bottom-full mb-1 right-0 bg-white shadow-xl rounded-lg border border-slate-200 py-1 min-w-[160px]">
-        <button onClick={() => onAction("reply")} className="w-full text-left px-3 py-2 text-sm hover:bg-slate-50">
+      <div className="absolute z-50 bottom-full mb-1 right-0 bg-white dark:bg-slate-800 dark:text-white shadow-xl rounded-lg border border-slate-200 dark:border-slate-700 py-1 min-w-[160px]">
+        <button onClick={() => onAction("reply")} className="w-full text-left px-3 py-2 text-sm hover:bg-slate-50 dark:hover:bg-slate-700">
           ↩ Ответить
         </button>
         {hasContent && (
-          <button onClick={() => onAction("copy")} className="w-full text-left px-3 py-2 text-sm hover:bg-slate-50">
+          <button onClick={() => onAction("copy")} className="w-full text-left px-3 py-2 text-sm hover:bg-slate-50 dark:hover:bg-slate-700">
             📋 Копировать
           </button>
         )}
         {mine && hasContent && (
-          <button onClick={() => onAction("edit")} className="w-full text-left px-3 py-2 text-sm hover:bg-slate-50">
+          <button onClick={() => onAction("edit")} className="w-full text-left px-3 py-2 text-sm hover:bg-slate-50 dark:hover:bg-slate-700">
             ✏ Изменить
           </button>
         )}
         {mine && (
           <button
             onClick={() => onAction("delete")}
-            className="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50"
+            className="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30"
           >
             🗑 Удалить
           </button>

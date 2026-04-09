@@ -6,6 +6,9 @@
   --font-sans: var(--font-inter);
 }
 
+/* Включаем dark variant через .dark класс на html */
+@custom-variant dark (&:where(.dark, .dark *));
+
 html, body {
   font-family: var(--font-sans), system-ui, -apple-system, sans-serif;
 }
