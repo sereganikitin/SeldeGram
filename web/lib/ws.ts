@@ -42,7 +42,7 @@ function makeSubscriber<T>(getSet: () => Set<T>) {
   };
 }
 
-export const useWs = create<WsState>((set, get) => ({
+export const useWs = create<WsState>()((set, get) => ({
   socket: null,
   connected: false,
   msgListeners: new Set(),
