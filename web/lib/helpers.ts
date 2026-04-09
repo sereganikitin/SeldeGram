@@ -1,0 +1,61 @@
+const AVATAR_COLORS = [
+  "#FF6B6B", "#4ECDC4", "#FFD93D", "#6BCB77", "#4D96FF",
+  "#9D4EDD", "#FF9F1C", "#2EC4B6", "#E71D36", "#7B2CBF",
+];
+
+export function avatarColor(id: string): string {
+  let hash = 0;
+  for (let i = 0; i < id.length; i++) hash = (hash * 31 + id.charCodeAt(i)) >>> 0;
+  return AVATAR_COLORS[hash % AVATAR_COLORS.length];
+}
+
+export function initials(name: string): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return "?";
+  if (parts.length === 1) return parts[0].substring(0, 2).toUpperCase();
+  return (parts[0][0] + parts[1][0]).toUpperCase();
+}
+
+export function formatTime(iso: string): string {
+  const d = new Date(iso);
+  return d.getHours().toString().padStart(2, "0") + ":" + d.getMinutes().toString().padStart(2, "0");
+}
+
+const MONTHS = ["янв", "фев", "мар", "апр", "май", "июн", "июл", "авг", "сен", "окт", "ноя", "дек"];
+
+export function formatDateLabel(iso: string): string {
+  const d = new Date(iso);
+  const today = new Date();
+  const yesterday = new Date(today);
+  yesterday.setDate(today.getDate() - 1);
+  const sameDay = (a: Date, b: Date) =>
+    a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+  if (sameDay(d, today)) return "Сегодня";
+  if (sameDay(d, yesterday)) return "Вчера";
+  if (d.getFullYear() === today.getFullYear()) return `${d.getDate()} ${MONTHS[d.getMonth()]}`;
+  return `${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
+}
+
+interface PreviewMsg {
+  content: string;
+  mediaType?: string | null;
+  mediaKey?: string | null;
+  isSticker?: boolean;
+  deletedAt?: string | null;
+}
+
+export function messagePreview(msg: PreviewMsg): string {
+  if (msg.deletedAt) return "удалено";
+  if (msg.isSticker) return `${msg.content || ""} Стикер`.trim();
+  if (msg.content) return msg.content;
+  if (msg.mediaType?.startsWith("image/")) return "📷 Фото";
+  if (msg.mediaType?.startsWith("video/")) return "📹 Видео";
+  if (msg.mediaKey) return "📄 Файл";
+  return "";
+}
+
+export async function getMediaUrl(key: string): Promise<string> {
+  const { api } = await import("./api");
+  const { data } = await api.get<{ url: string }>(`/media/${encodeURIComponent(key)}`);
+  return data.url;
+}
