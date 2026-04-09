@@ -42,7 +42,7 @@ export default function ChatsPage() {
   }
 
   return (
-    <div className="flex-1 flex h-screen overflow-hidden">
+    <div className="flex-1 flex min-h-0 overflow-hidden">
       <div className={`${selected ? "hidden md:flex" : "flex"} w-full md:w-auto`}>
         <ChatList selectedId={selected?.id ?? null} onSelect={setSelected} onLogout={handleLogout} />
       </div>

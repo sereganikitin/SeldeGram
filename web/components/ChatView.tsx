@@ -181,7 +181,7 @@ export function ChatView({ chat, onBack }: Props) {
   const typingName = typingUserId ? senderNameById.get(typingUserId) : null;
 
   return (
-    <section className="flex-1 flex flex-col bg-slate-50">
+    <section className="flex-1 flex flex-col bg-slate-50 min-h-0">
       <header className="bg-white border-b border-slate-200 px-4 py-3 flex items-center gap-3">
         {onBack && (
           <button onClick={onBack} className="md:hidden text-slate-500 mr-1">
