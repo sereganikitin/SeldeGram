@@ -42,6 +42,45 @@ export interface Message {
   createdAt: string;
 }
 
+export interface Sticker {
+  id: string;
+  packId: string;
+  mediaKey: string;
+  emoji: string;
+  order: number;
+}
+
+export interface StickerPack {
+  id: string;
+  authorId: string;
+  name: string;
+  slug: string;
+  coverKey: string | null;
+  stickers: Sticker[];
+}
+
+export interface StickerPackSearchResult {
+  id: string;
+  name: string;
+  slug: string;
+  coverKey: string | null;
+  _count: { stickers: number };
+}
+
+export interface UserSearchResult {
+  id: string;
+  username: string;
+  displayName: string;
+  avatarKey?: string | null;
+}
+
+export interface ChannelSearchResult {
+  id: string;
+  title: string | null;
+  slug: string | null;
+  memberCount: number;
+}
+
 export interface Chat {
   id: string;
   type: "direct" | "group" | "channel";

@@ -12,9 +12,11 @@ interface Props {
   selectedId: string | null;
   onSelect: (chat: Chat) => void;
   onLogout: () => void;
+  onNewChat: () => void;
+  onOpenStickers: () => void;
 }
 
-export function ChatList({ selectedId, onSelect, onLogout }: Props) {
+export function ChatList({ selectedId, onSelect, onLogout, onNewChat, onOpenStickers }: Props) {
   const meId = useAuth((s) => s.user?.id);
   const me = useAuth((s) => s.user);
   const onMessage = useWs((s: WsState) => s.onMessage);
@@ -98,8 +100,22 @@ export function ChatList({ selectedId, onSelect, onLogout }: Props) {
           <div className="font-semibold truncate">{me?.displayName}</div>
           <div className="text-xs text-slate-500 truncate">@{me?.username}</div>
         </div>
-        <button onClick={onLogout} className="text-sm text-slate-500 hover:text-slate-900">
-          Выйти
+        <button
+          onClick={onNewChat}
+          className="w-9 h-9 rounded-full bg-brand hover:bg-brand-dark text-white text-xl flex items-center justify-center"
+          title="Новый чат"
+        >
+          +
+        </button>
+        <button
+          onClick={onOpenStickers}
+          className="w-9 h-9 rounded-full hover:bg-slate-100 text-xl flex items-center justify-center"
+          title="Стикерпаки"
+        >
+          😀
+        </button>
+        <button onClick={onLogout} className="text-sm text-slate-500 hover:text-slate-900" title="Выйти">
+          ⎋
         </button>
       </header>
 

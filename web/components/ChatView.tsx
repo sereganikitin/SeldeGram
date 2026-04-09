@@ -7,14 +7,19 @@ import { useAuth } from "@/lib/store";
 import { useWs, type WsState } from "@/lib/ws";
 import { Avatar } from "./Avatar";
 import { MessageBubble } from "./MessageBubble";
+import { StickerPicker } from "./StickerPicker";
+import { ChatInfoModal } from "./ChatInfoModal";
 import { formatDateLabel, messagePreview } from "@/lib/helpers";
+import { uploadFile } from "@/lib/media";
 
 interface Props {
   chat: Chat;
   onBack?: () => void;
+  onChatGone: () => void;
+  onOpenStickers: () => void;
 }
 
-export function ChatView({ chat, onBack }: Props) {
+export function ChatView({ chat, onBack, onChatGone, onOpenStickers }: Props) {
   const meId = useAuth((s) => s.user?.id);
   const onMessage = useWs((s: WsState) => s.onMessage);
   const onEdited = useWs((s: WsState) => s.onEdited);
@@ -27,6 +32,11 @@ export function ChatView({ chat, onBack }: Props) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [replyTo, setReplyTo] = useState<Message | null>(null);
   const [typingUserId, setTypingUserId] = useState<string | null>(null);
+  const [stickersOpen, setStickersOpen] = useState(false);
+  const [infoOpen, setInfoOpen] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [dragOver, setDragOver] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const typingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastTypingSentRef = useRef(0);
@@ -151,6 +161,46 @@ export function ChatView({ chat, onBack }: Props) {
     }
   };
 
+  const sendFiles = async (files: FileList | File[]) => {
+    const arr = Array.from(files);
+    if (arr.length === 0) return;
+    setUploading(true);
+    try {
+      for (const f of arr) {
+        const { key, contentType, name, size } = await uploadFile(f);
+        await api.post(`/chats/${chat.id}/messages`, {
+          mediaKey: key,
+          mediaType: contentType,
+          mediaName: name,
+          mediaSize: size,
+          replyToId: replyTo?.id,
+        });
+      }
+      setReplyTo(null);
+    } catch (e: unknown) {
+      const err = e as { message?: string };
+      alert(err.message ?? "Не получилось");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const sendSticker = async (stickerId: string) => {
+    setStickersOpen(false);
+    try {
+      await api.post(`/chats/${chat.id}/messages`, { stickerId });
+    } catch (e: unknown) {
+      const err = e as { response?: { data?: { message?: string } } };
+      alert(err.response?.data?.message ?? "Не получилось");
+    }
+  };
+
+  const onDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setDragOver(false);
+    if (e.dataTransfer.files.length > 0) sendFiles(e.dataTransfer.files);
+  };
+
   const onInputChange = useCallback(
     (v: string) => {
       setInput(v);
@@ -181,28 +231,53 @@ export function ChatView({ chat, onBack }: Props) {
   const typingName = typingUserId ? senderNameById.get(typingUserId) : null;
 
   return (
-    <section className="flex-1 flex flex-col bg-slate-50 min-h-0">
+    <section
+      className="flex-1 flex flex-col bg-slate-50 min-h-0 relative"
+      onDragOver={(e) => {
+        e.preventDefault();
+        setDragOver(true);
+      }}
+      onDragLeave={() => setDragOver(false)}
+      onDrop={onDrop}
+    >
+      {dragOver && (
+        <div className="absolute inset-0 z-30 bg-brand/20 border-4 border-dashed border-brand rounded-lg flex items-center justify-center pointer-events-none">
+          <div className="text-brand-dark text-2xl font-bold">Отпустите файл для отправки</div>
+        </div>
+      )}
       <header className="bg-white border-b border-slate-200 px-4 py-3 flex items-center gap-3">
         {onBack && (
           <button onClick={onBack} className="md:hidden text-slate-500 mr-1">
             ←
           </button>
         )}
-        <Avatar id={other?.id ?? chat.id} name={chat.title ?? "?"} avatarKey={other?.avatarKey} size={40} />
-        <div className="flex-1 min-w-0">
-          <div className="font-semibold truncate">
-            {chat.type === "channel" && "📢 "}
-            {chat.type === "group" && "👥 "}
-            {chat.title}
-          </div>
-          {typingName ? (
-            <div className="text-xs text-brand-dark italic">{typingName} печатает...</div>
-          ) : (
-            <div className="text-xs text-slate-500">
-              {chat.type === "direct" ? "был в сети" : `${chat.memberCount ?? chat.members.length} участников`}
+        <button
+          onClick={() => setInfoOpen(true)}
+          className="flex items-center gap-3 flex-1 min-w-0 text-left hover:bg-slate-50 -mx-2 px-2 py-1 rounded-lg"
+        >
+          <Avatar id={other?.id ?? chat.id} name={chat.title ?? "?"} avatarKey={other?.avatarKey} size={40} />
+          <div className="flex-1 min-w-0">
+            <div className="font-semibold truncate">
+              {chat.type === "channel" && "📢 "}
+              {chat.type === "group" && "👥 "}
+              {chat.title}
             </div>
-          )}
-        </div>
+            {typingName ? (
+              <div className="text-xs text-brand-dark italic">{typingName} печатает...</div>
+            ) : (
+              <div className="text-xs text-slate-500">
+                {chat.type === "direct" ? "был в сети" : `${chat.memberCount ?? chat.members.length} участников`}
+              </div>
+            )}
+          </div>
+        </button>
+        <button
+          onClick={() => setInfoOpen(true)}
+          className="text-brand-dark text-xl px-2"
+          title="Информация"
+        >
+          ⓘ
+        </button>
       </header>
 
       <div ref={scrollRef} className="flex-1 overflow-y-auto p-4">
@@ -253,33 +328,65 @@ export function ChatView({ chat, onBack }: Props) {
       )}
 
       {canPost ? (
-        <div className="flex items-end gap-2 p-3 bg-white border-t border-slate-200">
-          <textarea
-            value={input}
-            onChange={(e) => onInputChange(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault();
-                send();
-              }
-            }}
-            placeholder={editingId ? "Изменить..." : "Сообщение..."}
-            rows={1}
-            className="flex-1 resize-none px-4 py-2 bg-slate-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-brand max-h-32"
-          />
-          <button
-            onClick={send}
-            disabled={!input.trim()}
-            className="w-10 h-10 rounded-full bg-brand hover:bg-brand-dark disabled:opacity-40 text-white flex items-center justify-center text-xl"
-          >
-            {editingId ? "✓" : "↑"}
-          </button>
-        </div>
+        <>
+          <div className="flex items-end gap-2 p-3 bg-white border-t border-slate-200">
+            <input
+              ref={fileInputRef}
+              type="file"
+              hidden
+              multiple
+              onChange={(e) => {
+                if (e.target.files) sendFiles(e.target.files);
+                e.target.value = "";
+              }}
+            />
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploading || !!editingId}
+              className="w-10 h-10 rounded-full hover:bg-slate-100 flex items-center justify-center text-xl flex-shrink-0 disabled:opacity-40"
+              title="Прикрепить"
+            >
+              {uploading ? "⏳" : "📎"}
+            </button>
+            <button
+              onClick={() => setStickersOpen((v) => !v)}
+              disabled={!!editingId}
+              className="w-10 h-10 rounded-full hover:bg-slate-100 flex items-center justify-center text-xl flex-shrink-0 disabled:opacity-40"
+              title="Стикеры"
+            >
+              {stickersOpen ? "⌨" : "😀"}
+            </button>
+            <textarea
+              value={input}
+              onChange={(e) => onInputChange(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  send();
+                }
+              }}
+              onFocus={() => setStickersOpen(false)}
+              placeholder={editingId ? "Изменить..." : "Сообщение..."}
+              rows={1}
+              className="flex-1 resize-none px-4 py-2 bg-slate-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-brand max-h-32"
+            />
+            <button
+              onClick={send}
+              disabled={!input.trim()}
+              className="w-10 h-10 rounded-full bg-brand hover:bg-brand-dark disabled:opacity-40 text-white flex items-center justify-center text-xl"
+            >
+              {editingId ? "✓" : "↑"}
+            </button>
+          </div>
+          {stickersOpen && <StickerPicker onPick={sendSticker} onOpenManage={() => { setStickersOpen(false); onOpenStickers(); }} />}
+        </>
       ) : (
         <div className="p-4 text-center text-sm text-slate-500 bg-white border-t border-slate-200">
           Только админы могут писать в канал
         </div>
       )}
+
+      <ChatInfoModal chatId={chat.id} open={infoOpen} onClose={() => setInfoOpen(false)} onChatGone={onChatGone} />
     </section>
   );
 }
