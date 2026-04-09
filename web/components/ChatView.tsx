@@ -133,6 +133,7 @@ export function ChatView({ chat, onBack, onChatGone, onOpenStickers }: Props) {
     const result: Array<{ kind: "msg"; m: Message } | { kind: "date"; id: string; label: string }> = [];
     let lastDay = "";
     for (const m of messages) {
+      if (m.deletedAt) continue;
       const day = new Date(m.createdAt).toDateString();
       if (day !== lastDay) {
         result.push({ kind: "date", id: "d-" + day, label: formatDateLabel(m.createdAt) });

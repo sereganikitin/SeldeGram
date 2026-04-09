@@ -159,8 +159,14 @@ export function ChatList({ selectedId, onSelect, onLogout, onNewChat, onOpenStic
                 </div>
                 <div className="flex items-center justify-between gap-2 mt-0.5">
                   <div className="text-sm text-slate-500 truncate">
-                    {chat.lastMessage?.senderId === meId && "Вы: "}
-                    {chat.lastMessage ? messagePreview(chat.lastMessage) : "Нет сообщений"}
+                    {chat.lastMessage && !chat.lastMessage.deletedAt ? (
+                      <>
+                        {chat.lastMessage.senderId === meId && "Вы: "}
+                        {messagePreview(chat.lastMessage)}
+                      </>
+                    ) : (
+                      "Нет сообщений"
+                    )}
                   </div>
                   {!!chat.unreadCount && chat.unreadCount > 0 && (
                     <span className="bg-brand text-white text-xs rounded-full min-w-[20px] h-5 px-1.5 flex items-center justify-center font-bold flex-shrink-0">

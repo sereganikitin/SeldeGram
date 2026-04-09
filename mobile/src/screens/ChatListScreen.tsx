@@ -177,7 +177,7 @@ export function ChatListScreen({ navigation }: Props) {
 }
 
 function previewLine(msg: Message | null | undefined, mine: boolean): string {
-  if (!msg) return 'Нет сообщений';
+  if (!msg || msg.deletedAt) return 'Нет сообщений';
   const prefix = mine ? 'Вы: ' : '';
   return prefix + messagePreview(msg);
 }

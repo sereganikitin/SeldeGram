@@ -40,6 +40,7 @@ function buildItems(messages: Message[]): ListItem[] {
   const items: ListItem[] = [];
   let lastDate = '';
   for (const m of messages) {
+    if (m.deletedAt) continue;
     const day = new Date(m.createdAt).toDateString();
     if (day !== lastDate) {
       items.push({ kind: 'date', id: 'd-' + day, label: formatDateLabel(m.createdAt) });
