@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { api } from "@/lib/api";
 import { Chat, Message } from "@/lib/types";
 import { useAuth } from "@/lib/store";
-import { useWs } from "@/lib/ws";
+import { useWs, type WsState } from "@/lib/ws";
 import { Avatar } from "./Avatar";
 import { MessageBubble } from "./MessageBubble";
 import { formatDateLabel, messagePreview } from "@/lib/helpers";
@@ -16,11 +16,11 @@ interface Props {
 
 export function ChatView({ chat, onBack }: Props) {
   const meId = useAuth((s) => s.user?.id);
-  const onMessage = useWs((s) => s.onMessage);
-  const onEdited = useWs((s) => s.onEdited);
-  const onDeletedWs = useWs((s) => s.onDeleted);
-  const onReadWs = useWs((s) => s.onRead);
-  const onTypingWs = useWs((s) => s.onTyping);
+  const onMessage = useWs((s: WsState) => s.onMessage);
+  const onEdited = useWs((s: WsState) => s.onEdited);
+  const onDeletedWs = useWs((s: WsState) => s.onDeleted);
+  const onReadWs = useWs((s: WsState) => s.onRead);
+  const onTypingWs = useWs((s: WsState) => s.onTyping);
   const [messages, setMessages] = useState<Message[]>([]);
   const [reads, setReads] = useState<{ userId: string; lastReadAt: string }[]>([]);
   const [input, setInput] = useState("");

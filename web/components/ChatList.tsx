@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { api } from "@/lib/api";
 import { Chat, Message } from "@/lib/types";
 import { useAuth } from "@/lib/store";
-import { useWs } from "@/lib/ws";
+import { useWs, type WsState } from "@/lib/ws";
 import { Avatar } from "./Avatar";
 import { formatTime, messagePreview } from "@/lib/helpers";
 
@@ -17,12 +17,12 @@ interface Props {
 export function ChatList({ selectedId, onSelect, onLogout }: Props) {
   const meId = useAuth((s) => s.user?.id);
   const me = useAuth((s) => s.user);
-  const onMessage = useWs((s) => s.onMessage);
-  const onChatUpdated = useWs((s) => s.onChatUpdated);
-  const onChatDeleted = useWs((s) => s.onChatDeleted);
-  const onRead = useWs((s) => s.onRead);
-  const onDeleted = useWs((s) => s.onDeleted);
-  const onEdited = useWs((s) => s.onEdited);
+  const onMessage = useWs((s: WsState) => s.onMessage);
+  const onChatUpdated = useWs((s: WsState) => s.onChatUpdated);
+  const onChatDeleted = useWs((s: WsState) => s.onChatDeleted);
+  const onRead = useWs((s: WsState) => s.onRead);
+  const onDeleted = useWs((s: WsState) => s.onDeleted);
+  const onEdited = useWs((s: WsState) => s.onEdited);
   const [chats, setChats] = useState<Chat[]>([]);
   const [search, setSearch] = useState("");
 

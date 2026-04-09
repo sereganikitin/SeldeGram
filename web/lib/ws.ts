@@ -12,7 +12,7 @@ type ChatDeletedListener = (chatId: string) => void;
 type ReadListener = (chatId: string, userId: string, lastReadAt: string) => void;
 type TypingListener = (chatId: string, userId: string) => void;
 
-interface WsState {
+export interface WsState {
   socket: WebSocket | null;
   connected: boolean;
   msgListeners: Set<MessageListener>;

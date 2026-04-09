@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/store";
-import { useWs } from "@/lib/ws";
+import { useWs, type WsState } from "@/lib/ws";
 import { Chat } from "@/lib/types";
 import { ChatList } from "@/components/ChatList";
 import { ChatView } from "@/components/ChatView";
@@ -14,8 +14,8 @@ export default function ChatsPage() {
   const hydrated = useAuth((s) => s.hydrated);
   const user = useAuth((s) => s.user);
   const logout = useAuth((s) => s.logout);
-  const wsConnect = useWs((s) => s.connect);
-  const wsDisconnect = useWs((s) => s.disconnect);
+  const wsConnect = useWs((s: WsState) => s.connect);
+  const wsDisconnect = useWs((s: WsState) => s.disconnect);
   const [selected, setSelected] = useState<Chat | null>(null);
 
   useEffect(() => {
