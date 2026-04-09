@@ -41,11 +41,11 @@ export class AuthService {
         username: dto.username,
         displayName: dto.displayName,
         passwordHash,
+        isVerified: true,
       },
     });
 
-    await this.issueVerificationCode(user.id, user.email);
-    return { id: user.id, email: user.email, isVerified: user.isVerified };
+    return this.issueTokens(user.id);
   }
 
   async verify(dto: VerifyDto) {

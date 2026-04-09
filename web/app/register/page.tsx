@@ -4,9 +4,12 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
+import { useAuth } from "@/lib/store";
 
 export default function RegisterPage() {
   const router = useRouter();
+  const setTokens = useAuth((s) => s.setTokens);
+  const fetchMe = useAuth((s) => s.fetchMe);
   const [email, setEmail] = useState("");
   const [username, setUsername] = useState("");
   const [displayName, setDisplayName] = useState("");
@@ -19,8 +22,10 @@ export default function RegisterPage() {
     setError(null);
     setLoading(true);
     try {
-      await api.post("/auth/register", { email, username, displayName, password });
-      router.replace(`/verify?email=${encodeURIComponent(email)}`);
+      const { data } = await api.post("/auth/register", { email, username, displayName, password });
+      setTokens(data.accessToken, data.refreshToken);
+      await fetchMe();
+      router.replace("/chats");
     } catch (e: unknown) {
       const err = e as { response?: { data?: { message?: string | string[] } }; message?: string };
       const msg = err.response?.data?.message ?? err.message ?? "Ошибка";

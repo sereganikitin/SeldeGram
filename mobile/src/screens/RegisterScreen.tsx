@@ -5,21 +5,25 @@ import { RootStackParamList } from '../navigation';
 import { Input } from '../ui/Input';
 import { Button } from '../ui/Button';
 import { api } from '../api';
+import { useAuth } from '../store/auth';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Register'>;
 
-export function RegisterScreen({ navigation }: Props) {
+export function RegisterScreen({}: Props) {
   const [email, setEmail] = useState('');
   const [username, setUsername] = useState('');
   const [displayName, setDisplayName] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const setTokens = useAuth((s) => s.setTokens);
+  const fetchMe = useAuth((s) => s.fetchMe);
 
   const submit = async () => {
     setLoading(true);
     try {
-      await api.post('/auth/register', { email, username, displayName, password });
-      navigation.replace('Verify', { email });
+      const { data } = await api.post('/auth/register', { email, username, displayName, password });
+      await setTokens(data.accessToken, data.refreshToken);
+      await fetchMe();
     } catch (e: any) {
       const msg = e.response?.data?.message ?? e.message ?? 'Ошибка';
       Alert.alert('Не получилось', Array.isArray(msg) ? msg.join('\n') : String(msg));
