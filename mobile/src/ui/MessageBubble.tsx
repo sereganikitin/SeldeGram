@@ -3,6 +3,8 @@ import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { Message, ChatMember } from '../types';
 import { MediaBubble } from './MediaBubble';
 import { StickerImage } from './StickerImage';
+import { AudioPlayer } from './AudioPlayer';
+import { PollBubble } from './PollBubble';
 import { formatTime, messagePreview } from '../helpers';
 
 interface Props {
@@ -25,6 +27,8 @@ export function MessageBubble({
   onReplyPress,
 }: Props) {
   const hasMedia = !!message.mediaKey && !!message.mediaType;
+  const isAudio = hasMedia && message.mediaType!.startsWith('audio/');
+  const isPoll = message.content?.startsWith('📊 ');
   const isDeleted = !!message.deletedAt;
   const isSticker = !!message.isSticker && !isDeleted;
 
@@ -76,7 +80,9 @@ export function MessageBubble({
         <Text style={mine ? styles.deletedMine : styles.deletedOther}>удалено</Text>
       ) : (
         <>
-          {hasMedia && (
+          {isAudio ? (
+            <AudioPlayer mediaKey={message.mediaKey!} duration={message.mediaSize} mine={mine} />
+          ) : hasMedia ? (
             <MediaBubble
               mediaKey={message.mediaKey!}
               mediaType={message.mediaType!}
@@ -84,8 +90,10 @@ export function MessageBubble({
               mediaSize={message.mediaSize}
               mine={mine}
             />
-          )}
-          {message.content ? (
+          ) : null}
+          {isPoll ? (
+            <PollBubble messageId={message.id} mine={mine} />
+          ) : message.content ? (
             <Text style={[mine ? styles.textMine : styles.textOther, hasMedia && { marginTop: 6 }]}>
               {message.content}
             </Text>

@@ -11,6 +11,7 @@ import { StickerPicker } from "./StickerPicker";
 import { ChatInfoModal } from "./ChatInfoModal";
 import { ChatBackground } from "./ChatBackground";
 import { WallpaperPickerModal } from "./WallpaperPickerModal";
+import { VoiceRecorder } from "./VoiceRecorder";
 import { formatDateLabel, messagePreview } from "@/lib/helpers";
 import { uploadFile } from "@/lib/media";
 
@@ -46,6 +47,7 @@ export function ChatView({ chat, onBack, onChatGone, onOpenStickers }: Props) {
   const onPinned = useWs((s: WsState) => s.onPinned);
   const [uploading, setUploading] = useState(false);
   const [dragOver, setDragOver] = useState(false);
+  const [voiceRecording, setVoiceRecording] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const typingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -214,6 +216,26 @@ export function ChatView({ chat, onBack, onChatGone, onOpenStickers }: Props) {
         });
       }
       setReplyTo(null);
+    } catch (e: unknown) {
+      const err = e as { message?: string };
+      alert(err.message ?? "Не получилось");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const sendVoice = async (blob: Blob, durationMs: number) => {
+    setVoiceRecording(false);
+    setUploading(true);
+    try {
+      const { uploadBlob: doUpload } = await import("@/lib/media");
+      const key = await doUpload(blob, "audio/webm", blob.size);
+      await api.post(`/chats/${chat.id}/messages`, {
+        mediaKey: key,
+        mediaType: "audio/webm",
+        mediaName: "voice.webm",
+        mediaSize: durationMs,
+      });
     } catch (e: unknown) {
       const err = e as { message?: string };
       alert(err.message ?? "Не получилось");
@@ -453,9 +475,24 @@ export function ChatView({ chat, onBack, onChatGone, onOpenStickers }: Props) {
               {uploading ? "⏳" : "📎"}
             </button>
             <button
+              onClick={() => {
+                const q = prompt("Вопрос опроса:");
+                if (!q?.trim()) return;
+                const optStr = prompt("Варианты через ; (минимум 2):");
+                const opts = (optStr ?? "").split(";").map((s) => s.trim()).filter(Boolean);
+                if (opts.length < 2) { alert("Нужно минимум 2 варианта"); return; }
+                api.post(`/chats/${chat.id}/poll`, { question: q.trim(), options: opts }).catch(() => {});
+              }}
+              disabled={!!editingId}
+              className="w-10 h-10 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center text-xl flex-shrink-0 disabled:opacity-40"
+              title="Опрос"
+            >
+              📊
+            </button>
+            <button
               onClick={() => setStickersOpen((v) => !v)}
               disabled={!!editingId}
-              className="w-10 h-10 rounded-full hover:bg-slate-100 flex items-center justify-center text-xl flex-shrink-0 disabled:opacity-40"
+              className="w-10 h-10 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center text-xl flex-shrink-0 disabled:opacity-40"
               title="Стикеры"
             >
               {stickersOpen ? "⌨" : "😀"}
@@ -474,15 +511,26 @@ export function ChatView({ chat, onBack, onChatGone, onOpenStickers }: Props) {
               rows={1}
               className="flex-1 resize-none px-4 py-2 bg-slate-100 dark:bg-slate-800 dark:text-white dark:placeholder:text-slate-500 rounded-2xl focus:outline-none focus:ring-2 focus:ring-brand max-h-32"
             />
-            <button
-              onClick={send}
-              disabled={!input.trim()}
-              className="w-10 h-10 rounded-full bg-brand hover:bg-brand-dark disabled:opacity-40 text-white flex items-center justify-center text-xl"
-            >
-              {editingId ? "✓" : "↑"}
-            </button>
+            {input.trim() || editingId ? (
+              <button
+                onClick={send}
+                disabled={!input.trim()}
+                className="w-10 h-10 rounded-full bg-brand hover:bg-brand-dark disabled:opacity-40 text-white flex items-center justify-center text-xl"
+              >
+                {editingId ? "✓" : "↑"}
+              </button>
+            ) : (
+              <button
+                onClick={() => setVoiceRecording(true)}
+                disabled={uploading}
+                className="w-10 h-10 rounded-full bg-brand hover:bg-brand-dark disabled:opacity-40 text-white flex items-center justify-center text-xl"
+              >
+                🎤
+              </button>
+            )}
           </div>
-          {stickersOpen && <StickerPicker onPick={sendSticker} onOpenManage={() => { setStickersOpen(false); onOpenStickers(); }} />}
+          {voiceRecording && <VoiceRecorder onRecorded={sendVoice} onCancel={() => setVoiceRecording(false)} />}
+          {stickersOpen && !voiceRecording && <StickerPicker onPick={sendSticker} onOpenManage={() => { setStickersOpen(false); onOpenStickers(); }} />}
         </>
       ) : (
         <div className="p-4 text-center text-sm text-slate-500 bg-white border-t border-slate-200">

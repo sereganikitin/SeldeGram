@@ -10,6 +10,7 @@ import { ChatsModule } from './chats/chats.module';
 import { MediaModule } from './media/media.module';
 import { PushModule } from './push/push.module';
 import { StickersModule } from './stickers/stickers.module';
+import { PollsModule } from './polls/polls.module';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { StickersModule } from './stickers/stickers.module';
     MediaModule,
     PushModule,
     StickersModule,
+    PollsModule,
   ],
   controllers: [HealthController],
 })

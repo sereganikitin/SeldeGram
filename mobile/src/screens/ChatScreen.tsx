@@ -26,6 +26,7 @@ import { setActiveChat } from '../push';
 import { MessageBubble } from '../ui/MessageBubble';
 import { DateSeparator } from '../ui/DateSeparator';
 import { StickerPicker } from '../ui/StickerPicker';
+import { VoiceRecorder } from '../ui/VoiceRecorder';
 import { ChatBackground } from '../ui/ChatBackground';
 import { useColors } from '../theme';
 import { formatDateLabel, messagePreview } from '../helpers';
@@ -63,6 +64,7 @@ export function ChatScreen({ route, navigation }: Props) {
   const [replyTo, setReplyTo] = useState<Message | null>(null);
   const [typingUserId, setTypingUserId] = useState<string | null>(null);
   const [stickersOpen, setStickersOpen] = useState(false);
+  const [recording, setRecording] = useState(false);
   const [pinnedMsg, setPinnedMsg] = useState<Message | null>(null);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQ, setSearchQ] = useState('');
@@ -310,6 +312,28 @@ export function ChatScreen({ route, navigation }: Props) {
     }
   };
 
+  const sendVoice = async (uri: string, durationMs: number) => {
+    setRecording(false);
+    setUploading(true);
+    try {
+      const contentType = 'audio/m4a';
+      const resp = await fetch(uri);
+      const blob = await resp.blob();
+      const size = blob.size;
+      const key = await uploadMedia(uri, contentType, size);
+      await api.post(`/chats/${chatId}/messages`, {
+        mediaKey: key,
+        mediaType: contentType,
+        mediaName: 'voice.m4a',
+        mediaSize: durationMs,
+      });
+    } catch (e: any) {
+      Alert.alert('Не получилось', e.message ?? String(e));
+    } finally {
+      setUploading(false);
+    }
+  };
+
   const sendSticker = async (stickerId: string) => {
     setStickersOpen(false);
     try {
@@ -319,10 +343,26 @@ export function ChatScreen({ route, navigation }: Props) {
     }
   };
 
+  const createPoll = () => {
+    Alert.prompt('Опрос', 'Введите вопрос:', (question) => {
+      if (!question?.trim()) return;
+      Alert.prompt('Варианты', 'Введите варианты через ; (минимум 2):', async (optStr) => {
+        const options = (optStr ?? '').split(';').map((s: string) => s.trim()).filter(Boolean);
+        if (options.length < 2) { Alert.alert('Нужно минимум 2 варианта'); return; }
+        try {
+          await api.post(`/chats/${chatId}/poll`, { question: question.trim(), options });
+        } catch (e: any) {
+          Alert.alert('Не получилось', e.response?.data?.message ?? e.message);
+        }
+      });
+    });
+  };
+
   const showAttach = () => {
     Alert.alert('Прикрепить', undefined, [
       { text: 'Фото', onPress: pickImage },
       { text: 'Файл', onPress: pickFile },
+      { text: '📊 Опрос', onPress: createPoll },
       { text: 'Отмена', style: 'cancel' },
     ]);
   };
@@ -527,11 +567,23 @@ export function ChatScreen({ route, navigation }: Props) {
               multiline
               onFocus={() => setStickersOpen(false)}
             />
-            <Pressable onPress={send} disabled={sending || !input.trim()} style={styles.sendBtn}>
-              <Text style={styles.sendText}>{editingId ? '✓' : '↑'}</Text>
-            </Pressable>
+            {input.trim() || editingId ? (
+              <Pressable onPress={send} disabled={sending || !input.trim()} style={styles.sendBtn}>
+                <Text style={styles.sendText}>{editingId ? '✓' : '↑'}</Text>
+              </Pressable>
+            ) : (
+              <Pressable onPress={() => setRecording(true)} disabled={uploading} style={styles.sendBtn}>
+                <Text style={styles.sendText}>🎤</Text>
+              </Pressable>
+            )}
           </View>
-          {stickersOpen && <StickerPicker onPick={sendSticker} onClose={() => setStickersOpen(false)} />}
+          {recording && (
+            <VoiceRecorder
+              onRecorded={sendVoice}
+              onCancel={() => setRecording(false)}
+            />
+          )}
+          {stickersOpen && !recording && <StickerPicker onPick={sendSticker} onClose={() => setStickersOpen(false)} />}
         </>
       )}
       </ChatBackground>

@@ -25,6 +25,7 @@ model User {
   chatMembers        ChatMember[]
   messages           Message[]
   chatReads          ChatRead[]
+  polls              Poll[]
   stickerPacks       StickerPack[]
   installedPacks     UserStickerPack[]
   recentStickers     RecentSticker[]
@@ -92,6 +93,7 @@ model Chat {
   members  ChatMember[]
   messages Message[]
   reads    ChatRead[]
+  polls    Poll[]
 
   @@map("chats")
 }
@@ -134,6 +136,7 @@ model Message {
   replies       Message[] @relation("MessageReply")
   forwardedFrom Message?  @relation("MessageForward", fields: [forwardedFromId], references: [id], onDelete: SetNull)
   forwardedAs   Message[] @relation("MessageForward")
+  poll          Poll?
 
   @@index([chatId, createdAt])
   @@map("messages")
@@ -197,6 +200,24 @@ model RecentSticker {
   @@unique([userId, stickerId])
   @@index([userId, lastUsedAt])
   @@map("recent_stickers")
+}
+
+model Poll {
+  id         String   @id @default(uuid())
+  chatId     String
+  senderId   String
+  messageId  String   @unique
+  question   String
+  options    Json
+  votes      Json     @default("{}")
+  createdAt  DateTime @default(now())
+
+  chat    Chat    @relation(fields: [chatId], references: [id], onDelete: Cascade)
+  sender  User    @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  message Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  @@index([chatId])
+  @@map("polls")
 }
 
 model ChatRead {

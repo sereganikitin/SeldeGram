@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { Message } from "@/lib/types";
 import { formatTime, messagePreview, getMediaUrl } from "@/lib/helpers";
+import { AudioPlayer } from "./AudioPlayer";
+import { PollBubble } from "./PollBubble";
 
 interface Props {
   message: Message;
@@ -13,7 +15,7 @@ interface Props {
   onAction: (action: "reply" | "edit" | "delete" | "copy" | "pin") => void;
 }
 
-function MediaContent({ message }: { message: Message }) {
+function MediaContent({ message, mine }: { message: Message; mine: boolean }) {
   const [url, setUrl] = useState<string | null>(null);
   useEffect(() => {
     if (!message.mediaKey) return;
@@ -32,6 +34,10 @@ function MediaContent({ message }: { message: Message }) {
     }
     // eslint-disable-next-line @next/next/no-img-element
     return <img src={url} alt="" className="w-36 h-36 object-contain" />;
+  }
+
+  if (message.mediaType.startsWith("audio/")) {
+    return <AudioPlayer mediaKey={message.mediaKey} duration={message.mediaSize ?? undefined} mine={mine} />;
   }
 
   if (message.mediaType.startsWith("image/")) {
@@ -75,7 +81,7 @@ export function MessageBubble({ message, mine, showSenderName, senderName, isRea
         className={`my-1 flex flex-col ${mine ? "items-end" : "items-start"} relative`}
       >
         {showSenderName && !mine && <div className="text-xs font-bold text-brand-dark mb-1 ml-1">{senderName}</div>}
-        <MediaContent message={message} />
+        <MediaContent message={message} mine={mine} />
         <div className="flex items-center gap-1 mt-1 text-[11px] text-slate-500">
           <span>{formatTime(message.createdAt)}</span>
           {mine && <span>{isRead ? "✓✓" : "✓"}</span>}
@@ -115,8 +121,12 @@ export function MessageBubble({ message, mine, showSenderName, senderName, isRea
           <span className={`italic text-sm ${mine ? "text-white/70" : "text-slate-500"}`}>удалено</span>
         ) : (
           <>
-            <MediaContent message={message} />
-            {message.content && <div className="text-base whitespace-pre-wrap break-words mt-1">{message.content}</div>}
+            <MediaContent message={message} mine={mine} />
+            {message.content?.startsWith("📊 ") ? (
+              <PollBubble messageId={message.id} mine={mine} />
+            ) : message.content ? (
+              <div className="text-base whitespace-pre-wrap break-words mt-1">{message.content}</div>
+            ) : null}
           </>
         )}
 
