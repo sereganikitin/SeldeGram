@@ -15,6 +15,7 @@ export function AudioPlayer({ mediaKey, duration, mine }: Props) {
   const [position, setPosition] = useState(0);
   const [totalMs, setTotalMs] = useState(duration ?? 0);
   const soundRef = useRef<Audio.Sound | null>(null);
+  const busyRef = useRef(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -27,36 +28,42 @@ export function AudioPlayer({ mediaKey, duration, mine }: Props) {
 
   const toggle = async () => {
     if (!url) return;
-
-    if (soundRef.current) {
-      if (playing) {
-        await soundRef.current.pauseAsync();
-      } else {
-        await soundRef.current.playAsync();
-      }
-      return;
-    }
-
-    await Audio.setAudioModeAsync({
-      allowsRecordingIOS: false,
-      playsInSilentModeIOS: true,
-    });
-    const { sound } = await Audio.Sound.createAsync(
-      { uri: url },
-      { shouldPlay: true },
-      (status) => {
-        if (!status.isLoaded) return;
-        setPlaying(status.isPlaying);
-        setPosition(status.positionMillis ?? 0);
-        if (status.durationMillis) setTotalMs(status.durationMillis);
-        if (status.didJustFinish) {
-          setPlaying(false);
-          setPosition(0);
-          soundRef.current?.setPositionAsync(0);
+    // Синхронный lock: игнорируем повторные нажатия пока предыдущая операция не завершилась.
+    if (busyRef.current) return;
+    busyRef.current = true;
+    try {
+      if (soundRef.current) {
+        if (playing) {
+          await soundRef.current.pauseAsync();
+        } else {
+          await soundRef.current.playAsync();
         }
-      },
-    );
-    soundRef.current = sound;
+        return;
+      }
+
+      await Audio.setAudioModeAsync({
+        allowsRecordingIOS: false,
+        playsInSilentModeIOS: true,
+      });
+      const { sound } = await Audio.Sound.createAsync(
+        { uri: url },
+        { shouldPlay: true },
+        (status) => {
+          if (!status.isLoaded) return;
+          setPlaying(status.isPlaying);
+          setPosition(status.positionMillis ?? 0);
+          if (status.durationMillis) setTotalMs(status.durationMillis);
+          if (status.didJustFinish) {
+            setPlaying(false);
+            setPosition(0);
+            soundRef.current?.setPositionAsync(0);
+          }
+        },
+      );
+      soundRef.current = sound;
+    } finally {
+      busyRef.current = false;
+    }
   };
 
   const fmt = (ms: number) => {
