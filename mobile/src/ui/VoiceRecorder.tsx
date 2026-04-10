@@ -17,6 +17,8 @@ export function VoiceRecorder({ onRecorded, onCancel }: Props) {
     return () => {
       timerRef.current && clearInterval(timerRef.current);
       recordingRef.current?.stopAndUnloadAsync().catch(() => {});
+      // Сбросить режим при размонтировании
+      Audio.setAudioModeAsync({ allowsRecordingIOS: false, playsInSilentModeIOS: true }).catch(() => {});
     };
   }, []);
 
@@ -50,6 +52,11 @@ export function VoiceRecorder({ onRecorded, onCancel }: Props) {
     if (!rec) return onCancel();
     try {
       await rec.stopAndUnloadAsync();
+      // Критично: сбросить режим записи, иначе воспроизведение ломается
+      await Audio.setAudioModeAsync({
+        allowsRecordingIOS: false,
+        playsInSilentModeIOS: true,
+      });
       const uri = rec.getURI();
       const status = await rec.getStatusAsync();
       const durationMs = status.durationMillis ?? seconds * 1000;
@@ -68,6 +75,10 @@ export function VoiceRecorder({ onRecorded, onCancel }: Props) {
     timerRef.current && clearInterval(timerRef.current);
     recordingRef.current?.stopAndUnloadAsync().catch(() => {});
     recordingRef.current = null;
+    await Audio.setAudioModeAsync({
+      allowsRecordingIOS: false,
+      playsInSilentModeIOS: true,
+    }).catch(() => {});
     onCancel();
   };
 

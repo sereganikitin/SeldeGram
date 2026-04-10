@@ -37,7 +37,10 @@ export function AudioPlayer({ mediaKey, duration, mine }: Props) {
       return;
     }
 
-    await Audio.setAudioModeAsync({ playsInSilentModeIOS: true });
+    await Audio.setAudioModeAsync({
+      allowsRecordingIOS: false,
+      playsInSilentModeIOS: true,
+    });
     const { sound } = await Audio.Sound.createAsync(
       { uri: url },
       { shouldPlay: true },
