@@ -33,11 +33,14 @@ export function ChatBackground({ wallpaper, children }: Props) {
   }
 
   if (parsed?.kind === "preset") {
+    const bg = parsed.preset.color2 ?? parsed.preset.color1;
+    const style: React.CSSProperties = { backgroundColor: bg };
+    if (parsed.preset.patternUri) {
+      style.backgroundImage = `url(${parsed.preset.patternUri})`;
+      style.backgroundRepeat = "repeat";
+    }
     return (
-      <div
-        className="flex-1 flex flex-col min-h-0"
-        style={{ backgroundColor: parsed.preset.color2 ?? parsed.preset.color1 }}
-      >
+      <div className="flex-1 flex flex-col min-h-0" style={style}>
         {children}
       </div>
     );

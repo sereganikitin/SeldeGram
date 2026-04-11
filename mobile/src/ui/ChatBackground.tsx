@@ -32,12 +32,20 @@ export function ChatBackground({ wallpaper, children }: Props) {
   }
 
   if (parsed?.kind === 'preset') {
-    // Простой одноцветный фон (градиент потребовал бы expo-linear-gradient, обойдёмся плотным цветом)
-    return (
-      <View style={{ flex: 1, backgroundColor: parsed.preset.color2 ?? parsed.preset.color1 }}>
-        {children}
-      </View>
-    );
+    const bg = parsed.preset.color2 ?? parsed.preset.color1;
+    if (parsed.preset.patternUri) {
+      return (
+        <View style={{ flex: 1, backgroundColor: bg }}>
+          <Image
+            source={{ uri: parsed.preset.patternUri }}
+            style={StyleSheet.absoluteFill}
+            resizeMode="repeat"
+          />
+          {children}
+        </View>
+      );
+    }
+    return <View style={{ flex: 1, backgroundColor: bg }}>{children}</View>;
   }
 
   return <View style={{ flex: 1, backgroundColor: colors.bg }}>{children}</View>;

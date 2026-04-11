@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, Pressable, ScrollView, Alert } from 'react-native';
+import { View, Text, StyleSheet, Pressable, ScrollView, Alert, Image } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation';
@@ -65,6 +65,13 @@ export function WallpaperPickerScreen({ route, navigation }: Props) {
             onPress={() => apply(p.id === 'default' ? null : `preset:${p.id}`)}
             style={[styles.tile, { backgroundColor: p.color2 ?? p.color1, borderColor: colors.border }]}
           >
+            {p.patternUri && (
+              <Image
+                source={{ uri: p.patternUri }}
+                style={StyleSheet.absoluteFill}
+                resizeMode="repeat"
+              />
+            )}
             <Text style={styles.tileLabel}>{p.name}</Text>
           </Pressable>
         ))}
