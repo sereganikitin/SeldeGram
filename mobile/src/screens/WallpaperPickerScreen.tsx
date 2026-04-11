@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, Pressable, ScrollView, Alert, Image } from 'react-native';
+import { View, Text, StyleSheet, Pressable, ScrollView, Alert } from 'react-native';
+import { SvgXml } from 'react-native-svg';
 import * as ImagePicker from 'expo-image-picker';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation';
@@ -63,14 +64,17 @@ export function WallpaperPickerScreen({ route, navigation }: Props) {
           <Pressable
             key={p.id}
             onPress={() => apply(p.id === 'default' ? null : `preset:${p.id}`)}
-            style={[styles.tile, { backgroundColor: p.color2 ?? p.color1, borderColor: colors.border }]}
+            style={[styles.tile, { backgroundColor: p.color2 ?? p.color1, borderColor: colors.border, overflow: 'hidden' }]}
           >
-            {p.patternUri && (
-              <Image
-                source={{ uri: p.patternUri }}
-                style={StyleSheet.absoluteFill}
-                resizeMode="repeat"
-              />
+            {p.patternSvg && (
+              <View style={StyleSheet.absoluteFill} pointerEvents="none">
+                <SvgXml
+                  xml={p.patternSvg}
+                  width="100%"
+                  height="100%"
+                  preserveAspectRatio="xMidYMid slice"
+                />
+              </View>
             )}
             <Text style={styles.tileLabel}>{p.name}</Text>
           </Pressable>

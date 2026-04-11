@@ -37,7 +37,9 @@ export function ChatBackground({ wallpaper, children }: Props) {
     const style: React.CSSProperties = { backgroundColor: bg };
     if (parsed.preset.patternUri) {
       style.backgroundImage = `url(${parsed.preset.patternUri})`;
-      style.backgroundRepeat = "repeat";
+      style.backgroundRepeat = "no-repeat";
+      style.backgroundSize = "cover";
+      style.backgroundPosition = "center";
     }
     return (
       <div className="flex-1 flex flex-col min-h-0" style={style}>

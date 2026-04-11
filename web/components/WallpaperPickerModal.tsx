@@ -59,7 +59,9 @@ export function WallpaperPickerModal({ open, onClose, chatId, onApplied }: Props
             const style: React.CSSProperties = { backgroundColor: p.color2 ?? p.color1 };
             if (p.patternUri) {
               style.backgroundImage = `url(${p.patternUri})`;
-              style.backgroundRepeat = "repeat";
+              style.backgroundRepeat = "no-repeat";
+              style.backgroundSize = "cover";
+              style.backgroundPosition = "center";
             }
             return (
               <button

@@ -1,21 +1,124 @@
-// SVG-паттерны обоев (нежно-розовая гамма с рыбками и крабиками).
-// Хранятся как data URL — работают через <Image source={{uri}}> с resizeMode="repeat".
+// SVG-сцены обоев (нежно-розовая гамма с рыбками и крабиками).
+// Экспортируем как raw SVG строки — рендерим через react-native-svg SvgXml.
+// SVG растягивается на весь экран через preserveAspectRatio="xMidYMid slice".
 
-function svgUrl(svg: string): string {
-  const encoded = encodeURIComponent(svg)
-    .replace(/'/g, '%27')
-    .replace(/"/g, '%22');
-  return `data:image/svg+xml;charset=utf-8,${encoded}`;
+function fish(x: number, y: number, scale: number, color: string, flip = false) {
+  const t = `translate(${x},${y}) scale(${flip ? -scale : scale}, ${scale})`;
+  return `<g transform="${t}">
+    <ellipse cx="20" cy="10" rx="18" ry="9" fill="${color}"/>
+    <polygon points="2,10 -10,2 -10,18" fill="${color}"/>
+    <circle cx="30" cy="7" r="1.8" fill="#fff"/>
+    <circle cx="30" cy="7" r="0.8" fill="#333"/>
+  </g>`;
 }
 
-const PINK_FISH_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="240" height="240" viewBox="0 0 240 240"><defs><linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#ffe8f0"/><stop offset="100%" stop-color="#ffd4e1"/></linearGradient></defs><rect width="240" height="240" fill="url(#bg)"/><g opacity="0.55"><g transform="translate(30,50)"><ellipse cx="20" cy="10" rx="18" ry="9" fill="#ff8fa8"/><polygon points="2,10 -10,2 -10,18" fill="#ff8fa8"/><circle cx="30" cy="7" r="1.8" fill="#fff"/></g><g transform="translate(140,90) scale(-1,1)"><ellipse cx="20" cy="10" rx="20" ry="10" fill="#ffa5b8"/><polygon points="2,10 -12,0 -12,20" fill="#ffa5b8"/><circle cx="32" cy="7" r="2" fill="#fff"/></g><g transform="translate(70,160)"><ellipse cx="20" cy="10" rx="16" ry="8" fill="#ff7a99"/><polygon points="4,10 -8,3 -8,17" fill="#ff7a99"/><circle cx="28" cy="8" r="1.5" fill="#fff"/></g><g transform="translate(180,200) scale(-1,1)"><ellipse cx="15" cy="8" rx="14" ry="7" fill="#ffb3c5"/><polygon points="1,8 -10,2 -10,14" fill="#ffb3c5"/><circle cx="22" cy="6" r="1.5" fill="#fff"/></g><circle cx="100" cy="30" r="3" fill="#fff" opacity="0.6"/><circle cx="105" cy="22" r="2" fill="#fff" opacity="0.5"/><circle cx="200" cy="50" r="2.5" fill="#fff" opacity="0.6"/><circle cx="60" cy="200" r="2" fill="#fff" opacity="0.5"/><circle cx="220" cy="140" r="3" fill="#fff" opacity="0.5"/></g></svg>`;
+function crab(x: number, y: number, scale: number, color: string) {
+  const t = `translate(${x},${y}) scale(${scale})`;
+  return `<g transform="${t}">
+    <ellipse cx="20" cy="18" rx="18" ry="12" fill="${color}"/>
+    <circle cx="14" cy="10" r="3" fill="#fff"/>
+    <circle cx="26" cy="10" r="3" fill="#fff"/>
+    <circle cx="14" cy="10" r="1.5" fill="#333"/>
+    <circle cx="26" cy="10" r="1.5" fill="#333"/>
+    <ellipse cx="-4" cy="22" rx="5" ry="4" fill="${color}"/>
+    <ellipse cx="44" cy="22" rx="5" ry="4" fill="${color}"/>
+    <line x1="6" y1="26" x2="2" y2="34" stroke="${color}" stroke-width="2" stroke-linecap="round"/>
+    <line x1="12" y1="28" x2="10" y2="36" stroke="${color}" stroke-width="2" stroke-linecap="round"/>
+    <line x1="28" y1="28" x2="30" y2="36" stroke="${color}" stroke-width="2" stroke-linecap="round"/>
+    <line x1="34" y1="26" x2="38" y2="34" stroke="${color}" stroke-width="2" stroke-linecap="round"/>
+  </g>`;
+}
 
-const CORAL_CRAB_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="240" height="240" viewBox="0 0 240 240"><defs><linearGradient id="bg2" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#ffd9c4"/><stop offset="100%" stop-color="#ffc4cc"/></linearGradient></defs><rect width="240" height="240" fill="url(#bg2)"/><g opacity="0.6"><g transform="translate(40,60)"><ellipse cx="20" cy="18" rx="18" ry="12" fill="#ff7070"/><circle cx="14" cy="10" r="3" fill="#fff"/><circle cx="26" cy="10" r="3" fill="#fff"/><circle cx="14" cy="10" r="1.5" fill="#333"/><circle cx="26" cy="10" r="1.5" fill="#333"/><ellipse cx="-4" cy="22" rx="5" ry="4" fill="#ff7070"/><ellipse cx="44" cy="22" rx="5" ry="4" fill="#ff7070"/><line x1="6" y1="26" x2="2" y2="34" stroke="#ff7070" stroke-width="2" stroke-linecap="round"/><line x1="12" y1="28" x2="10" y2="36" stroke="#ff7070" stroke-width="2" stroke-linecap="round"/><line x1="28" y1="28" x2="30" y2="36" stroke="#ff7070" stroke-width="2" stroke-linecap="round"/><line x1="34" y1="26" x2="38" y2="34" stroke="#ff7070" stroke-width="2" stroke-linecap="round"/></g><g transform="translate(150,170)"><ellipse cx="20" cy="18" rx="16" ry="11" fill="#ff8080"/><circle cx="14" cy="10" r="2.5" fill="#fff"/><circle cx="26" cy="10" r="2.5" fill="#fff"/><circle cx="14" cy="10" r="1.2" fill="#333"/><circle cx="26" cy="10" r="1.2" fill="#333"/><ellipse cx="-2" cy="22" rx="4" ry="3" fill="#ff8080"/><ellipse cx="42" cy="22" rx="4" ry="3" fill="#ff8080"/><line x1="6" y1="26" x2="3" y2="32" stroke="#ff8080" stroke-width="2" stroke-linecap="round"/><line x1="34" y1="26" x2="37" y2="32" stroke="#ff8080" stroke-width="2" stroke-linecap="round"/></g><g transform="translate(180,40)"><ellipse cx="15" cy="12" rx="13" ry="8" fill="#ff9090"/><circle cx="11" cy="8" r="2" fill="#fff"/><circle cx="19" cy="8" r="2" fill="#fff"/><circle cx="11" cy="8" r="1" fill="#333"/><circle cx="19" cy="8" r="1" fill="#333"/></g><circle cx="120" cy="80" r="2" fill="#fff" opacity="0.5"/><circle cx="90" cy="140" r="2" fill="#fff" opacity="0.5"/><circle cx="210" cy="110" r="3" fill="#fff" opacity="0.5"/></g></svg>`;
+function bubble(x: number, y: number, r: number, opacity = 0.6) {
+  return `<circle cx="${x}" cy="${y}" r="${r}" fill="#fff" opacity="${opacity}"/>`;
+}
 
-const PINK_SEA_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="260" height="260" viewBox="0 0 260 260"><defs><linearGradient id="bg3" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#fff0f5"/><stop offset="50%" stop-color="#ffdbe8"/><stop offset="100%" stop-color="#ffc7d8"/></linearGradient></defs><rect width="260" height="260" fill="url(#bg3)"/><g opacity="0.55"><path d="M0 60 Q30 50 60 60 T120 60 T180 60 T260 60" stroke="#ff9bb8" stroke-width="1.5" fill="none" opacity="0.4"/><path d="M0 160 Q40 150 80 160 T160 160 T240 160 T320 160" stroke="#ff9bb8" stroke-width="1.5" fill="none" opacity="0.4"/><g transform="translate(30,90)"><ellipse cx="20" cy="10" rx="18" ry="9" fill="#ff8fa8"/><polygon points="2,10 -10,2 -10,18" fill="#ff8fa8"/><circle cx="30" cy="7" r="1.8" fill="#fff"/><path d="M10 12 Q15 15 20 12" stroke="#ff5c7c" stroke-width="1" fill="none"/></g><g transform="translate(130,40)"><ellipse cx="18" cy="16" rx="16" ry="10" fill="#ff7a8e"/><circle cx="12" cy="10" r="2.5" fill="#fff"/><circle cx="24" cy="10" r="2.5" fill="#fff"/><circle cx="12" cy="10" r="1.2" fill="#333"/><circle cx="24" cy="10" r="1.2" fill="#333"/><ellipse cx="-3" cy="19" rx="4" ry="3" fill="#ff7a8e"/><ellipse cx="39" cy="19" rx="4" ry="3" fill="#ff7a8e"/><line x1="6" y1="24" x2="3" y2="30" stroke="#ff7a8e" stroke-width="2" stroke-linecap="round"/><line x1="30" y1="24" x2="33" y2="30" stroke="#ff7a8e" stroke-width="2" stroke-linecap="round"/></g><g transform="translate(160,180) scale(-1,1)"><ellipse cx="20" cy="10" rx="20" ry="10" fill="#ffa5b8"/><polygon points="2,10 -12,0 -12,20" fill="#ffa5b8"/><circle cx="32" cy="7" r="2" fill="#fff"/></g><g transform="translate(70,220)"><ellipse cx="12" cy="6" rx="11" ry="5" fill="#ffb3c5"/><polygon points="2,6 -6,1 -6,11" fill="#ffb3c5"/><circle cx="18" cy="5" r="1" fill="#fff"/></g><circle cx="100" cy="200" r="3" fill="#fff" opacity="0.6"/><circle cx="95" cy="190" r="2" fill="#fff" opacity="0.5"/><circle cx="220" cy="100" r="2.5" fill="#fff" opacity="0.5"/><circle cx="200" cy="230" r="2" fill="#fff" opacity="0.5"/></g></svg>`;
+// 400x800 — ориентация телефона
+export const PINK_FISH_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="400" height="800" viewBox="0 0 400 800" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ffe8f0"/>
+      <stop offset="100%" stop-color="#ffc4d5"/>
+    </linearGradient>
+  </defs>
+  <rect width="400" height="800" fill="url(#bg)"/>
+  <g opacity="0.6">
+    ${fish(40, 80, 2, '#ff8fa8')}
+    ${fish(250, 160, 1.6, '#ffa5b8', true)}
+    ${fish(80, 260, 1.8, '#ff7a99')}
+    ${fish(280, 340, 1.4, '#ffb3c5', true)}
+    ${fish(50, 440, 2.2, '#ff9bb5')}
+    ${fish(260, 540, 1.7, '#ff8098', true)}
+    ${fish(100, 640, 1.5, '#ffa5b8')}
+    ${fish(290, 720, 2, '#ff7a99', true)}
+    ${bubble(160, 60, 4, 0.7)}
+    ${bubble(170, 45, 2.5, 0.5)}
+    ${bubble(320, 200, 3, 0.6)}
+    ${bubble(60, 380, 3, 0.6)}
+    ${bubble(200, 500, 4, 0.6)}
+    ${bubble(350, 620, 2.5, 0.5)}
+    ${bubble(140, 750, 3, 0.5)}
+  </g>
+</svg>`;
+
+export const CORAL_CRAB_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="400" height="800" viewBox="0 0 400 800" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="bg2" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ffe1d1"/>
+      <stop offset="100%" stop-color="#ffbfc7"/>
+    </linearGradient>
+  </defs>
+  <rect width="400" height="800" fill="url(#bg2)"/>
+  <g opacity="0.65">
+    ${crab(60, 100, 1.8, '#ff7575')}
+    ${crab(250, 220, 1.5, '#ff8585')}
+    ${crab(90, 360, 2, '#ff6f6f')}
+    ${crab(270, 480, 1.6, '#ff8080')}
+    ${crab(50, 580, 1.7, '#ff7a7a')}
+    ${crab(280, 680, 1.4, '#ff9090')}
+    ${bubble(180, 80, 3, 0.5)}
+    ${bubble(340, 160, 2.5, 0.5)}
+    ${bubble(160, 300, 3, 0.5)}
+    ${bubble(60, 480, 2.5, 0.5)}
+    ${bubble(210, 560, 3, 0.5)}
+    ${bubble(350, 620, 2, 0.5)}
+  </g>
+</svg>`;
+
+export const PINK_SEA_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="400" height="800" viewBox="0 0 400 800" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="bg3" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#fff0f5"/>
+      <stop offset="50%" stop-color="#ffdbe8"/>
+      <stop offset="100%" stop-color="#ffc0d2"/>
+    </linearGradient>
+  </defs>
+  <rect width="400" height="800" fill="url(#bg3)"/>
+  <g opacity="0.6">
+    <path d="M0 120 Q50 100 100 120 T200 120 T300 120 T400 120" stroke="#ff9bb8" stroke-width="2" fill="none" opacity="0.4"/>
+    <path d="M0 300 Q60 280 120 300 T240 300 T360 300 T480 300" stroke="#ff9bb8" stroke-width="2" fill="none" opacity="0.4"/>
+    <path d="M0 500 Q50 480 100 500 T200 500 T300 500 T400 500" stroke="#ff9bb8" stroke-width="2" fill="none" opacity="0.4"/>
+    <path d="M0 680 Q60 660 120 680 T240 680 T360 680 T480 680" stroke="#ff9bb8" stroke-width="2" fill="none" opacity="0.4"/>
+    ${fish(60, 60, 2, '#ff8fa8')}
+    ${crab(240, 140, 1.6, '#ff7a8e')}
+    ${fish(80, 220, 1.5, '#ffa5b8', true)}
+    ${fish(260, 330, 2, '#ff8fa8')}
+    ${crab(50, 400, 1.5, '#ff7a8e')}
+    ${fish(270, 470, 1.7, '#ffb3c5', true)}
+    ${fish(60, 560, 1.8, '#ff7a99')}
+    ${crab(260, 620, 1.4, '#ff8a9c')}
+    ${fish(80, 710, 1.6, '#ffa5b8', true)}
+    ${bubble(180, 100, 4, 0.6)}
+    ${bubble(170, 80, 2.5, 0.5)}
+    ${bubble(320, 260, 3, 0.5)}
+    ${bubble(120, 440, 3, 0.5)}
+    ${bubble(320, 540, 2.5, 0.5)}
+    ${bubble(200, 680, 4, 0.6)}
+  </g>
+</svg>`;
 
 export const WALLPAPER_SVGS: Record<string, string> = {
-  pink_fish: svgUrl(PINK_FISH_SVG),
-  coral_crab: svgUrl(CORAL_CRAB_SVG),
-  pink_sea: svgUrl(PINK_SEA_SVG),
+  pink_fish: PINK_FISH_SVG,
+  coral_crab: CORAL_CRAB_SVG,
+  pink_sea: PINK_SEA_SVG,
 };

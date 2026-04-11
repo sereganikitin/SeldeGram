@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { View, Image, StyleSheet } from 'react-native';
+import { SvgXml } from 'react-native-svg';
 import { parseWallpaper } from '../wallpapers';
 import { getMediaUrl } from '../media';
 import { useColors } from '../theme';
@@ -33,14 +34,12 @@ export function ChatBackground({ wallpaper, children }: Props) {
 
   if (parsed?.kind === 'preset') {
     const bg = parsed.preset.color2 ?? parsed.preset.color1;
-    if (parsed.preset.patternUri) {
+    if (parsed.preset.patternSvg) {
       return (
         <View style={{ flex: 1, backgroundColor: bg }}>
-          <Image
-            source={{ uri: parsed.preset.patternUri }}
-            style={StyleSheet.absoluteFill}
-            resizeMode="repeat"
-          />
+          <View style={StyleSheet.absoluteFill} pointerEvents="none">
+            <SvgXml xml={parsed.preset.patternSvg} width="100%" height="100%" preserveAspectRatio="xMidYMid slice" />
+          </View>
           {children}
         </View>
       );
