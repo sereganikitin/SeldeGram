@@ -4,7 +4,10 @@
       "Bash(curl -s https://api.github.com/repos/nextlevelbuilder/ui-ux-pro-max-skill)",
       "Bash(curl -s https://api.github.com/repos/nextlevelbuilder/ui-ux-pro-max-skill/contents/)",
       "Bash(curl -s https://raw.githubusercontent.com/nextlevelbuilder/ui-ux-pro-max-skill/main/skill.json)",
-      "Bash(xargs sed:*)"
+      "Bash(xargs sed:*)",
+      "Bash(find components:*)",
+      "Bash(find app:*)",
+      "Bash(find src/screens -name '*.tsx' -exec sed -i -e 's/backgroundColor: '\\\\''#fff'\\\\''/backgroundColor: '\\\\''#fff5f9'\\\\''/g' -e 's/backgroundColor: '\\\\''#fafafa'\\\\''/backgroundColor: '\\\\''#ffe8f0'\\\\''/g' -e 's/backgroundColor: '\\\\''#f5f5f5'\\\\''/backgroundColor: '\\\\''#ffe8f0'\\\\''/g' -e 's/borderBottomColor: '\\\\''#eee'\\\\''/borderBottomColor: '\\\\''#ffd4e1'\\\\''/g' -e 's/borderColor: '\\\\''#eee'\\\\''/borderColor: '\\\\''#ffd4e1'\\\\''/g' -e 's/borderColor: '\\\\''#ddd'\\\\''/borderColor: '\\\\''#ffd4e1'\\\\''/g' -e 's/color: '\\\\''#777'\\\\''/color: '\\\\''#8c6471'\\\\''/g' -e 's/color: '\\\\''#666'\\\\''/color: '\\\\''#8c6471'\\\\''/g' -e 's/color: '\\\\''#888'\\\\''/color: '\\\\''#8c6471'\\\\''/g' -e 's/color: '\\\\''#999'\\\\''/color: '\\\\''#8c6471'\\\\''/g' -e 's/color: '\\\\''#aaa'\\\\''/color: '\\\\''#b59aa4'\\\\''/g' '{}' ';')"
     ]
   }
 }

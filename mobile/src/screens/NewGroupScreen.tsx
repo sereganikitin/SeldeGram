@@ -103,19 +103,19 @@ export function NewGroupScreen({ navigation }: Props) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 20, backgroundColor: '#fff' },
+  container: { flex: 1, padding: 20, backgroundColor: '#fff5f9' },
   chips: { flexGrow: 0, marginBottom: 12 },
-  chip: { backgroundColor: '#5fe3d4', borderRadius: 16, paddingHorizontal: 12, paddingVertical: 6, marginRight: 6 },
+  chip: { backgroundColor: '#ff7a99', borderRadius: 16, paddingHorizontal: 12, paddingVertical: 6, marginRight: 6 },
   chipText: { color: '#fff', fontSize: 14 },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#eee',
+    borderBottomColor: '#ffd4e1',
     gap: 12,
   },
   name: { fontSize: 16, fontWeight: '600' },
-  username: { fontSize: 13, color: '#777', marginTop: 2 },
-  check: { fontSize: 22, color: '#5fe3d4', width: 30, textAlign: 'right' },
+  username: { fontSize: 13, color: '#8c6471', marginTop: 2 },
+  check: { fontSize: 22, color: '#ff7a99', width: 30, textAlign: 'right' },
 });

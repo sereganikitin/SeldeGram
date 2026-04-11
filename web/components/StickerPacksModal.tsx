@@ -46,7 +46,7 @@ export function StickerPacksModal({ open, onClose }: Props) {
           <div className="flex gap-2 mb-4">
             <button
               onClick={() => setView("search")}
-              className="flex-1 bg-slate-100 hover:bg-slate-200 py-2 rounded-lg font-semibold text-sm"
+              className="flex-1 bg-cream-alt hover:bg-cream-alt py-2 rounded-lg font-semibold text-sm"
             >
               🔎 Поиск
             </button>
@@ -57,13 +57,13 @@ export function StickerPacksModal({ open, onClose }: Props) {
               + Создать пак
             </button>
           </div>
-          <div className="text-xs font-semibold text-slate-500 mb-2">МОИ ПАКИ</div>
-          {my.length === 0 && <div className="text-slate-400 text-sm py-4 text-center">Пока ничего нет</div>}
+          <div className="text-xs font-semibold text-ink-muted mb-2">МОИ ПАКИ</div>
+          {my.length === 0 && <div className="text-ink-muted text-sm py-4 text-center">Пока ничего нет</div>}
           {my.map((p) => (
             <button
               key={p.id}
               onClick={() => openPack(p.id)}
-              className="w-full flex items-center gap-3 p-2 hover:bg-slate-50 rounded-lg text-left"
+              className="w-full flex items-center gap-3 p-2 hover:bg-cream rounded-lg text-left"
             >
               {p.coverKey ? (
                 <StickerImage mediaKey={p.coverKey} size={48} />
@@ -72,7 +72,7 @@ export function StickerPacksModal({ open, onClose }: Props) {
               )}
               <div>
                 <div className="font-semibold">{p.name}</div>
-                <div className="text-xs text-slate-500">@{p.slug} · {p.stickers.length} стикеров</div>
+                <div className="text-xs text-ink-muted">@{p.slug} · {p.stickers.length} стикеров</div>
               </div>
             </button>
           ))}
@@ -122,14 +122,14 @@ function SearchView({ onBack }: { onBack: () => void }) {
         placeholder="Поиск по @slug или названию"
         value={q}
         onChange={(e) => setQ(e.target.value)}
-        className="w-full px-4 py-3 bg-slate-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand mb-3"
+        className="w-full px-4 py-3 bg-cream-alt rounded-lg focus:outline-none focus:ring-2 focus:ring-brand mb-3"
       />
       {results.map((p) => (
-        <div key={p.id} className="flex items-center gap-3 p-2 hover:bg-slate-50 rounded-lg">
+        <div key={p.id} className="flex items-center gap-3 p-2 hover:bg-cream rounded-lg">
           {p.coverKey ? <StickerImage mediaKey={p.coverKey} size={48} /> : <div className="w-12 h-12 bg-slate-200 rounded" />}
           <div className="flex-1">
             <div className="font-semibold">{p.name}</div>
-            <div className="text-xs text-slate-500">@{p.slug} · {p._count.stickers} стикеров</div>
+            <div className="text-xs text-ink-muted">@{p.slug} · {p._count.stickers} стикеров</div>
           </div>
           <button onClick={() => install(p.id)} className="text-brand-dark font-semibold text-sm">Установить</button>
         </div>
@@ -164,13 +164,13 @@ function CreateView({ onCreated, onCancel }: { onCreated: (id: string) => void; 
         value={name}
         onChange={(e) => setName(e.target.value)}
         placeholder="Название пака"
-        className="w-full px-4 py-3 bg-slate-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand"
+        className="w-full px-4 py-3 bg-cream-alt rounded-lg focus:outline-none focus:ring-2 focus:ring-brand"
       />
       <input
         value={slug}
         onChange={(e) => setSlug(e.target.value.toLowerCase())}
         placeholder="@slug (латиница)"
-        className="w-full px-4 py-3 bg-slate-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand"
+        className="w-full px-4 py-3 bg-cream-alt rounded-lg focus:outline-none focus:ring-2 focus:ring-brand"
       />
       <button
         onClick={create}
@@ -250,14 +250,14 @@ function PackView({ packId, meId, onBack }: { packId: string; meId: string | und
     onBack();
   };
 
-  if (!pack) return <div className="p-5 text-center text-slate-400">Загрузка...</div>;
+  if (!pack) return <div className="p-5 text-center text-ink-muted">Загрузка...</div>;
 
   return (
     <div className="p-5">
       <button onClick={onBack} className="text-brand-dark text-sm mb-3">← Назад</button>
       <div className="text-center mb-4">
         <div className="text-xl font-bold">{pack.name}</div>
-        <div className="text-sm text-slate-500">@{pack.slug} · {pack.stickers.length} стикеров</div>
+        <div className="text-sm text-ink-muted">@{pack.slug} · {pack.stickers.length} стикеров</div>
       </div>
 
       <div className="grid grid-cols-4 gap-2 mb-4">
@@ -284,11 +284,11 @@ function PackView({ packId, meId, onBack }: { packId: string; meId: string | und
       )}
 
       {!installed ? (
-        <button onClick={install} className="w-full bg-slate-100 hover:bg-slate-200 py-2 rounded-lg font-semibold mb-2">
+        <button onClick={install} className="w-full bg-cream-alt hover:bg-cream-alt py-2 rounded-lg font-semibold mb-2">
           Установить
         </button>
       ) : (
-        <button onClick={uninstall} className="w-full bg-slate-100 hover:bg-slate-200 py-2 rounded-lg font-semibold mb-2">
+        <button onClick={uninstall} className="w-full bg-cream-alt hover:bg-cream-alt py-2 rounded-lg font-semibold mb-2">
           Удалить из своих
         </button>
       )}
@@ -309,10 +309,10 @@ function PackView({ packId, meId, onBack }: { packId: string; meId: string | und
               onChange={(e) => setEmoji(e.target.value)}
               maxLength={4}
               placeholder="😀"
-              className="w-full px-4 py-3 border-2 border-slate-200 rounded-lg text-center text-2xl focus:outline-none focus:border-brand"
+              className="w-full px-4 py-3 border-2 border-cream-border rounded-lg text-center text-2xl focus:outline-none focus:border-brand"
             />
             <div className="flex gap-2">
-              <button onClick={() => setPendingFile(null)} className="flex-1 bg-slate-100 py-2 rounded-lg">Отмена</button>
+              <button onClick={() => setPendingFile(null)} className="flex-1 bg-cream-alt py-2 rounded-lg">Отмена</button>
               <button onClick={confirmAdd} disabled={busy || !emoji} className="flex-1 bg-brand text-white py-2 rounded-lg disabled:opacity-50">
                 Добавить
               </button>

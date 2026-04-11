@@ -98,7 +98,7 @@ const styles = StyleSheet.create({
   empty: { textAlign: 'center', padding: 30, color: '#888' },
   emptyHint: { textAlign: 'center', color: '#aaa', fontSize: 12, paddingHorizontal: 20 },
   closeBtn: { alignSelf: 'center', marginTop: 16, padding: 10 },
-  closeText: { color: '#5fe3d4', fontSize: 16 },
+  closeText: { color: '#ff7a99', fontSize: 16 },
   tabsBar: {
     flexGrow: 0,
     borderTopWidth: 1,
@@ -106,6 +106,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
   },
   tab: { paddingVertical: 8, paddingHorizontal: 14 },
-  tabActive: { borderBottomWidth: 2, borderBottomColor: '#5fe3d4' },
+  tabActive: { borderBottomWidth: 2, borderBottomColor: '#ff7a99' },
   tabLabel: { fontSize: 16, fontWeight: '600' },
 });

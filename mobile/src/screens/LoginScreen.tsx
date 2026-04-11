@@ -41,6 +41,6 @@ export function LoginScreen({}: Props) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 24, backgroundColor: '#fff' },
+  container: { flex: 1, padding: 24, backgroundColor: '#fff5f9' },
   title: { fontSize: 28, fontWeight: '700', marginBottom: 24 },
 });

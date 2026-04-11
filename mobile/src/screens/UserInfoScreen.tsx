@@ -105,8 +105,8 @@ export function UserInfoScreen({ route, navigation }: Props) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 20, backgroundColor: '#fff' },
+  container: { flex: 1, padding: 20, backgroundColor: '#fff5f9' },
   header: { alignItems: 'center', marginVertical: 30, gap: 12 },
   name: { fontSize: 24, fontWeight: '700' },
-  username: { fontSize: 16, color: '#777' },
+  username: { fontSize: 16, color: '#8c6471' },
 });

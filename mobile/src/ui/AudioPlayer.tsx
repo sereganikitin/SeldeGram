@@ -77,16 +77,16 @@ export function AudioPlayer({ mediaKey, duration, mine }: Props) {
 
   return (
     <View style={styles.container}>
-      <Pressable onPress={toggle} style={[styles.playBtn, { backgroundColor: mine ? '#fff3' : '#5fe3d422' }]}>
-        <Text style={[styles.playIcon, { color: mine ? '#fff' : '#5fe3d4' }]}>
+      <Pressable onPress={toggle} style={[styles.playBtn, { backgroundColor: mine ? '#fff3' : '#ff7a9922' }]}>
+        <Text style={[styles.playIcon, { color: mine ? '#fff' : '#ff7a99' }]}>
           {playing ? '⏸' : '▶'}
         </Text>
       </Pressable>
       <View style={styles.waveArea}>
         <View style={styles.waveTrack}>
-          <View style={[styles.waveFill, { width: `${Math.round(progress * 100)}%`, backgroundColor: mine ? '#fff' : '#5fe3d4' }]} />
+          <View style={[styles.waveFill, { width: `${Math.round(progress * 100)}%`, backgroundColor: mine ? '#fff' : '#ff7a99' }]} />
         </View>
-        <Text style={[styles.time, { color: mine ? '#cce4ff' : '#888' }]}>
+        <Text style={[styles.time, { color: mine ? '#ffd4e1' : '#8c6471' }]}>
           {playing ? fmt(position) : fmt(totalMs)}
         </Text>
       </View>

@@ -316,15 +316,15 @@ export function ChatView({ chat, onBack, onChatGone, onOpenStickers }: Props) {
           <div className="text-brand-dark text-2xl font-bold">Отпустите файл для отправки</div>
         </div>
       )}
-      <header className="bg-white dark:bg-slate-950 border-b border-slate-200 dark:border-slate-800 px-4 py-3 flex items-center gap-3">
+      <header className="bg-white dark:bg-slate-950 border-b border-cream-border dark:border-slate-800 px-4 py-3 flex items-center gap-3">
         {onBack && (
-          <button onClick={onBack} className="md:hidden text-slate-500 mr-1">
+          <button onClick={onBack} className="md:hidden text-ink-muted mr-1">
             ←
           </button>
         )}
         <button
           onClick={() => setInfoOpen(true)}
-          className="flex items-center gap-3 flex-1 min-w-0 text-left hover:bg-slate-50 dark:hover:bg-slate-900 -mx-2 px-2 py-1 rounded-lg"
+          className="flex items-center gap-3 flex-1 min-w-0 text-left hover:bg-cream dark:hover:bg-slate-900 -mx-2 px-2 py-1 rounded-lg"
         >
           <Avatar id={other?.id ?? chat.id} name={chat.title ?? "?"} avatarKey={other?.avatarKey} size={40} />
           <div className="flex-1 min-w-0">
@@ -336,7 +336,7 @@ export function ChatView({ chat, onBack, onChatGone, onOpenStickers }: Props) {
             {typingName ? (
               <div className="text-xs text-brand-dark italic">{typingName} печатает...</div>
             ) : (
-              <div className="text-xs text-slate-500 dark:text-slate-400">
+              <div className="text-xs text-ink-muted dark:text-ink-muted">
                 {chat.type === "direct" ? "был в сети" : `${chat.memberCount ?? chat.members.length} участников`}
               </div>
             )}
@@ -359,18 +359,18 @@ export function ChatView({ chat, onBack, onChatGone, onOpenStickers }: Props) {
       </header>
 
       {pinnedMsg && !pinnedMsg.deletedAt && (
-        <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur border-b border-slate-200 dark:border-slate-800 px-4 py-2 flex items-center gap-2">
+        <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur border-b border-cream-border dark:border-slate-800 px-4 py-2 flex items-center gap-2">
           <span className="text-brand-dark">📌</span>
           <div className="flex-1 min-w-0">
             <div className="text-xs text-brand-dark font-semibold">Закреплённое</div>
-            <div className="text-sm text-slate-700 dark:text-slate-300 truncate">
+            <div className="text-sm text-ink dark:text-slate-300 truncate">
               {pinnedMsg.content || "📷 Медиа"}
             </div>
           </div>
           {(chat.type === "direct" || chat.viewerRole === "admin") && (
             <button
               onClick={() => api.delete(`/chats/${chat.id}/pin`).catch(() => {})}
-              className="text-slate-400 hover:text-slate-700 dark:hover:text-white text-lg px-2"
+              className="text-ink-muted hover:text-ink dark:hover:text-white text-lg px-2"
               title="Открепить"
             >
               ✕
@@ -380,16 +380,16 @@ export function ChatView({ chat, onBack, onChatGone, onOpenStickers }: Props) {
       )}
 
       {searchOpen && (
-        <div className="bg-white dark:bg-slate-950 border-b border-slate-200 dark:border-slate-800 p-3">
+        <div className="bg-white dark:bg-slate-950 border-b border-cream-border dark:border-slate-800 p-3">
           <input
             value={searchQ}
             onChange={(e) => setSearchQ(e.target.value)}
             autoFocus
             placeholder="Поиск по сообщениям"
-            className="w-full px-3 py-2 bg-slate-100 dark:bg-slate-800 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-brand"
+            className="w-full px-3 py-2 bg-cream-alt dark:bg-slate-800 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-brand"
           />
           {searchResults.length > 0 && (
-            <div className="mt-2 max-h-60 overflow-y-auto border border-slate-200 dark:border-slate-800 rounded-lg">
+            <div className="mt-2 max-h-60 overflow-y-auto border border-cream-border dark:border-slate-800 rounded-lg">
               {searchResults.map((m) => (
                 <button
                   key={m.id}
@@ -398,10 +398,10 @@ export function ChatView({ chat, onBack, onChatGone, onOpenStickers }: Props) {
                     setSearchQ("");
                     document.getElementById(`msg-${m.id}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
                   }}
-                  className="w-full text-left px-3 py-2 border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-900 last:border-b-0"
+                  className="w-full text-left px-3 py-2 border-b border-cream-border dark:border-slate-800 hover:bg-cream dark:hover:bg-slate-900 last:border-b-0"
                 >
                   <div className="text-sm dark:text-white truncate">{m.content}</div>
-                  <div className="text-xs text-slate-500">{senderNameById.get(m.senderId) ?? ""}</div>
+                  <div className="text-xs text-ink-muted">{senderNameById.get(m.senderId) ?? ""}</div>
                 </button>
               ))}
             </div>
@@ -414,7 +414,7 @@ export function ChatView({ chat, onBack, onChatGone, onOpenStickers }: Props) {
           if (item.kind === "date") {
             return (
               <div key={item.id} className="text-center my-3">
-                <span className="bg-white text-slate-500 text-xs px-3 py-1 rounded-full border border-slate-200">
+                <span className="bg-white text-ink-muted text-xs px-3 py-1 rounded-full border border-cream-border">
                   {item.label}
                 </span>
               </div>
@@ -440,10 +440,10 @@ export function ChatView({ chat, onBack, onChatGone, onOpenStickers }: Props) {
       </div>
 
       {(replyTo || editingId) && (
-        <div className="flex items-center gap-3 px-4 py-2 bg-slate-100 dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800">
+        <div className="flex items-center gap-3 px-4 py-2 bg-cream-alt dark:bg-slate-900 border-t border-cream-border dark:border-slate-800">
           <div className="flex-1 min-w-0">
             <div className="text-xs text-brand-dark font-semibold">{editingId ? "Изменение" : "Ответ"}</div>
-            <div className="text-sm text-slate-600 truncate">{editingId ? input : messagePreview(replyTo!)}</div>
+            <div className="text-sm text-ink-muted truncate">{editingId ? input : messagePreview(replyTo!)}</div>
           </div>
           <button
             onClick={() => {
@@ -451,7 +451,7 @@ export function ChatView({ chat, onBack, onChatGone, onOpenStickers }: Props) {
               setEditingId(null);
               if (editingId) setInput("");
             }}
-            className="text-slate-400 hover:text-slate-700 px-2"
+            className="text-ink-muted hover:text-ink px-2"
           >
             ✕
           </button>
@@ -460,7 +460,7 @@ export function ChatView({ chat, onBack, onChatGone, onOpenStickers }: Props) {
 
       {canPost ? (
         <>
-          <div className="flex items-end gap-2 p-3 bg-white dark:bg-slate-950 border-t border-slate-200 dark:border-slate-800">
+          <div className="flex items-end gap-2 p-3 bg-white dark:bg-slate-950 border-t border-cream-border dark:border-slate-800">
             <input
               ref={fileInputRef}
               type="file"
@@ -474,7 +474,7 @@ export function ChatView({ chat, onBack, onChatGone, onOpenStickers }: Props) {
             <button
               onClick={() => fileInputRef.current?.click()}
               disabled={uploading || !!editingId}
-              className="w-10 h-10 rounded-full hover:bg-slate-100 flex items-center justify-center text-xl flex-shrink-0 disabled:opacity-40"
+              className="w-10 h-10 rounded-full hover:bg-cream-alt flex items-center justify-center text-xl flex-shrink-0 disabled:opacity-40"
               title="Прикрепить"
             >
               {uploading ? "⏳" : "📎"}
@@ -489,7 +489,7 @@ export function ChatView({ chat, onBack, onChatGone, onOpenStickers }: Props) {
                 api.post(`/chats/${chat.id}/poll`, { question: q.trim(), options: opts }).catch(() => {});
               }}
               disabled={!!editingId}
-              className="w-10 h-10 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center text-xl flex-shrink-0 disabled:opacity-40"
+              className="w-10 h-10 rounded-full hover:bg-cream-alt dark:hover:bg-slate-800 flex items-center justify-center text-xl flex-shrink-0 disabled:opacity-40"
               title="Опрос"
             >
               📊
@@ -497,7 +497,7 @@ export function ChatView({ chat, onBack, onChatGone, onOpenStickers }: Props) {
             <button
               onClick={() => setStickersOpen((v) => !v)}
               disabled={!!editingId}
-              className="w-10 h-10 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center text-xl flex-shrink-0 disabled:opacity-40"
+              className="w-10 h-10 rounded-full hover:bg-cream-alt dark:hover:bg-slate-800 flex items-center justify-center text-xl flex-shrink-0 disabled:opacity-40"
               title="Стикеры"
             >
               {stickersOpen ? "⌨" : "😀"}
@@ -514,7 +514,7 @@ export function ChatView({ chat, onBack, onChatGone, onOpenStickers }: Props) {
               onFocus={() => setStickersOpen(false)}
               placeholder={editingId ? "Изменить..." : "Сообщение..."}
               rows={1}
-              className="flex-1 resize-none px-4 py-2 bg-slate-100 dark:bg-slate-800 dark:text-white dark:placeholder:text-slate-500 rounded-2xl focus:outline-none focus:ring-2 focus:ring-brand max-h-32"
+              className="flex-1 resize-none px-4 py-2 bg-cream-alt dark:bg-slate-800 dark:text-white dark:placeholder:text-ink-muted rounded-2xl focus:outline-none focus:ring-2 focus:ring-brand max-h-32"
             />
             {input.trim() || editingId ? (
               <button
@@ -538,7 +538,7 @@ export function ChatView({ chat, onBack, onChatGone, onOpenStickers }: Props) {
           {stickersOpen && !voiceRecording && <StickerPicker onPick={sendSticker} onOpenManage={() => { setStickersOpen(false); onOpenStickers(); }} />}
         </>
       ) : (
-        <div className="p-4 text-center text-sm text-slate-500 bg-white border-t border-slate-200">
+        <div className="p-4 text-center text-sm text-ink-muted bg-white border-t border-cream-border">
           Только админы могут писать в канал
         </div>
       )}

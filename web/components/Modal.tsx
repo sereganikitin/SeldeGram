@@ -29,9 +29,9 @@ export function Modal({ open, onClose, title, children, width = "max-w-md" }: Pr
         className={`bg-white dark:bg-slate-900 dark:text-white rounded-2xl shadow-2xl w-full ${width} max-h-[90dvh] flex flex-col overflow-hidden`}
       >
         {title && (
-          <div className="px-5 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+          <div className="px-5 py-4 border-b border-cream-border dark:border-slate-800 flex items-center justify-between">
             <h2 className="font-bold text-lg">{title}</h2>
-            <button onClick={onClose} className="text-slate-400 hover:text-slate-700 dark:hover:text-white text-2xl leading-none">
+            <button onClick={onClose} className="text-ink-muted hover:text-ink dark:hover:text-white text-2xl leading-none">
               ×
             </button>
           </div>

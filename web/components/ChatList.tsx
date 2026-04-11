@@ -93,12 +93,12 @@ export function ChatList({ selectedId, onSelect, onLogout, onNewChat, onOpenStic
   const filtered = chats.filter((c) => (c.title ?? "").toLowerCase().includes(search.toLowerCase()));
 
   return (
-    <aside className="w-full md:w-80 lg:w-96 border-r border-slate-200 dark:border-slate-800 flex flex-col bg-white dark:bg-slate-950">
-      <header className="p-4 border-b border-slate-200 dark:border-slate-800 flex items-center gap-3">
+    <aside className="w-full md:w-80 lg:w-96 border-r border-cream-border dark:border-slate-800 flex flex-col bg-white dark:bg-slate-950">
+      <header className="p-4 border-b border-cream-border dark:border-slate-800 flex items-center gap-3">
         {me && <Avatar id={me.id} name={me.displayName} avatarKey={me.avatarKey} size={40} />}
         <div className="flex-1 min-w-0">
           <div className="font-semibold truncate dark:text-white">{me?.displayName}</div>
-          <div className="text-xs text-slate-500 dark:text-slate-400 truncate">@{me?.username}</div>
+          <div className="text-xs text-ink-muted dark:text-ink-muted truncate">@{me?.username}</div>
         </div>
         <button
           onClick={onNewChat}
@@ -109,33 +109,33 @@ export function ChatList({ selectedId, onSelect, onLogout, onNewChat, onOpenStic
         </button>
         <button
           onClick={onOpenStickers}
-          className="w-9 h-9 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-xl flex items-center justify-center"
+          className="w-9 h-9 rounded-full hover:bg-cream-alt dark:hover:bg-slate-800 text-xl flex items-center justify-center"
           title="Стикерпаки"
         >
           😀
         </button>
         <button
           onClick={onLogout}
-          className="w-9 h-9 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center"
+          className="w-9 h-9 rounded-full hover:bg-cream-alt dark:hover:bg-slate-800 flex items-center justify-center"
           title="Профиль"
         >
           👤
         </button>
       </header>
 
-      <div className="p-3 border-b border-slate-200 dark:border-slate-800">
+      <div className="p-3 border-b border-cream-border dark:border-slate-800">
         <input
           type="text"
           placeholder="Поиск"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="w-full px-3 py-2 bg-slate-100 dark:bg-slate-800 dark:text-white dark:placeholder:text-slate-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand"
+          className="w-full px-3 py-2 bg-cream-alt dark:bg-slate-800 dark:text-white dark:placeholder:text-ink-muted rounded-lg focus:outline-none focus:ring-2 focus:ring-brand"
         />
       </div>
 
       <div className="flex-1 overflow-y-auto">
         {filtered.length === 0 && (
-          <div className="text-center text-slate-400 py-10 px-4 text-sm">
+          <div className="text-center text-ink-muted py-10 px-4 text-sm">
             Чатов нет. Создайте чат в мобильном приложении — он появится здесь.
           </div>
         )}
@@ -145,7 +145,7 @@ export function ChatList({ selectedId, onSelect, onLogout, onNewChat, onOpenStic
             <button
               key={chat.id}
               onClick={() => onSelect(chat)}
-              className={`w-full flex items-center gap-3 px-4 py-3 border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-900 text-left ${
+              className={`w-full flex items-center gap-3 px-4 py-3 border-b border-cream-border dark:border-slate-800 hover:bg-cream dark:hover:bg-slate-900 text-left ${
                 selectedId === chat.id ? "bg-brand/10 dark:bg-brand/20" : ""
               }`}
             >
@@ -158,11 +158,11 @@ export function ChatList({ selectedId, onSelect, onLogout, onNewChat, onOpenStic
                     {chat.title}
                   </div>
                   {chat.lastMessage && (
-                    <div className="text-xs text-slate-400 dark:text-slate-500 flex-shrink-0">{formatTime(chat.lastMessage.createdAt)}</div>
+                    <div className="text-xs text-ink-muted dark:text-ink-muted flex-shrink-0">{formatTime(chat.lastMessage.createdAt)}</div>
                   )}
                 </div>
                 <div className="flex items-center justify-between gap-2 mt-0.5">
-                  <div className="text-sm text-slate-500 dark:text-slate-400 truncate">
+                  <div className="text-sm text-ink-muted dark:text-ink-muted truncate">
                     {chat.lastMessage && !chat.lastMessage.deletedAt ? (
                       <>
                         {chat.lastMessage.senderId === meId && "Вы: "}

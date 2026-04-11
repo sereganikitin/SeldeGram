@@ -67,11 +67,11 @@ export function WallpaperPickerModal({ open, onClose, chatId, onApplied }: Props
               <button
                 key={p.id}
                 onClick={() => apply(p.id === "default" ? null : `preset:${p.id}`)}
-                className="aspect-[4/3] rounded-xl border border-slate-200 dark:border-slate-700 flex items-end p-3 hover:scale-[1.02] transition"
+                className="aspect-[4/3] rounded-xl border border-cream-border dark:border-slate-700 flex items-end p-3 hover:scale-[1.02] transition"
                 style={style}
               >
                 <span
-                  className="text-slate-900 font-semibold text-sm"
+                  className="text-ink font-semibold text-sm"
                   style={{ textShadow: "0 1px 3px rgba(255,255,255,0.7)" }}
                 >
                   {p.name}
@@ -89,7 +89,7 @@ export function WallpaperPickerModal({ open, onClose, chatId, onApplied }: Props
         {chatId && (
           <button
             onClick={() => apply(null)}
-            className="w-full bg-slate-100 dark:bg-slate-800 dark:text-white hover:bg-slate-200 dark:hover:bg-slate-700 py-3 rounded-lg font-semibold"
+            className="w-full bg-cream-alt dark:bg-slate-800 dark:text-white hover:bg-cream-alt dark:hover:bg-slate-700 py-3 rounded-lg font-semibold"
           >
             Сбросить (как по умолчанию)
           </button>

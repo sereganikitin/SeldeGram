@@ -23,7 +23,7 @@ export function NewChatModal({ open, onClose, onCreated }: Props) {
 
   return (
     <Modal open={open} onClose={onClose} title="Новый чат" width="max-w-lg">
-      <div className="flex border-b border-slate-200 sticky top-0 bg-white z-10">
+      <div className="flex border-b border-cream-border sticky top-0 bg-white z-10">
         {([
           ["direct", "💬 Личный"],
           ["group", "👥 Группа"],
@@ -34,7 +34,7 @@ export function NewChatModal({ open, onClose, onCreated }: Props) {
             key={k}
             onClick={() => setTab(k)}
             className={`flex-1 py-3 text-sm font-medium transition ${
-              tab === k ? "text-brand-dark border-b-2 border-brand" : "text-slate-500 hover:text-slate-900"
+              tab === k ? "text-brand-dark border-b-2 border-brand" : "text-ink-muted hover:text-ink"
             }`}
           >
             {label}
@@ -84,19 +84,19 @@ function DirectTab({ onCreated }: { onCreated: (c: Chat) => void }) {
         value={q}
         onChange={(e) => setQ(e.target.value)}
         autoFocus
-        className="w-full px-4 py-3 bg-slate-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand mb-3"
+        className="w-full px-4 py-3 bg-cream-alt rounded-lg focus:outline-none focus:ring-2 focus:ring-brand mb-3"
       />
       <div className="max-h-96 overflow-y-auto">
         {results.map((u) => (
           <button
             key={u.id}
             onClick={() => start(u.username)}
-            className="w-full flex items-center gap-3 p-3 hover:bg-slate-50 rounded-lg text-left"
+            className="w-full flex items-center gap-3 p-3 hover:bg-cream rounded-lg text-left"
           >
             <Avatar id={u.id} name={u.displayName} avatarKey={u.avatarKey} size={40} />
             <div>
               <div className="font-semibold">{u.displayName}</div>
-              <div className="text-xs text-slate-500">@{u.username}</div>
+              <div className="text-xs text-ink-muted">@{u.username}</div>
             </div>
           </button>
         ))}
@@ -154,7 +154,7 @@ function GroupTab({ onCreated }: { onCreated: (c: Chat) => void }) {
         placeholder="Название группы"
         value={title}
         onChange={(e) => setTitle(e.target.value)}
-        className="w-full px-4 py-3 bg-slate-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand"
+        className="w-full px-4 py-3 bg-cream-alt rounded-lg focus:outline-none focus:ring-2 focus:ring-brand"
       />
       {selected.length > 0 && (
         <div className="flex flex-wrap gap-2">
@@ -174,7 +174,7 @@ function GroupTab({ onCreated }: { onCreated: (c: Chat) => void }) {
         placeholder="Добавить участников"
         value={q}
         onChange={(e) => setQ(e.target.value)}
-        className="w-full px-4 py-3 bg-slate-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand"
+        className="w-full px-4 py-3 bg-cream-alt rounded-lg focus:outline-none focus:ring-2 focus:ring-brand"
       />
       <div className="max-h-60 overflow-y-auto">
         {results.map((u) => {
@@ -183,12 +183,12 @@ function GroupTab({ onCreated }: { onCreated: (c: Chat) => void }) {
             <button
               key={u.id}
               onClick={() => toggle(u)}
-              className="w-full flex items-center gap-3 p-2 hover:bg-slate-50 rounded-lg text-left"
+              className="w-full flex items-center gap-3 p-2 hover:bg-cream rounded-lg text-left"
             >
               <Avatar id={u.id} name={u.displayName} avatarKey={u.avatarKey} size={36} />
               <div className="flex-1">
                 <div className="font-semibold text-sm">{u.displayName}</div>
-                <div className="text-xs text-slate-500">@{u.username}</div>
+                <div className="text-xs text-ink-muted">@{u.username}</div>
               </div>
               {isSel && <span className="text-brand-dark">✓</span>}
             </button>
@@ -232,16 +232,16 @@ function ChannelTab({ onCreated }: { onCreated: (c: Chat) => void }) {
         placeholder="Название канала"
         value={title}
         onChange={(e) => setTitle(e.target.value)}
-        className="w-full px-4 py-3 bg-slate-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand"
+        className="w-full px-4 py-3 bg-cream-alt rounded-lg focus:outline-none focus:ring-2 focus:ring-brand"
       />
       <input
         type="text"
         placeholder="@slug (латиница, цифры, подчёркивание)"
         value={slug}
         onChange={(e) => setSlug(e.target.value.toLowerCase())}
-        className="w-full px-4 py-3 bg-slate-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand"
+        className="w-full px-4 py-3 bg-cream-alt rounded-lg focus:outline-none focus:ring-2 focus:ring-brand"
       />
-      <p className="text-xs text-slate-500">По slug канал смогут найти другие пользователи. Изменить нельзя.</p>
+      <p className="text-xs text-ink-muted">По slug канал смогут найти другие пользователи. Изменить нельзя.</p>
       <button
         onClick={create}
         disabled={loading}
@@ -286,15 +286,15 @@ function FindChannelTab({ onCreated }: { onCreated: (c: Chat) => void }) {
         value={q}
         onChange={(e) => setQ(e.target.value)}
         autoFocus
-        className="w-full px-4 py-3 bg-slate-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand mb-3"
+        className="w-full px-4 py-3 bg-cream-alt rounded-lg focus:outline-none focus:ring-2 focus:ring-brand mb-3"
       />
       <div className="max-h-96 overflow-y-auto space-y-1">
         {results.map((c) => (
-          <div key={c.id} className="flex items-center gap-3 p-3 hover:bg-slate-50 rounded-lg">
+          <div key={c.id} className="flex items-center gap-3 p-3 hover:bg-cream rounded-lg">
             <Avatar id={c.id} name={c.title ?? "?"} size={40} />
             <div className="flex-1">
               <div className="font-semibold">{c.title}</div>
-              <div className="text-xs text-slate-500">
+              <div className="text-xs text-ink-muted">
                 @{c.slug} · {c.memberCount} подписчиков
               </div>
             </div>

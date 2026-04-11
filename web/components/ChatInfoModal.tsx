@@ -157,7 +157,7 @@ export function ChatInfoModal({ chatId, open, onClose, onChatGone, onOpenWallpap
             </h3>
           )}
           {chat.slug && <div className="text-sm text-brand-dark mt-1">@{chat.slug}</div>}
-          <div className="text-sm text-slate-500 mt-1">
+          <div className="text-sm text-ink-muted mt-1">
             {chat.memberCount ?? chat.members.length}{" "}
             {chat.type === "channel" ? "подписчиков" : isDirect ? "участника" : "участников"}
           </div>
@@ -170,19 +170,19 @@ export function ChatInfoModal({ chatId, open, onClose, onChatGone, onOpenWallpap
               placeholder="+ Добавить участника"
               value={addQ}
               onChange={(e) => searchToAdd(e.target.value)}
-              className="w-full px-4 py-2 bg-slate-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand"
+              className="w-full px-4 py-2 bg-cream-alt rounded-lg focus:outline-none focus:ring-2 focus:ring-brand"
             />
             {addResults.length > 0 && (
-              <div className="mt-2 border border-slate-200 rounded-lg overflow-hidden max-h-40 overflow-y-auto">
+              <div className="mt-2 border border-cream-border rounded-lg overflow-hidden max-h-40 overflow-y-auto">
                 {addResults.map((u) => (
                   <button
                     key={u.id}
                     onClick={() => addUser(u.username)}
-                    className="w-full flex items-center gap-2 p-2 hover:bg-slate-50 text-left"
+                    className="w-full flex items-center gap-2 p-2 hover:bg-cream text-left"
                   >
                     <Avatar id={u.id} name={u.displayName} avatarKey={u.avatarKey} size={32} />
                     <span className="text-sm">{u.displayName}</span>
-                    <span className="text-xs text-slate-500">@{u.username}</span>
+                    <span className="text-xs text-ink-muted">@{u.username}</span>
                   </button>
                 ))}
               </div>
@@ -195,13 +195,13 @@ export function ChatInfoModal({ chatId, open, onClose, onChatGone, onOpenWallpap
             const isMe = m.id === meId;
             const canRemove = isMe || (isAdmin && !isDirect);
             return (
-              <div key={m.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-50">
+              <div key={m.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-cream">
                 <Avatar id={m.id} name={m.displayName} avatarKey={m.avatarKey} size={40} />
                 <div className="flex-1">
                   <div className="font-semibold text-sm">
                     {m.displayName} {isMe && <span className="text-brand-dark font-normal">(вы)</span>}
                   </div>
-                  <div className="text-xs text-slate-500">
+                  <div className="text-xs text-ink-muted">
                     @{m.username} {m.role === "admin" && "· админ"}
                   </div>
                 </div>
@@ -221,7 +221,7 @@ export function ChatInfoModal({ chatId, open, onClose, onChatGone, onOpenWallpap
         {onOpenWallpaper && (
           <button
             onClick={onOpenWallpaper}
-            className="w-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-white font-semibold py-3 rounded-lg mb-2"
+            className="w-full bg-cream-alt hover:bg-cream-alt dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-white font-semibold py-3 rounded-lg mb-2"
           >
             🖼 Обои чата
           </button>
@@ -230,7 +230,7 @@ export function ChatInfoModal({ chatId, open, onClose, onChatGone, onOpenWallpap
           <>
             <button
               onClick={toggleBlock}
-              className="w-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-white font-semibold py-3 rounded-lg mb-2"
+              className="w-full bg-cream-alt hover:bg-cream-alt dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-white font-semibold py-3 rounded-lg mb-2"
             >
               {blocked ? "✓ Разблокировать" : "🚫 Заблокировать"}
             </button>

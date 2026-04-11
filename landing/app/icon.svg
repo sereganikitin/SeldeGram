@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#fff0f5"/>
+      <stop offset="100%" stop-color="#ffd4e1"/>
+    </linearGradient>
+    <linearGradient id="crab" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ff9bb5"/>
+      <stop offset="100%" stop-color="#e84e76"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="14" fill="url(#bg)"/>
+  <ellipse cx="11" cy="34" rx="7" ry="5" fill="url(#crab)"/>
+  <ellipse cx="53" cy="34" rx="7" ry="5" fill="url(#crab)"/>
+  <ellipse cx="32" cy="36" rx="20" ry="14" fill="url(#crab)"/>
+  <circle cx="24" cy="28" r="4" fill="#fff"/>
+  <circle cx="40" cy="28" r="4" fill="#fff"/>
+  <circle cx="24" cy="28" r="2" fill="#3d1a28"/>
+  <circle cx="40" cy="28" r="2" fill="#3d1a28"/>
+  <line x1="15" y1="44" x2="10" y2="52" stroke="#e84e76" stroke-width="3" stroke-linecap="round"/>
+  <line x1="22" y1="48" x2="20" y2="56" stroke="#e84e76" stroke-width="3" stroke-linecap="round"/>
+  <line x1="42" y1="48" x2="44" y2="56" stroke="#e84e76" stroke-width="3" stroke-linecap="round"/>
+  <line x1="49" y1="44" x2="54" y2="52" stroke="#e84e76" stroke-width="3" stroke-linecap="round"/>
+  <path d="M28 38 Q32 41 36 38" stroke="#fff" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+  <ellipse cx="27" cy="33" rx="6" ry="2" fill="#ffc4d5" opacity="0.5"/>
+</svg>

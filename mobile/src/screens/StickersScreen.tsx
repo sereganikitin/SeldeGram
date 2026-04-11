@@ -111,20 +111,20 @@ export function StickersScreen({ navigation }: Props) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 16, backgroundColor: '#fff' },
-  section: { fontSize: 14, fontWeight: '600', color: '#666', marginTop: 16, marginBottom: 8 },
+  container: { flex: 1, padding: 16, backgroundColor: '#fff5f9' },
+  section: { fontSize: 14, fontWeight: '600', color: '#8c6471', marginTop: 16, marginBottom: 8 },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 10,
     gap: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#eee',
+    borderBottomColor: '#ffd4e1',
   },
   coverPh: { width: 50, height: 50, backgroundColor: '#eee', borderRadius: 8 },
   name: { fontSize: 16, fontWeight: '600' },
-  meta: { fontSize: 13, color: '#777', marginTop: 2 },
-  installBtn: { color: '#5fe3d4', fontWeight: '600' },
-  empty: { color: '#aaa', textAlign: 'center', padding: 12 },
-  searchInput: { borderWidth: 1, borderColor: '#ddd', borderRadius: 10, padding: 12, fontSize: 16 },
+  meta: { fontSize: 13, color: '#8c6471', marginTop: 2 },
+  installBtn: { color: '#ff7a99', fontWeight: '600' },
+  empty: { color: '#b59aa4', textAlign: 'center', padding: 12 },
+  searchInput: { borderWidth: 1, borderColor: '#ffd4e1', borderRadius: 10, padding: 12, fontSize: 16 },
 });

@@ -41,7 +41,7 @@ export function VerifyScreen({ route }: Props) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 24, backgroundColor: '#fff' },
+  container: { flex: 1, padding: 24, backgroundColor: '#fff5f9' },
   title: { fontSize: 28, fontWeight: '700', marginBottom: 8 },
-  hint: { fontSize: 14, color: '#666', marginBottom: 24 },
+  hint: { fontSize: 14, color: '#8c6471', marginBottom: 24 },
 });

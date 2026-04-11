@@ -162,20 +162,20 @@ export function StickerPackScreen({ route, navigation }: Props) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 16, backgroundColor: '#fff' },
+  container: { flex: 1, padding: 16, backgroundColor: '#fff5f9' },
   header: { alignItems: 'center', marginBottom: 16 },
   name: { fontSize: 22, fontWeight: '700' },
-  slug: { fontSize: 13, color: '#777', marginTop: 4 },
+  slug: { fontSize: 13, color: '#8c6471', marginTop: 4 },
   cell: { flex: 1 / 3, alignItems: 'center', padding: 8 },
   cellEmoji: { fontSize: 18, marginTop: 4 },
-  empty: { textAlign: 'center', color: '#aaa', padding: 30 },
+  empty: { textAlign: 'center', color: '#b59aa4', padding: 30 },
   actions: { gap: 10, marginTop: 12 },
   modalBg: { flex: 1, backgroundColor: '#0007', justifyContent: 'center', alignItems: 'center' },
-  modalBox: { backgroundColor: '#fff', borderRadius: 16, padding: 20, width: '80%', gap: 12 },
+  modalBox: { backgroundColor: '#fff5f9', borderRadius: 16, padding: 20, width: '80%', gap: 12 },
   modalTitle: { fontSize: 16, fontWeight: '600', textAlign: 'center' },
   modalInput: {
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: '#ffd4e1',
     borderRadius: 10,
     padding: 14,
     fontSize: 24,

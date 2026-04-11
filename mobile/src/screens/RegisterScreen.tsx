@@ -45,6 +45,6 @@ export function RegisterScreen({}: Props) {
 }
 
 const styles = StyleSheet.create({
-  container: { padding: 24, backgroundColor: '#fff', flexGrow: 1 },
+  container: { padding: 24, backgroundColor: '#fff5f9', flexGrow: 1 },
   title: { fontSize: 28, fontWeight: '700', marginBottom: 24 },
 });

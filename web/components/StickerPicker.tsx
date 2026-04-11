@@ -40,11 +40,11 @@ export function StickerPicker({ onPick, onOpenManage }: Props) {
     })();
   }, []);
 
-  if (loading) return <div className="h-72 flex items-center justify-center text-slate-400">Загрузка...</div>;
+  if (loading) return <div className="h-72 flex items-center justify-center text-ink-muted">Загрузка...</div>;
 
   if (tabs.length === 0) {
     return (
-      <div className="h-72 flex flex-col items-center justify-center gap-3 text-slate-400">
+      <div className="h-72 flex flex-col items-center justify-center gap-3 text-ink-muted">
         <div>У вас нет установленных стикерпаков</div>
         <button onClick={onOpenManage} className="text-brand-dark font-semibold">
           Открыть стикерпаки
@@ -56,25 +56,25 @@ export function StickerPicker({ onPick, onOpenManage }: Props) {
   const active = tabs[activeIdx];
 
   return (
-    <div className="h-80 bg-white border-t border-slate-200 flex flex-col">
+    <div className="h-80 bg-white border-t border-cream-border flex flex-col">
       <div className="flex-1 overflow-y-auto p-2 grid grid-cols-6 sm:grid-cols-8 gap-2">
         {active.stickers.map((s) => (
           <button
             key={s.id}
             onClick={() => onPick(s.id)}
-            className="flex items-center justify-center hover:bg-slate-100 rounded p-1"
+            className="flex items-center justify-center hover:bg-cream-alt rounded p-1"
           >
             <StickerImage mediaKey={s.mediaKey} mediaType={s.mediaType} size={64} />
           </button>
         ))}
       </div>
-      <div className="flex border-t border-slate-200 bg-slate-50">
+      <div className="flex border-t border-cream-border bg-cream">
         {tabs.map((t, i) => (
           <button
             key={t.id}
             onClick={() => setActiveIdx(i)}
             className={`px-3 py-2 text-sm font-semibold ${
-              i === activeIdx ? "border-t-2 border-brand text-brand-dark" : "text-slate-500"
+              i === activeIdx ? "border-t-2 border-brand text-brand-dark" : "text-ink-muted"
             }`}
           >
             {t.label}

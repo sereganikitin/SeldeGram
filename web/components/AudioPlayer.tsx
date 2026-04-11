@@ -79,7 +79,7 @@ export function AudioPlayer({ mediaKey, duration, mine }: Props) {
             style={{ width: `${Math.round(progress * 100)}%` }}
           />
         </div>
-        <div className={`text-xs mt-1 ${mine ? "text-white/70" : "text-slate-500"}`}>
+        <div className={`text-xs mt-1 ${mine ? "text-white/70" : "text-ink-muted"}`}>
           {playing ? fmt(position) : fmt(totalMs)}
         </div>
       </div>

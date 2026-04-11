@@ -43,8 +43,8 @@ export function ForwardScreen({ route, navigation }: Props) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff' },
-  header: { fontSize: 14, color: '#666', padding: 16 },
+  container: { flex: 1, backgroundColor: '#fff5f9' },
+  header: { fontSize: 14, color: '#8c6471', padding: 16 },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -52,7 +52,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     gap: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#eee',
+    borderBottomColor: '#ffd4e1',
   },
   title: { fontSize: 16, fontWeight: '600' },
 });

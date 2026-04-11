@@ -68,16 +68,16 @@ export function ProfileModal({ open, onClose, onLogout, onOpenWallpaper, onOpenB
         </div>
 
         <div>
-          <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">Имя</label>
+          <label className="block text-xs text-ink-muted dark:text-ink-muted mb-1">Имя</label>
           <input
             value={name}
             onChange={(e) => setName(e.target.value)}
             onBlur={saveName}
-            className="w-full px-4 py-3 bg-slate-100 dark:bg-slate-800 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-brand"
+            className="w-full px-4 py-3 bg-cream-alt dark:bg-slate-800 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-brand"
           />
         </div>
 
-        <div className="text-sm text-slate-500 dark:text-slate-400 space-y-1">
+        <div className="text-sm text-ink-muted dark:text-ink-muted space-y-1">
           <div>@{user.username}</div>
           <div>{user.email}</div>
         </div>
@@ -92,7 +92,7 @@ export function ProfileModal({ open, onClose, onLogout, onOpenWallpaper, onOpenB
                 className={`flex-1 py-2 rounded-lg border text-sm font-medium transition ${
                   themeMode === m
                     ? "bg-brand text-white border-brand"
-                    : "bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 dark:text-white hover:bg-slate-50 dark:hover:bg-slate-700"
+                    : "bg-white dark:bg-slate-800 border-cream-border dark:border-slate-700 dark:text-white hover:bg-cream dark:hover:bg-slate-700"
                 }`}
               >
                 {m === "system" ? "Системная" : m === "light" ? "Светлая" : "Тёмная"}
@@ -103,14 +103,14 @@ export function ProfileModal({ open, onClose, onLogout, onOpenWallpaper, onOpenB
 
         <button
           onClick={onOpenWallpaper}
-          className="w-full bg-slate-100 dark:bg-slate-800 dark:text-white hover:bg-slate-200 dark:hover:bg-slate-700 py-3 rounded-lg font-semibold"
+          className="w-full bg-cream-alt dark:bg-slate-800 dark:text-white hover:bg-cream-alt dark:hover:bg-slate-700 py-3 rounded-lg font-semibold"
         >
           🖼 Обои по умолчанию
         </button>
 
         <button
           onClick={onOpenBlockList}
-          className="w-full bg-slate-100 dark:bg-slate-800 dark:text-white hover:bg-slate-200 dark:hover:bg-slate-700 py-3 rounded-lg font-semibold"
+          className="w-full bg-cream-alt dark:bg-slate-800 dark:text-white hover:bg-cream-alt dark:hover:bg-slate-700 py-3 rounded-lg font-semibold"
         >
           🚫 Заблокированные
         </button>

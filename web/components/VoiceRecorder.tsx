@@ -71,11 +71,11 @@ export function VoiceRecorder({ onRecorded, onCancel }: Props) {
   const fmt = (s: number) => `${Math.floor(s / 60)}:${(s % 60).toString().padStart(2, "0")}`;
 
   return (
-    <div className="flex items-center gap-3 p-3 bg-white dark:bg-slate-950 border-t border-slate-200 dark:border-slate-800">
+    <div className="flex items-center gap-3 p-3 bg-white dark:bg-slate-950 border-t border-cream-border dark:border-slate-800">
       <div className="w-3 h-3 rounded-full bg-red-500 animate-pulse" />
       <div className="font-mono text-lg font-semibold dark:text-white">{fmt(seconds)}</div>
       <div className="flex-1" />
-      <button onClick={cancel} className="text-slate-500 hover:text-slate-800 dark:hover:text-white px-3 py-2">
+      <button onClick={cancel} className="text-ink-muted hover:text-slate-800 dark:hover:text-white px-3 py-2">
         Отмена
       </button>
       <button

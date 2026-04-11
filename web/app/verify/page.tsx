@@ -36,7 +36,7 @@ function VerifyForm() {
     <div className="flex-1 flex items-center justify-center px-4 py-12">
       <div className="w-full max-w-md bg-white rounded-2xl shadow-xl p-8">
         <h1 className="text-2xl font-bold mb-2">Подтверждение</h1>
-        <p className="text-sm text-slate-600 mb-6">
+        <p className="text-sm text-ink-muted mb-6">
           Мы отправили 6-значный код на <b>{email}</b>
         </p>
 
@@ -49,7 +49,7 @@ function VerifyForm() {
             required
             maxLength={6}
             placeholder="123456"
-            className="w-full px-4 py-3 border border-slate-200 rounded-lg focus:outline-none focus:border-brand text-center text-2xl tracking-widest"
+            className="w-full px-4 py-3 border border-cream-border rounded-lg focus:outline-none focus:border-brand text-center text-2xl tracking-widest"
           />
           {error && <div className="text-red-600 text-sm">{error}</div>}
           <button
@@ -67,7 +67,7 @@ function VerifyForm() {
 
 export default function VerifyPage() {
   return (
-    <Suspense fallback={<div className="flex-1 flex items-center justify-center text-slate-400">Загрузка...</div>}>
+    <Suspense fallback={<div className="flex-1 flex items-center justify-center text-ink-muted">Загрузка...</div>}>
       <VerifyForm />
     </Suspense>
   );

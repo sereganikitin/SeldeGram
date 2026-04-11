@@ -116,7 +116,7 @@ export function ChatScreen({ route, navigation }: Props) {
       headerRight: () => (
         <View style={{ flexDirection: 'row' }}>
           <Pressable onPress={() => setSearchOpen((v) => !v)}>
-            <Text style={{ fontSize: 18, color: '#5fe3d4', paddingHorizontal: 8 }}>🔎</Text>
+            <Text style={{ fontSize: 18, color: '#ff7a99', paddingHorizontal: 8 }}>🔎</Text>
           </Pressable>
           <Pressable
             onPress={() => {
@@ -124,7 +124,7 @@ export function ChatScreen({ route, navigation }: Props) {
               else navigation.navigate('GroupInfo', { chatId });
             }}
           >
-            <Text style={{ fontSize: 20, color: '#5fe3d4', paddingHorizontal: 8 }}>ⓘ</Text>
+            <Text style={{ fontSize: 20, color: '#ff7a99', paddingHorizontal: 8 }}>ⓘ</Text>
           </Pressable>
         </View>
       ),
@@ -600,21 +600,21 @@ export function ChatScreen({ route, navigation }: Props) {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  typingBar: { paddingHorizontal: 16, paddingVertical: 4, backgroundColor: '#f5f5f5' },
-  typingText: { fontSize: 12, color: '#5fe3d4', fontStyle: 'italic' },
+  typingBar: { paddingHorizontal: 16, paddingVertical: 4, backgroundColor: '#ffe8f0' },
+  typingText: { fontSize: 12, color: '#ff7a99', fontStyle: 'italic' },
   replyBar: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 12,
     paddingVertical: 8,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#ffe8f0',
     borderTopWidth: 1,
     borderTopColor: '#ddd',
     gap: 12,
   },
-  replyLabel: { fontSize: 12, color: '#5fe3d4', fontWeight: '600' },
+  replyLabel: { fontSize: 12, color: '#ff7a99', fontWeight: '600' },
   replyContent: { fontSize: 13, color: '#555', marginTop: 2 },
-  replyClose: { fontSize: 18, color: '#888', paddingHorizontal: 8 },
+  replyClose: { fontSize: 18, color: '#8c6471', paddingHorizontal: 8 },
   inputBar: {
     flexDirection: 'row',
     alignItems: 'flex-end',
@@ -628,7 +628,7 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: '#ffd4e1',
     borderRadius: 18,
     paddingHorizontal: 14,
     paddingVertical: 10,
@@ -639,13 +639,13 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#5fe3d4',
+    backgroundColor: '#ff7a99',
     justifyContent: 'center',
     alignItems: 'center',
   },
   sendText: { color: '#fff', fontSize: 22, fontWeight: '700' },
   readOnlyBar: { padding: 14, borderTopWidth: 1, borderTopColor: '#eee', alignItems: 'center' },
-  readOnlyText: { color: '#888', fontSize: 14 },
+  readOnlyText: { color: '#8c6471', fontSize: 14 },
   pinnedBar: { paddingHorizontal: 14, paddingVertical: 8, borderBottomWidth: 1 },
   pinnedLabel: { fontSize: 11, fontWeight: '700' },
   pinnedText: { fontSize: 13, marginTop: 2 },

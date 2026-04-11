@@ -39,21 +39,21 @@ export function PollBubble({ messageId, mine }: Props) {
 
   return (
     <View style={styles.container}>
-      <Text style={[styles.question, { color: mine ? '#fff' : '#000' }]}>{poll.question}</Text>
+      <Text style={[styles.question, { color: mine ? '#fff' : '#3d1a28' }]}>{poll.question}</Text>
       {poll.options.map((opt: string, i: number) => {
         const pct = poll.totalVotes > 0 ? Math.round((poll.counts[i] / poll.totalVotes) * 100) : 0;
         const isMyVote = myVote === i;
         return (
           <Pressable key={i} onPress={() => vote(i)} style={styles.option}>
-            <View style={[styles.bar, { width: `${pct}%`, backgroundColor: mine ? '#fff3' : '#5fe3d422' }]} />
-            <Text style={[styles.optText, { color: mine ? '#fff' : '#333' }, isMyVote && styles.bold]}>
+            <View style={[styles.bar, { width: `${pct}%`, backgroundColor: mine ? '#fff3' : '#ff7a9933' }]} />
+            <Text style={[styles.optText, { color: mine ? '#fff' : '#3d1a28' }, isMyVote && styles.bold]}>
               {isMyVote ? '✓ ' : ''}{opt}
             </Text>
-            <Text style={[styles.pct, { color: mine ? '#cce4ff' : '#888' }]}>{pct}%</Text>
+            <Text style={[styles.pct, { color: mine ? '#ffd4e1' : '#8c6471' }]}>{pct}%</Text>
           </Pressable>
         );
       })}
-      <Text style={[styles.total, { color: mine ? '#cce4ff' : '#888' }]}>
+      <Text style={[styles.total, { color: mine ? '#ffd4e1' : '#8c6471' }]}>
         {poll.totalVotes} голосов
       </Text>
     </View>

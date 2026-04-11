@@ -51,6 +51,6 @@ export function NewChannelScreen({ navigation }: Props) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 20, backgroundColor: '#fff' },
-  hint: { fontSize: 13, color: '#888', marginBottom: 16 },
+  container: { flex: 1, padding: 20, backgroundColor: '#fff5f9' },
+  hint: { fontSize: 13, color: '#8c6471', marginBottom: 16 },
 });

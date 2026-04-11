@@ -44,24 +44,24 @@ export default function LoginPage() {
 
         <form onSubmit={submit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Email</label>
+            <label className="block text-sm font-medium text-ink mb-1">Email</label>
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="w-full px-4 py-3 border border-slate-200 rounded-lg focus:outline-none focus:border-brand"
+              className="w-full px-4 py-3 border border-cream-border rounded-lg focus:outline-none focus:border-brand"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Пароль</label>
+            <label className="block text-sm font-medium text-ink mb-1">Пароль</label>
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
               minLength={8}
-              className="w-full px-4 py-3 border border-slate-200 rounded-lg focus:outline-none focus:border-brand"
+              className="w-full px-4 py-3 border border-cream-border rounded-lg focus:outline-none focus:border-brand"
             />
           </div>
           {error && <div className="text-red-600 text-sm">{error}</div>}
@@ -74,7 +74,7 @@ export default function LoginPage() {
           </button>
         </form>
 
-        <p className="mt-6 text-center text-sm text-slate-600">
+        <p className="mt-6 text-center text-sm text-ink-muted">
           Нет аккаунта?{" "}
           <Link href="/register" className="text-brand-dark font-medium hover:underline">
             Создать

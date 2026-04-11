@@ -57,7 +57,7 @@ export default function ChatsPage() {
   };
 
   if (!hydrated || !user) {
-    return <div className="flex-1 flex items-center justify-center text-slate-400">Загрузка...</div>;
+    return <div className="flex-1 flex items-center justify-center text-ink-muted">Загрузка...</div>;
   }
 
   return (
@@ -81,7 +81,7 @@ export default function ChatsPage() {
               onOpenStickers={() => setStickersOpen(true)}
             />
           ) : (
-            <div className="flex-1 flex items-center justify-center text-slate-400 bg-slate-50 dark:bg-slate-900">
+            <div className="flex-1 flex items-center justify-center text-ink-muted bg-cream dark:bg-slate-900">
               Выберите чат
             </div>
           )}

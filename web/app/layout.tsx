@@ -26,7 +26,7 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className="h-[100dvh] flex flex-col bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 overflow-hidden">
+      <body className="h-[100dvh] flex flex-col bg-cream dark:bg-[#1a0b12] text-ink dark:text-[#ffe8f0] overflow-hidden">
         {children}
       </body>
     </html>

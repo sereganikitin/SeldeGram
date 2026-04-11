@@ -83,7 +83,7 @@ export function MessageBubble({ message, mine, showSenderName, senderName, isRea
       >
         {showSenderName && !mine && <div className="text-xs font-bold text-brand-dark mb-1 ml-1">{senderName}</div>}
         <MediaContent message={message} mine={mine} />
-        <div className="flex items-center gap-1 mt-1 text-[11px] text-slate-500">
+        <div className="flex items-center gap-1 mt-1 text-[11px] text-ink-muted">
           <span>{formatTime(message.createdAt)}</span>
           {mine && <span>{isRead ? "✓✓" : "✓"}</span>}
         </div>
@@ -97,7 +97,7 @@ export function MessageBubble({ message, mine, showSenderName, senderName, isRea
       <div
         onContextMenu={handleContext}
         className={`relative max-w-[78%] px-3 py-2 rounded-2xl ${
-          mine ? "bg-brand text-white" : "bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm"
+          mine ? "bg-brand text-white" : "bg-white dark:bg-slate-800 text-ink dark:text-white shadow-sm"
         }`}
       >
         {showSenderName && !mine && !isDeleted && (
@@ -105,13 +105,13 @@ export function MessageBubble({ message, mine, showSenderName, senderName, isRea
         )}
 
         {message.forwardedFromId && !isDeleted && (
-          <div className={`text-xs italic mb-1 ${mine ? "text-white/70" : "text-slate-500"}`}>↪ Переслано</div>
+          <div className={`text-xs italic mb-1 ${mine ? "text-white/70" : "text-ink-muted"}`}>↪ Переслано</div>
         )}
 
         {message.replyTo && !isDeleted && (
           <div
             className={`border-l-2 pl-2 py-1 mb-1 text-xs rounded ${
-              mine ? "border-white/70 bg-white/10 text-white/90" : "border-brand bg-brand/10 text-slate-700"
+              mine ? "border-white/70 bg-white/10 text-white/90" : "border-brand bg-brand/10 text-ink"
             }`}
           >
             {messagePreview(message.replyTo)}
@@ -119,7 +119,7 @@ export function MessageBubble({ message, mine, showSenderName, senderName, isRea
         )}
 
         {isDeleted ? (
-          <span className={`italic text-sm ${mine ? "text-white/70" : "text-slate-500"}`}>удалено</span>
+          <span className={`italic text-sm ${mine ? "text-white/70" : "text-ink-muted"}`}>удалено</span>
         ) : (
           <>
             <MediaContent message={message} mine={mine} />
@@ -131,7 +131,7 @@ export function MessageBubble({ message, mine, showSenderName, senderName, isRea
           </>
         )}
 
-        <div className={`flex items-center gap-1 justify-end text-[11px] mt-1 ${mine ? "text-white/70" : "text-slate-500"}`}>
+        <div className={`flex items-center gap-1 justify-end text-[11px] mt-1 ${mine ? "text-white/70" : "text-ink-muted"}`}>
           {message.editedAt && !isDeleted && <span className="italic">изм.</span>}
           <span>{formatTime(message.createdAt)}</span>
           {mine && !isDeleted && <span>{isRead ? "✓✓" : "✓"}</span>}
@@ -159,25 +159,25 @@ function ActionMenu({
   return (
     <>
       <div className="fixed inset-0 z-40" onClick={onClose} />
-      <div className="absolute z-50 bottom-full mb-1 right-0 bg-white dark:bg-slate-800 dark:text-white shadow-xl rounded-lg border border-slate-200 dark:border-slate-700 py-1 min-w-[160px]">
-        <button onClick={() => onAction("reply")} className="w-full text-left px-3 py-2 text-sm hover:bg-slate-50 dark:hover:bg-slate-700">
+      <div className="absolute z-50 bottom-full mb-1 right-0 bg-white dark:bg-slate-800 dark:text-white shadow-xl rounded-lg border border-cream-border dark:border-slate-700 py-1 min-w-[160px]">
+        <button onClick={() => onAction("reply")} className="w-full text-left px-3 py-2 text-sm hover:bg-cream dark:hover:bg-slate-700">
           ↩ Ответить
         </button>
-        <button onClick={() => onAction("pin")} className="w-full text-left px-3 py-2 text-sm hover:bg-slate-50 dark:hover:bg-slate-700">
+        <button onClick={() => onAction("pin")} className="w-full text-left px-3 py-2 text-sm hover:bg-cream dark:hover:bg-slate-700">
           📌 Закрепить
         </button>
         {canComment && (
-          <button onClick={() => onAction("thread")} className="w-full text-left px-3 py-2 text-sm hover:bg-slate-50 dark:hover:bg-slate-700">
+          <button onClick={() => onAction("thread")} className="w-full text-left px-3 py-2 text-sm hover:bg-cream dark:hover:bg-slate-700">
             💬 Комментарии
           </button>
         )}
         {hasContent && (
-          <button onClick={() => onAction("copy")} className="w-full text-left px-3 py-2 text-sm hover:bg-slate-50 dark:hover:bg-slate-700">
+          <button onClick={() => onAction("copy")} className="w-full text-left px-3 py-2 text-sm hover:bg-cream dark:hover:bg-slate-700">
             📋 Копировать
           </button>
         )}
         {mine && hasContent && (
-          <button onClick={() => onAction("edit")} className="w-full text-left px-3 py-2 text-sm hover:bg-slate-50 dark:hover:bg-slate-700">
+          <button onClick={() => onAction("edit")} className="w-full text-left px-3 py-2 text-sm hover:bg-cream dark:hover:bg-slate-700">
             ✏ Изменить
           </button>
         )}

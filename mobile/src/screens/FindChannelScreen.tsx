@@ -66,9 +66,9 @@ export function FindChannelScreen({ navigation }: Props) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 20, backgroundColor: '#fff' },
-  row: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#eee' },
+  container: { flex: 1, padding: 20, backgroundColor: '#fff5f9' },
+  row: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#ffd4e1' },
   name: { fontSize: 16, fontWeight: '600' },
-  meta: { fontSize: 13, color: '#777', marginTop: 2 },
-  joinBtn: { color: '#5fe3d4', fontSize: 14, fontWeight: '600' },
+  meta: { fontSize: 13, color: '#8c6471', marginTop: 2 },
+  joinBtn: { color: '#ff7a99', fontSize: 14, fontWeight: '600' },
 });

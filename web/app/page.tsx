@@ -21,7 +21,7 @@ export default function Home() {
 
   return (
     <div className="flex-1 flex items-center justify-center">
-      <div className="text-slate-400">Загрузка...</div>
+      <div className="text-ink-muted">Загрузка...</div>
     </div>
   );
 }

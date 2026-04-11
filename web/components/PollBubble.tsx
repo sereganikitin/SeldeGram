@@ -56,11 +56,11 @@ export function PollBubble({ messageId, mine }: Props) {
             <span className={`flex-1 text-sm z-[1] ${isMyVote ? "font-bold" : ""} ${mine ? "text-white" : "dark:text-white"}`}>
               {isMyVote ? "✓ " : ""}{opt}
             </span>
-            <span className={`text-xs z-[1] ml-2 ${mine ? "text-white/70" : "text-slate-500"}`}>{pct}%</span>
+            <span className={`text-xs z-[1] ml-2 ${mine ? "text-white/70" : "text-ink-muted"}`}>{pct}%</span>
           </button>
         );
       })}
-      <div className={`text-xs mt-1 ${mine ? "text-white/60" : "text-slate-500"}`}>
+      <div className={`text-xs mt-1 ${mine ? "text-white/60" : "text-ink-muted"}`}>
         {poll.totalVotes} голосов
       </div>
     </div>
