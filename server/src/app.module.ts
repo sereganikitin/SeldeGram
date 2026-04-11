@@ -11,6 +11,7 @@ import { MediaModule } from './media/media.module';
 import { PushModule } from './push/push.module';
 import { StickersModule } from './stickers/stickers.module';
 import { PollsModule } from './polls/polls.module';
+import { BlocksModule } from './blocks/blocks.module';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { PollsModule } from './polls/polls.module';
     PushModule,
     StickersModule,
     PollsModule,
+    BlocksModule,
   ],
   controllers: [HealthController],
 })

@@ -126,6 +126,15 @@ export class ChatsController {
     return this.chats.unpinMessage(id, req.user.userId);
   }
 
+  @Get(':id/thread/:msgId')
+  thread(
+    @Req() req: { user: { userId: string } },
+    @Param('id') id: string,
+    @Param('msgId') msgId: string,
+  ) {
+    return this.chats.listThreadMessages(id, req.user.userId, msgId);
+  }
+
   @Get(':id/messages')
   messages(
     @Req() req: { user: { userId: string } },

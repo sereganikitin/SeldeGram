@@ -26,6 +26,8 @@ model User {
   messages           Message[]
   chatReads          ChatRead[]
   polls              Poll[]
+  blocksInitiated    Block[]           @relation("Blocker")
+  blocksReceived     Block[]           @relation("Blocked")
   stickerPacks       StickerPack[]
   installedPacks     UserStickerPack[]
   recentStickers     RecentSticker[]
@@ -126,6 +128,7 @@ model Message {
   isSticker       Boolean   @default(false)
   replyToId       String?
   forwardedFromId String?
+  threadOfId      String?
   editedAt        DateTime?
   deletedAt       DateTime?
   createdAt       DateTime  @default(now())
@@ -136,6 +139,8 @@ model Message {
   replies       Message[] @relation("MessageReply")
   forwardedFrom Message?  @relation("MessageForward", fields: [forwardedFromId], references: [id], onDelete: SetNull)
   forwardedAs   Message[] @relation("MessageForward")
+  threadOf      Message?  @relation("MessageThread", fields: [threadOfId], references: [id], onDelete: Cascade)
+  threadReplies Message[] @relation("MessageThread")
   poll          Poll?
 
   @@index([chatId, createdAt])
@@ -200,6 +205,21 @@ model RecentSticker {
   @@unique([userId, stickerId])
   @@index([userId, lastUsedAt])
   @@map("recent_stickers")
+}
+
+model Block {
+  id        String   @id @default(uuid())
+  blockerId String
+  blockedId String
+  createdAt DateTime @default(now())
+
+  blocker User @relation("Blocker", fields: [blockerId], references: [id], onDelete: Cascade)
+  blocked User @relation("Blocked", fields: [blockedId], references: [id], onDelete: Cascade)
+
+  @@unique([blockerId, blockedId])
+  @@index([blockerId])
+  @@index([blockedId])
+  @@map("blocks")
 }
 
 model Poll {

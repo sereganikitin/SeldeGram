@@ -114,7 +114,14 @@ export function ProfileScreen({ navigation }: Props) {
         onPress={() => navigation.navigate('WallpaperPicker', {})}
       />
 
-      <View style={{ height: 28 }} />
+      <View style={{ height: 20 }} />
+      <Button
+        title="🚫 Заблокированные"
+        variant="secondary"
+        onPress={() => navigation.navigate('BlockList')}
+      />
+
+      <View style={{ height: 20 }} />
       <Button title="Выйти" variant="secondary" onPress={logout} />
       {saving && <Text style={{ color: colors.textMuted, marginTop: 12 }}>Сохранение...</Text>}
     </ScrollView>

@@ -25,6 +25,8 @@ import { CreateStickerPackScreen } from './src/screens/CreateStickerPackScreen';
 import { StickerPackScreen } from './src/screens/StickerPackScreen';
 import { ProfileScreen } from './src/screens/ProfileScreen';
 import { WallpaperPickerScreen } from './src/screens/WallpaperPickerScreen';
+import { BlockListScreen } from './src/screens/BlockListScreen';
+import { ThreadScreen } from './src/screens/ThreadScreen';
 import { useAuth } from './src/store/auth';
 import { useWs } from './src/store/ws';
 import { registerPushToken } from './src/push';
@@ -103,6 +105,8 @@ export default function App() {
             <Stack.Screen name="StickerPack" component={StickerPackScreen} options={{ title: 'Пак' }} />
             <Stack.Screen name="Profile" component={ProfileScreen} options={{ title: 'Профиль' }} />
             <Stack.Screen name="WallpaperPicker" component={WallpaperPickerScreen} options={{ title: 'Обои' }} />
+            <Stack.Screen name="BlockList" component={BlockListScreen} options={{ title: 'Заблокированные' }} />
+            <Stack.Screen name="Thread" component={ThreadScreen} options={{ title: 'Комментарии' }} />
           </>
         ) : (
           <>

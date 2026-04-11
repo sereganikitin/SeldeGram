@@ -22,13 +22,21 @@ export function ChatInfoModal({ chatId, open, onClose, onChatGone, onOpenWallpap
   const [editingTitle, setEditingTitle] = useState(false);
   const [addQ, setAddQ] = useState("");
   const [addResults, setAddResults] = useState<UserSearchResult[]>([]);
+  const [blocked, setBlocked] = useState(false);
 
   const load = useCallback(async () => {
     if (!open) return;
     const { data } = await api.get<Chat>(`/chats/${chatId}`);
     setChat(data);
     setTitleDraft(data.title ?? "");
-  }, [chatId, open]);
+    if (data.type === "direct") {
+      try {
+        const { data: blocks } = await api.get<Array<{ id: string }>>("/me/blocks");
+        const otherId = data.members.find((m) => m.id !== meId)?.id;
+        setBlocked(!!otherId && blocks.some((b) => b.id === otherId));
+      } catch {}
+    }
+  }, [chatId, open, meId]);
 
   useEffect(() => {
     load();
@@ -80,6 +88,23 @@ export function ChatInfoModal({ chatId, open, onClose, onChatGone, onOpenWallpap
         onClose();
       } else {
         await load();
+      }
+    } catch (e: unknown) {
+      const err = e as { response?: { data?: { message?: string } } };
+      alert(err.response?.data?.message ?? "Не получилось");
+    }
+  };
+
+  const toggleBlock = async () => {
+    if (!other) return;
+    try {
+      if (blocked) {
+        await api.delete(`/me/blocks/${other.id}`);
+        setBlocked(false);
+      } else {
+        if (!confirm(`Заблокировать ${other.displayName}?`)) return;
+        await api.post(`/me/blocks/${other.id}`);
+        setBlocked(true);
       }
     } catch (e: unknown) {
       const err = e as { response?: { data?: { message?: string } } };
@@ -202,12 +227,20 @@ export function ChatInfoModal({ chatId, open, onClose, onChatGone, onOpenWallpap
           </button>
         )}
         {isDirect && (
-          <button
-            onClick={deleteChat}
-            className="w-full bg-red-50 text-red-600 font-semibold py-3 rounded-lg hover:bg-red-100"
-          >
-            Удалить чат
-          </button>
+          <>
+            <button
+              onClick={toggleBlock}
+              className="w-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-white font-semibold py-3 rounded-lg mb-2"
+            >
+              {blocked ? "✓ Разблокировать" : "🚫 Заблокировать"}
+            </button>
+            <button
+              onClick={deleteChat}
+              className="w-full bg-red-50 text-red-600 font-semibold py-3 rounded-lg hover:bg-red-100"
+            >
+              Удалить чат
+            </button>
+          </>
         )}
       </div>
     </Modal>

@@ -28,6 +28,7 @@ export interface Message {
   replyToId?: string | null;
   replyTo?: ReplyPreviewData | null;
   forwardedFromId?: string | null;
+  threadOfId?: string | null;
   editedAt?: string | null;
   deletedAt?: string | null;
   createdAt: string;

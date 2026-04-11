@@ -16,10 +16,17 @@ export function UserInfoScreen({ route, navigation }: Props) {
   const meId = useAuth((s) => s.user?.id);
   const [chat, setChat] = useState<Chat | null>(null);
 
+  const [blocked, setBlocked] = useState(false);
+
   const load = useCallback(async () => {
     const { data } = await api.get<Chat>(`/chats/${chatId}`);
     setChat(data);
-  }, [chatId]);
+    try {
+      const { data: blocks } = await api.get<Array<{ id: string }>>('/me/blocks');
+      const otherId = data.members.find((m) => m.id !== meId)?.id;
+      setBlocked(!!otherId && blocks.some((b) => b.id === otherId));
+    } catch {}
+  }, [chatId, meId]);
 
   useFocusEffect(
     useCallback(() => {
@@ -47,12 +54,40 @@ export function UserInfoScreen({ route, navigation }: Props) {
     ]);
   };
 
+  const toggleBlock = async () => {
+    if (!other) return;
+    try {
+      if (blocked) {
+        await api.delete(`/me/blocks/${other.id}`);
+        setBlocked(false);
+      } else {
+        Alert.alert(
+          `Заблокировать ${other.displayName}?`,
+          'Этот пользователь больше не сможет писать вам в личные чаты.',
+          [
+            { text: 'Отмена', style: 'cancel' },
+            {
+              text: 'Заблокировать',
+              style: 'destructive',
+              onPress: async () => {
+                await api.post(`/me/blocks/${other.id}`);
+                setBlocked(true);
+              },
+            },
+          ],
+        );
+      }
+    } catch (e: any) {
+      Alert.alert('Не получилось', e.response?.data?.message ?? e.message);
+    }
+  };
+
   if (!chat || !other) return <View style={styles.container} />;
 
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Avatar id={other.id} name={other.displayName} size={100} />
+        <Avatar id={other.id} name={other.displayName} avatarKey={other.avatarKey} size={100} />
         <Text style={styles.name}>{other.displayName}</Text>
         <Text style={styles.username}>@{other.username}</Text>
       </View>
@@ -61,6 +96,8 @@ export function UserInfoScreen({ route, navigation }: Props) {
         variant="secondary"
         onPress={() => navigation.navigate('WallpaperPicker', { chatId })}
       />
+      <View style={{ height: 10 }} />
+      <Button title={blocked ? '✓ Разблокировать' : '🚫 Заблокировать'} variant="secondary" onPress={toggleBlock} />
       <View style={{ height: 10 }} />
       <Button title="Удалить чат" variant="secondary" onPress={deleteChat} />
     </View>

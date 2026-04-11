@@ -17,4 +17,6 @@ export type RootStackParamList = {
   StickerPack: { packId: string };
   Profile: undefined;
   WallpaperPicker: { chatId?: string };
+  BlockList: undefined;
+  Thread: { chatId: string; messageId: string };
 };

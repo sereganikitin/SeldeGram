@@ -12,6 +12,7 @@ import { ChatInfoModal } from "./ChatInfoModal";
 import { ChatBackground } from "./ChatBackground";
 import { WallpaperPickerModal } from "./WallpaperPickerModal";
 import { VoiceRecorder } from "./VoiceRecorder";
+import { ThreadModal } from "./ThreadModal";
 import { formatDateLabel, messagePreview } from "@/lib/helpers";
 import { uploadFile } from "@/lib/media";
 
@@ -48,6 +49,7 @@ export function ChatView({ chat, onBack, onChatGone, onOpenStickers }: Props) {
   const [uploading, setUploading] = useState(false);
   const [dragOver, setDragOver] = useState(false);
   const [voiceRecording, setVoiceRecording] = useState(false);
+  const [threadParent, setThreadParent] = useState<Message | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const typingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -272,7 +274,7 @@ export function ChatView({ chat, onBack, onChatGone, onOpenStickers }: Props) {
     [chat.id],
   );
 
-  const handleAction = (msg: Message) => (action: "reply" | "edit" | "delete" | "copy" | "pin") => {
+  const handleAction = (msg: Message) => (action: "reply" | "edit" | "delete" | "copy" | "pin" | "thread") => {
     if (action === "reply") setReplyTo(msg);
     else if (action === "copy") navigator.clipboard?.writeText(msg.content).catch(() => {});
     else if (action === "edit") {
@@ -288,6 +290,8 @@ export function ChatView({ chat, onBack, onChatGone, onOpenStickers }: Props) {
       } else {
         api.post(`/chats/${chat.id}/pin/${msg.id}`).catch(() => {});
       }
+    } else if (action === "thread") {
+      setThreadParent(msg);
     }
   };
 
@@ -428,6 +432,7 @@ export function ChatView({ chat, onBack, onChatGone, onOpenStickers }: Props) {
                 senderName={senderNameById.get(m.senderId)}
                 isRead={isRead}
                 onAction={handleAction(m)}
+                canComment={chat.type === "channel" && !m.threadOfId}
               />
             </div>
           );
@@ -553,6 +558,12 @@ export function ChatView({ chat, onBack, onChatGone, onOpenStickers }: Props) {
         onClose={() => setWallpaperOpen(false)}
         chatId={chat.id}
         onApplied={() => api.get<Chat>(`/chats/${chat.id}`).then(({ data }) => setWallpaper(data.viewerWallpaper ?? null))}
+      />
+      <ThreadModal
+        open={!!threadParent}
+        onClose={() => setThreadParent(null)}
+        chatId={chat.id}
+        parent={threadParent}
       />
     </section>
     </ChatBackground>

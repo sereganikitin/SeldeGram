@@ -13,9 +13,10 @@ interface Props {
   onClose: () => void;
   onLogout: () => void;
   onOpenWallpaper: () => void;
+  onOpenBlockList: () => void;
 }
 
-export function ProfileModal({ open, onClose, onLogout, onOpenWallpaper }: Props) {
+export function ProfileModal({ open, onClose, onLogout, onOpenWallpaper, onOpenBlockList }: Props) {
   const user = useAuth((s) => s.user);
   const patchMe = useAuth((s) => s.patchMe);
   const themeMode = useTheme((s) => s.mode);
@@ -105,6 +106,13 @@ export function ProfileModal({ open, onClose, onLogout, onOpenWallpaper }: Props
           className="w-full bg-slate-100 dark:bg-slate-800 dark:text-white hover:bg-slate-200 dark:hover:bg-slate-700 py-3 rounded-lg font-semibold"
         >
           🖼 Обои по умолчанию
+        </button>
+
+        <button
+          onClick={onOpenBlockList}
+          className="w-full bg-slate-100 dark:bg-slate-800 dark:text-white hover:bg-slate-200 dark:hover:bg-slate-700 py-3 rounded-lg font-semibold"
+        >
+          🚫 Заблокированные
         </button>
 
         <button

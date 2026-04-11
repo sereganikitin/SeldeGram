@@ -3,6 +3,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { WsHub } from '../ws/ws.hub';
 import { PushService } from '../push/push.service';
 import { StickersService } from '../stickers/stickers.service';
+import { BlocksService } from '../blocks/blocks.service';
 
 const messageInclude = {
   replyTo: {
@@ -24,12 +25,16 @@ export class ChatsService {
     private readonly hub: WsHub,
     private readonly push: PushService,
     private readonly stickers: StickersService,
+    private readonly blocks: BlocksService,
   ) {}
 
   async createDirect(userId: string, otherUsername: string) {
     const other = await this.prisma.user.findUnique({ where: { username: otherUsername } });
     if (!other) throw new NotFoundException('User not found');
     if (other.id === userId) throw new ForbiddenException('Cannot chat with yourself');
+    if (await this.blocks.isBlocked(userId, other.id)) {
+      throw new ForbiddenException('User is blocked');
+    }
 
     const existing = await this.prisma.chat.findFirst({
       where: {
@@ -279,12 +284,33 @@ export class ChatsService {
   async listMessages(chatId: string, userId: string, before: string | undefined, limit: number) {
     await this.assertMember(chatId, userId);
     const messages = await this.prisma.message.findMany({
-      where: { chatId, ...(before ? { createdAt: { lt: new Date(before) } } : {}) },
+      where: {
+        chatId,
+        threadOfId: null,
+        ...(before ? { createdAt: { lt: new Date(before) } } : {}),
+      },
       orderBy: { createdAt: 'desc' },
       take: Math.min(limit, 100),
       include: messageInclude,
     });
     return messages.reverse();
+  }
+
+  async listThreadMessages(chatId: string, userId: string, parentId: string, limit = 100) {
+    await this.assertMember(chatId, userId);
+    const parent = await this.prisma.message.findUnique({ where: { id: parentId } });
+    if (!parent || parent.chatId !== chatId) throw new NotFoundException('Parent not found');
+    const messages = await this.prisma.message.findMany({
+      where: { chatId, threadOfId: parentId },
+      orderBy: { createdAt: 'asc' },
+      take: Math.min(limit, 200),
+      include: messageInclude,
+    });
+    return messages;
+  }
+
+  async getThreadCount(chatId: string, parentId: string) {
+    return this.prisma.message.count({ where: { chatId, threadOfId: parentId, deletedAt: null } });
   }
 
   async sendMessage(
@@ -299,13 +325,38 @@ export class ChatsService {
       replyToId?: string;
       forwardedFromId?: string;
       stickerId?: string;
+      threadOfId?: string;
     },
   ) {
     const member = await this.assertMember(chatId, userId);
     const chatRow = await this.prisma.chat.findUnique({ where: { id: chatId }, select: { type: true } });
-    if (chatRow?.type === 'channel' && member.role !== 'admin') {
+
+    // В канале только админы пишут в основную ленту. Комментарии под постом (threadOfId) — любой участник.
+    if (chatRow?.type === 'channel' && member.role !== 'admin' && !payload.threadOfId) {
       throw new ForbiddenException('Only admins can post to channel');
     }
+
+    // Для direct-чата проверяем блокировку
+    if (chatRow?.type === 'direct') {
+      const others = await this.prisma.chatMember.findMany({
+        where: { chatId, userId: { not: userId } },
+        select: { userId: true },
+      });
+      for (const o of others) {
+        if (await this.blocks.isBlocked(userId, o.userId)) {
+          throw new ForbiddenException('User is blocked');
+        }
+      }
+    }
+
+    // Проверка threadOf для комментариев
+    if (payload.threadOfId) {
+      const parent = await this.prisma.message.findUnique({ where: { id: payload.threadOfId } });
+      if (!parent || parent.chatId !== chatId) {
+        throw new NotFoundException('Parent message not found');
+      }
+    }
+
     if (!payload.content && !payload.mediaKey && !payload.forwardedFromId && !payload.stickerId) {
       throw new ForbiddenException('Empty message');
     }
@@ -360,6 +411,7 @@ export class ChatsService {
         isSticker,
         replyToId: payload.replyToId,
         forwardedFromId: payload.forwardedFromId,
+        threadOfId: payload.threadOfId,
       },
       include: messageInclude,
     });

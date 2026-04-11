@@ -370,10 +370,17 @@ export function ChatScreen({ route, navigation }: Props) {
   const onMessageLongPress = (msg: Message) => {
     const mine = msg.senderId === meId;
     const canPin = chat?.type === 'direct' || chat?.viewerRole === 'admin';
+    const isChannelPost = chat?.type === 'channel' && !msg.threadOfId;
     const options: { text: string; onPress?: () => void; style?: 'destructive' | 'cancel' }[] = [
       { text: 'Ответить', onPress: () => setReplyTo(msg) },
       { text: 'Переслать', onPress: () => navigation.navigate('Forward', { messageId: msg.id }) },
     ];
+    if (isChannelPost) {
+      options.push({
+        text: '💬 Комментарии',
+        onPress: () => navigation.navigate('Thread', { chatId, messageId: msg.id }),
+      });
+    }
     if (canPin) {
       options.push({
         text: pinnedMsg?.id === msg.id ? 'Открепить' : 'Закрепить',

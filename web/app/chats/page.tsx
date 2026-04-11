@@ -12,6 +12,7 @@ import { NewChatModal } from "@/components/NewChatModal";
 import { StickerPacksModal } from "@/components/StickerPacksModal";
 import { ProfileModal } from "@/components/ProfileModal";
 import { WallpaperPickerModal } from "@/components/WallpaperPickerModal";
+import { BlockListModal } from "@/components/BlockListModal";
 
 export default function ChatsPage() {
   const router = useRouter();
@@ -27,6 +28,7 @@ export default function ChatsPage() {
   const [stickersOpen, setStickersOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [wallpaperOpen, setWallpaperOpen] = useState(false);
+  const [blockListOpen, setBlockListOpen] = useState(false);
 
   useEffect(() => {
     hydrate();
@@ -96,8 +98,13 @@ export default function ChatsPage() {
           setProfileOpen(false);
           setWallpaperOpen(true);
         }}
+        onOpenBlockList={() => {
+          setProfileOpen(false);
+          setBlockListOpen(true);
+        }}
       />
       <WallpaperPickerModal open={wallpaperOpen} onClose={() => setWallpaperOpen(false)} />
+      <BlockListModal open={blockListOpen} onClose={() => setBlockListOpen(false)} />
     </>
   );
 }

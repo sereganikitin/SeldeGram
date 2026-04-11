@@ -37,6 +37,7 @@ export interface Message {
     deletedAt?: string | null;
   } | null;
   forwardedFromId?: string | null;
+  threadOfId?: string | null;
   editedAt?: string | null;
   deletedAt?: string | null;
   createdAt: string;

@@ -35,4 +35,8 @@ export class SendMessageDto {
   @IsOptional()
   @IsString()
   stickerId?: string;
+
+  @IsOptional()
+  @IsString()
+  threadOfId?: string;
 }

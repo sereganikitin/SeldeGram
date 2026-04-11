@@ -12,7 +12,8 @@ interface Props {
   showSenderName: boolean;
   senderName?: string;
   isRead: boolean;
-  onAction: (action: "reply" | "edit" | "delete" | "copy" | "pin") => void;
+  onAction: (action: "reply" | "edit" | "delete" | "copy" | "pin" | "thread") => void;
+  canComment?: boolean;
 }
 
 function MediaContent({ message, mine }: { message: Message; mine: boolean }) {
@@ -64,7 +65,7 @@ function MediaContent({ message, mine }: { message: Message; mine: boolean }) {
   );
 }
 
-export function MessageBubble({ message, mine, showSenderName, senderName, isRead, onAction }: Props) {
+export function MessageBubble({ message, mine, showSenderName, senderName, isRead, onAction, canComment }: Props) {
   const isDeleted = !!message.deletedAt;
   const isSticker = !!message.isSticker && !isDeleted;
   const [menuOpen, setMenuOpen] = useState(false);
@@ -165,6 +166,11 @@ function ActionMenu({
         <button onClick={() => onAction("pin")} className="w-full text-left px-3 py-2 text-sm hover:bg-slate-50 dark:hover:bg-slate-700">
           📌 Закрепить
         </button>
+        {canComment && (
+          <button onClick={() => onAction("thread")} className="w-full text-left px-3 py-2 text-sm hover:bg-slate-50 dark:hover:bg-slate-700">
+            💬 Комментарии
+          </button>
+        )}
         {hasContent && (
           <button onClick={() => onAction("copy")} className="w-full text-left px-3 py-2 text-sm hover:bg-slate-50 dark:hover:bg-slate-700">
             📋 Копировать
