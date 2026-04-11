@@ -10,11 +10,13 @@ import { useWs } from '../store/ws';
 import { Avatar } from '../ui/Avatar';
 import { messagePreview, formatTime } from '../helpers';
 import { useColors } from '../theme';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'ChatList'>;
 
 export function ChatListScreen({ navigation }: Props) {
   const colors = useColors();
+  const insets = useSafeAreaInsets();
   const [chats, setChats] = useState<Chat[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const meId = useAuth((s) => s.user?.id);
@@ -161,7 +163,12 @@ export function ChatListScreen({ navigation }: Props) {
           );
         }}
       />
-      <View style={[styles.bottomBar, { borderTopColor: colors.border }]}>
+      <View
+        style={[
+          styles.bottomBar,
+          { borderTopColor: colors.border, paddingBottom: Math.max(insets.bottom, 12) },
+        ]}
+      >
         <Pressable onPress={() => navigation.navigate('NewChat')} style={[styles.newBtn, { backgroundColor: colors.primary }]}>
           <Text style={styles.newBtnText}>+ Новый чат</Text>
         </Pressable>
@@ -211,7 +218,13 @@ const styles = StyleSheet.create({
   empty: { alignItems: 'center', marginTop: 80 },
   emptyText: { fontSize: 18, marginBottom: 8 },
   emptyHint: { fontSize: 14 },
-  bottomBar: { flexDirection: 'row', borderTopWidth: 1, padding: 12, gap: 12 },
+  bottomBar: {
+    flexDirection: 'row',
+    borderTopWidth: 1,
+    paddingHorizontal: 12,
+    paddingTop: 12,
+    gap: 12,
+  },
   newBtn: { flex: 1, paddingVertical: 14, borderRadius: 12, alignItems: 'center' },
   newBtnText: { color: '#fff', fontSize: 16, fontWeight: '600' },
   iconBtn: { paddingVertical: 14, paddingHorizontal: 18, borderRadius: 12, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },

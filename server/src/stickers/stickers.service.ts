@@ -1,15 +1,55 @@
-import { ForbiddenException, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { ForbiddenException, Injectable, Logger, NotFoundException, OnModuleInit } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { MediaService } from '../media/media.service';
 
 @Injectable()
-export class StickersService {
+export class StickersService implements OnModuleInit {
   private readonly logger = new Logger(StickersService.name);
 
   constructor(
     private readonly prisma: PrismaService,
     private readonly media: MediaService,
   ) {}
+
+  onModuleInit() {
+    // Фоновая миграция старых webm-стикеров в mp4 (iOS AVPlayer не умеет webm).
+    // Запускается через 10 секунд после старта, чтобы не блокировать boot.
+    setTimeout(() => {
+      this.migrateWebmStickers().catch((e) =>
+        this.logger.error(`Webm migration failed: ${(e as Error).message}`),
+      );
+    }, 10_000);
+  }
+
+  async migrateWebmStickers() {
+    const webm = await this.prisma.sticker.findMany({
+      where: { mediaType: 'video/webm' },
+      include: { pack: true },
+    });
+    if (webm.length === 0) return;
+    this.logger.log(`Migrating ${webm.length} webm stickers to mp4...`);
+    let done = 0;
+    for (const s of webm) {
+      try {
+        const newKey = await this.media.convertWebmStickerToMp4(s.pack.authorId, s.mediaKey);
+        await this.prisma.sticker.update({
+          where: { id: s.id },
+          data: { mediaKey: newKey, mediaType: 'video/mp4' },
+        });
+        // Обновить cover пака, если он указывал на старый webm
+        if (s.pack.coverKey === s.mediaKey) {
+          await this.prisma.stickerPack.update({
+            where: { id: s.packId },
+            data: { coverKey: newKey },
+          });
+        }
+        done++;
+      } catch (e) {
+        this.logger.warn(`Failed to migrate sticker ${s.id}: ${(e as Error).message}`);
+      }
+    }
+    this.logger.log(`Sticker migration done: ${done}/${webm.length} converted`);
+  }
 
   async createPack(authorId: string, name: string, slug: string, coverKey?: string) {
     const slugLower = slug.toLowerCase();

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, FlatList, StyleSheet, Pressable, ScrollView } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { api } from '../api';
 import { Sticker, StickerPack } from '../types';
 import { StickerImage } from './StickerImage';
@@ -16,6 +17,7 @@ interface Tab {
 }
 
 export function StickerPicker({ onPick, onClose }: Props) {
+  const insets = useSafeAreaInsets();
   const [tabs, setTabs] = useState<Tab[]>([]);
   const [activeIdx, setActiveIdx] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -41,9 +43,11 @@ export function StickerPicker({ onPick, onClose }: Props) {
     })();
   }, []);
 
+  const containerStyle = [styles.container, { paddingBottom: Math.max(insets.bottom, 8) }];
+
   if (loading) {
     return (
-      <View style={styles.container}>
+      <View style={containerStyle}>
         <Text style={styles.empty}>Загрузка...</Text>
       </View>
     );
@@ -51,7 +55,7 @@ export function StickerPicker({ onPick, onClose }: Props) {
 
   if (tabs.length === 0) {
     return (
-      <View style={styles.container}>
+      <View style={containerStyle}>
         <Text style={styles.empty}>У вас нет установленных стикерпаков</Text>
         <Text style={styles.emptyHint}>Откройте Чаты → Стикеры, чтобы добавить или создать пак</Text>
         <Pressable onPress={onClose} style={styles.closeBtn}>
@@ -64,7 +68,7 @@ export function StickerPicker({ onPick, onClose }: Props) {
   const active = tabs[activeIdx];
 
   return (
-    <View style={styles.container}>
+    <View style={containerStyle}>
       <FlatList
         key={active.id}
         data={active.stickers}

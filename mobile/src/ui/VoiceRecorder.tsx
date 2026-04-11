@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, Pressable, StyleSheet, Alert } from 'react-native';
 import { Audio } from 'expo-av';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 interface Props {
   onRecorded: (uri: string, durationMs: number) => void;
@@ -8,6 +9,7 @@ interface Props {
 }
 
 export function VoiceRecorder({ onRecorded, onCancel }: Props) {
+  const insets = useSafeAreaInsets();
   const recordingRef = useRef<Audio.Recording | null>(null);
   const [seconds, setSeconds] = useState(0);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -89,7 +91,7 @@ export function VoiceRecorder({ onRecorded, onCancel }: Props) {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { paddingBottom: Math.max(insets.bottom, 12) }]}>
       <View style={styles.recDot} />
       <Text style={styles.time}>{fmt(seconds)}</Text>
       <View style={{ flex: 1 }} />

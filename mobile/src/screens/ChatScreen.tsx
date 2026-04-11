@@ -556,7 +556,15 @@ export function ChatScreen({ route, navigation }: Props) {
         </View>
       ) : (
         <>
-          <View style={[styles.inputBar, { paddingBottom: Math.max(insets.bottom, 10) }]}>
+          <View
+            style={[
+              styles.inputBar,
+              {
+                paddingBottom:
+                  stickersOpen || recording ? 10 : Math.max(insets.bottom, 10),
+              },
+            ]}
+          >
             <Pressable
               onPress={showAttach}
               style={[styles.attachBtn, { backgroundColor: colors.surfaceAlt }]}
