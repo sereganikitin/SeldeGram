@@ -5,14 +5,14 @@ export interface WallpaperPreset {
   name: string;
   color1: string;
   color2?: string;
-  patternUri?: string;
+  patternSvg?: string;
 }
 
 export const WALLPAPER_PRESETS: WallpaperPreset[] = [
   { id: "default", name: "По умолчанию", color1: "#ffffff" },
-  { id: "pink_fish", name: "Рыбки", color1: "#ffd4e1", patternUri: WALLPAPER_SVGS.pink_fish },
-  { id: "coral_crab", name: "Крабики", color1: "#ffc4cc", patternUri: WALLPAPER_SVGS.coral_crab },
-  { id: "pink_sea", name: "Розовое море", color1: "#ffdbe8", patternUri: WALLPAPER_SVGS.pink_sea },
+  { id: "pink_fish", name: "Рыбки", color1: "#ffd4e1", patternSvg: WALLPAPER_SVGS.pink_fish },
+  { id: "coral_crab", name: "Крабики", color1: "#ffc4cc", patternSvg: WALLPAPER_SVGS.coral_crab },
+  { id: "pink_sea", name: "Розовое море", color1: "#ffdbe8", patternSvg: WALLPAPER_SVGS.pink_sea },
   { id: "mint", name: "Мята", color1: "#e0f7f1", color2: "#a8e6cf" },
   { id: "sky", name: "Небо", color1: "#dbeeff", color2: "#a8d4ff" },
   { id: "rose", name: "Розовый", color1: "#ffe8ec", color2: "#ffc1cc" },

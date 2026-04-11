@@ -34,15 +34,19 @@ export function ChatBackground({ wallpaper, children }: Props) {
 
   if (parsed?.kind === "preset") {
     const bg = parsed.preset.color2 ?? parsed.preset.color1;
-    const style: React.CSSProperties = { backgroundColor: bg };
-    if (parsed.preset.patternUri) {
-      style.backgroundImage = `url(${parsed.preset.patternUri})`;
-      style.backgroundRepeat = "no-repeat";
-      style.backgroundSize = "cover";
-      style.backgroundPosition = "center";
+    if (parsed.preset.patternSvg) {
+      return (
+        <div className="flex-1 flex flex-col min-h-0 relative" style={{ backgroundColor: bg }}>
+          <div
+            className="absolute inset-0 pointer-events-none overflow-hidden"
+            dangerouslySetInnerHTML={{ __html: parsed.preset.patternSvg }}
+          />
+          <div className="relative flex-1 flex flex-col min-h-0">{children}</div>
+        </div>
+      );
     }
     return (
-      <div className="flex-1 flex flex-col min-h-0" style={style}>
+      <div className="flex-1 flex flex-col min-h-0" style={{ backgroundColor: bg }}>
         {children}
       </div>
     );

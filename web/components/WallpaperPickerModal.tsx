@@ -55,30 +55,27 @@ export function WallpaperPickerModal({ open, onClose, chatId, onApplied }: Props
     <Modal open={open} onClose={onClose} title={chatId ? "Обои чата" : "Обои по умолчанию"} width="max-w-md">
       <div className="p-5">
         <div className="grid grid-cols-2 gap-3 mb-4">
-          {WALLPAPER_PRESETS.map((p) => {
-            const style: React.CSSProperties = { backgroundColor: p.color2 ?? p.color1 };
-            if (p.patternUri) {
-              style.backgroundImage = `url(${p.patternUri})`;
-              style.backgroundRepeat = "no-repeat";
-              style.backgroundSize = "cover";
-              style.backgroundPosition = "center";
-            }
-            return (
-              <button
-                key={p.id}
-                onClick={() => apply(p.id === "default" ? null : `preset:${p.id}`)}
-                className="aspect-[4/3] rounded-xl border border-cream-border dark:border-slate-700 flex items-end p-3 hover:scale-[1.02] transition"
-                style={style}
+          {WALLPAPER_PRESETS.map((p) => (
+            <button
+              key={p.id}
+              onClick={() => apply(p.id === "default" ? null : `preset:${p.id}`)}
+              className="aspect-[4/3] rounded-xl border border-cream-border dark:border-slate-700 flex items-end p-3 hover:scale-[1.02] transition relative overflow-hidden"
+              style={{ backgroundColor: p.color2 ?? p.color1 }}
+            >
+              {p.patternSvg && (
+                <div
+                  className="absolute inset-0 pointer-events-none"
+                  dangerouslySetInnerHTML={{ __html: p.patternSvg }}
+                />
+              )}
+              <span
+                className="relative z-10 text-ink font-semibold text-sm"
+                style={{ textShadow: "0 1px 3px rgba(255,255,255,0.7)" }}
               >
-                <span
-                  className="text-ink font-semibold text-sm"
-                  style={{ textShadow: "0 1px 3px rgba(255,255,255,0.7)" }}
-                >
-                  {p.name}
-                </span>
-              </button>
-            );
-          })}
+                {p.name}
+              </span>
+            </button>
+          ))}
         </div>
 
         <label className="block w-full bg-brand hover:bg-brand-dark text-white text-center py-3 rounded-lg font-semibold cursor-pointer mb-2">

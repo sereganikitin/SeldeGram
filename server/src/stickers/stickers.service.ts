@@ -1,9 +1,15 @@
-import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { ForbiddenException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { MediaService } from '../media/media.service';
 
 @Injectable()
 export class StickersService {
-  constructor(private readonly prisma: PrismaService) {}
+  private readonly logger = new Logger(StickersService.name);
+
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly media: MediaService,
+  ) {}
 
   async createPack(authorId: string, name: string, slug: string, coverKey?: string) {
     const slugLower = slug.toLowerCase();
@@ -31,6 +37,20 @@ export class StickersService {
     if (!pack) throw new NotFoundException('Pack not found');
     if (pack.authorId !== authorId) throw new ForbiddenException('Not your pack');
 
+    // WebM конвертируем в MP4 (h264) для совместимости с iOS AVPlayer
+    let finalMediaKey = mediaKey;
+    let finalMediaType = mediaType ?? 'image/png';
+    if (finalMediaType === 'video/webm' || finalMediaType === 'video/webm;codecs=vp9') {
+      try {
+        finalMediaKey = await this.media.convertWebmStickerToMp4(authorId, mediaKey);
+        finalMediaType = 'video/mp4';
+        this.logger.log(`Converted WebM sticker to MP4: ${finalMediaKey}`);
+      } catch (e) {
+        this.logger.error(`WebM→MP4 conversion failed: ${(e as Error).message}`);
+        throw new ForbiddenException('Failed to convert WebM sticker. Make sure ffmpeg is installed on server.');
+      }
+    }
+
     const last = await this.prisma.sticker.findFirst({
       where: { packId },
       orderBy: { order: 'desc' },
@@ -38,14 +58,14 @@ export class StickersService {
     const order = (last?.order ?? -1) + 1;
 
     const sticker = await this.prisma.sticker.create({
-      data: { packId, mediaKey, mediaType: mediaType ?? 'image/png', emoji, order },
+      data: { packId, mediaKey: finalMediaKey, mediaType: finalMediaType, emoji, order },
     });
 
     // Если у пака ещё нет обложки — ставим первый стикер
     if (!pack.coverKey) {
       await this.prisma.stickerPack.update({
         where: { id: packId },
-        data: { coverKey: mediaKey },
+        data: { coverKey: finalMediaKey },
       });
     }
 

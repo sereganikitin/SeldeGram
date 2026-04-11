@@ -1,8 +1,19 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { S3Client, CreateBucketCommand, HeadBucketCommand, PutObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
+import {
+  S3Client,
+  CreateBucketCommand,
+  HeadBucketCommand,
+  PutObjectCommand,
+  GetObjectCommand,
+  DeleteObjectCommand,
+} from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import { spawn } from 'child_process';
 import * as crypto from 'crypto';
+import * as fs from 'fs/promises';
+import * as os from 'os';
+import * as path from 'path';
 
 const MAX_SIZE = 50 * 1024 * 1024; // 50 MB
 
@@ -21,7 +32,6 @@ export class MediaService implements OnModuleInit {
       secretAccessKey: config.get<string>('S3_SECRET_KEY', 'seldegram_dev_password'),
     };
 
-    // Внутренний клиент — для управления bucket'ом и upload-операций (бэкенд → MinIO напрямую)
     this.internalClient = new S3Client({
       endpoint: config.get<string>('S3_ENDPOINT', 'http://localhost:9000'),
       region,
@@ -29,7 +39,6 @@ export class MediaService implements OnModuleInit {
       forcePathStyle: true,
     });
 
-    // Публичный клиент — генерирует URL'ы под публичный домен (https://media.infoseledka.ru)
     this.publicClient = new S3Client({
       endpoint: config.get<string>('S3_PUBLIC_ENDPOINT', 'http://localhost:9000'),
       region,
@@ -75,5 +84,86 @@ export class MediaService implements OnModuleInit {
   async createDownloadUrl(key: string) {
     const cmd = new GetObjectCommand({ Bucket: this.bucket, Key: key });
     return getSignedUrl(this.publicClient, cmd, { expiresIn: 3600 });
+  }
+
+  async downloadToFile(key: string, filePath: string): Promise<void> {
+    const resp = await this.internalClient.send(
+      new GetObjectCommand({ Bucket: this.bucket, Key: key }),
+    );
+    const chunks: Buffer[] = [];
+    const stream = resp.Body as NodeJS.ReadableStream;
+    for await (const chunk of stream) {
+      chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+    }
+    await fs.writeFile(filePath, Buffer.concat(chunks));
+  }
+
+  async uploadFile(filePath: string, key: string, contentType: string): Promise<void> {
+    const body = await fs.readFile(filePath);
+    await this.internalClient.send(
+      new PutObjectCommand({
+        Bucket: this.bucket,
+        Key: key,
+        Body: body,
+        ContentType: contentType,
+        ContentLength: body.length,
+      }),
+    );
+  }
+
+  async deleteObject(key: string): Promise<void> {
+    await this.internalClient.send(
+      new DeleteObjectCommand({ Bucket: this.bucket, Key: key }),
+    );
+  }
+
+  /**
+   * Конвертирует WebM-стикер в MP4 (h264) для совместимости с iOS AVPlayer.
+   * Возвращает новый ключ MP4 файла. Старый WebM удаляется.
+   */
+  async convertWebmStickerToMp4(userId: string, webmKey: string): Promise<string> {
+    const tmpId = crypto.randomBytes(8).toString('hex');
+    const tmpDir = os.tmpdir();
+    const webmPath = path.join(tmpDir, `${tmpId}.webm`);
+    const mp4Path = path.join(tmpDir, `${tmpId}.mp4`);
+    const newKey = `u/${userId}/${Date.now()}-${crypto.randomBytes(8).toString('hex')}.mp4`;
+
+    try {
+      await this.downloadToFile(webmKey, webmPath);
+      await this.runFfmpeg([
+        '-y',
+        '-i', webmPath,
+        '-c:v', 'libx264',
+        '-pix_fmt', 'yuv420p',
+        '-an', // без аудио
+        '-movflags', '+faststart',
+        '-vf', 'scale=trunc(iw/2)*2:trunc(ih/2)*2', // h264 требует чётные размеры
+        mp4Path,
+      ]);
+      await this.uploadFile(mp4Path, newKey, 'video/mp4');
+      // Удаляем оригинал webm из MinIO
+      await this.deleteObject(webmKey).catch((e) =>
+        this.logger.warn(`Failed to delete original webm: ${(e as Error).message}`),
+      );
+      return newKey;
+    } finally {
+      await fs.unlink(webmPath).catch(() => undefined);
+      await fs.unlink(mp4Path).catch(() => undefined);
+    }
+  }
+
+  private runFfmpeg(args: string[]): Promise<void> {
+    return new Promise((resolve, reject) => {
+      const proc = spawn('ffmpeg', args);
+      let stderr = '';
+      proc.stderr.on('data', (chunk) => {
+        stderr += chunk.toString();
+      });
+      proc.on('error', (err) => reject(err));
+      proc.on('close', (code) => {
+        if (code === 0) resolve();
+        else reject(new Error(`ffmpeg exited with code ${code}: ${stderr.slice(-500)}`));
+      });
+    });
   }
 }
