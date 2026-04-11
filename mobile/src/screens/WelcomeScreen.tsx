@@ -13,8 +13,8 @@ export function WelcomeScreen({ navigation }: Props) {
   return (
     <View style={[styles.container, { backgroundColor: colors.bg }]}>
       <CrabLogo size={120} />
-      <Text style={[styles.title, { color: colors.text }]}>SeldeGram</Text>
-      <Text style={[styles.subtitle, { color: colors.textMuted }]}>Остаёмся на связи 🦀</Text>
+      <Text style={[styles.title, { color: colors.text }]}>CraboGram</Text>
+      <Text style={[styles.subtitle, { color: colors.textMuted }]}>Самый нежный мессенджер 🦀</Text>
       <View style={styles.buttons}>
         <Button title="Войти" onPress={() => navigation.navigate('Login')} />
         <Button title="Создать аккаунт" variant="secondary" onPress={() => navigation.navigate('Register')} />

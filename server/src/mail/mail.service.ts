@@ -28,7 +28,7 @@ export class MailService {
     await this.transporter.sendMail({
       from: this.from,
       to: email,
-      subject: 'SeldeGram — код подтверждения',
+      subject: 'CraboGram — код подтверждения',
       text: `Ваш код подтверждения: ${code}\n\nКод действителен 15 минут.`,
       html: `<p>Ваш код подтверждения: <b>${code}</b></p><p>Код действителен 15 минут.</p>`,
     });

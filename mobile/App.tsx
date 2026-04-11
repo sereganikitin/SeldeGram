@@ -2,6 +2,7 @@ import 'react-native-gesture-handler';
 import React, { useEffect, useRef } from 'react';
 import { View, ActivityIndicator } from 'react-native';
 import { NavigationContainer, NavigationContainerRef, DefaultTheme, DarkTheme } from '@react-navigation/native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { StatusBar } from 'expo-status-bar';
 import { useTheme, useColors, useIsDark } from './src/theme';
@@ -82,6 +83,7 @@ export default function App() {
     : { ...DefaultTheme, colors: { ...DefaultTheme.colors, background: colors.bg, card: colors.surface, text: colors.text, border: colors.border, primary: colors.primary } };
 
   return (
+    <SafeAreaProvider>
     <NavigationContainer ref={navRef} theme={navTheme}>
       <StatusBar style={isDark ? 'light' : 'dark'} />
       <Stack.Navigator>
@@ -118,5 +120,6 @@ export default function App() {
         )}
       </Stack.Navigator>
     </NavigationContainer>
+    </SafeAreaProvider>
   );
 }

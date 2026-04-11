@@ -39,7 +39,7 @@ export default function LoginPage() {
           <div className="w-10 h-10 rounded-xl bg-brand flex items-center justify-center text-white font-bold text-lg">
             S
           </div>
-          <h1 className="text-2xl font-bold">Вход в SeldeGram</h1>
+          <h1 className="text-2xl font-bold">Вход в CraboGram</h1>
         </div>
 
         <form onSubmit={submit} className="space-y-4">

@@ -28,6 +28,7 @@ import { DateSeparator } from '../ui/DateSeparator';
 import { StickerPicker } from '../ui/StickerPicker';
 import { VoiceRecorder } from '../ui/VoiceRecorder';
 import { ChatBackground } from '../ui/ChatBackground';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColors } from '../theme';
 import { formatDateLabel, messagePreview } from '../helpers';
 
@@ -70,6 +71,7 @@ export function ChatScreen({ route, navigation }: Props) {
   const [searchQ, setSearchQ] = useState('');
   const [searchResults, setSearchResults] = useState<Message[]>([]);
   const colors = useColors();
+  const insets = useSafeAreaInsets();
   const myUser = useAuth((s) => s.user);
   const meId = useAuth((s) => s.user?.id);
   const onMessage = useWs((s) => s.onMessage);
@@ -549,28 +551,32 @@ export function ChatScreen({ route, navigation }: Props) {
       )}
 
       {chat?.type === 'channel' && chat.viewerRole !== 'admin' ? (
-        <View style={styles.readOnlyBar}>
+        <View style={[styles.readOnlyBar, { paddingBottom: Math.max(insets.bottom, 14) }]}>
           <Text style={styles.readOnlyText}>Только админы могут писать в канал</Text>
         </View>
       ) : (
         <>
-          <View style={styles.inputBar}>
-            <Pressable onPress={showAttach} style={styles.attachBtn} disabled={uploading || !!editingId}>
-              {uploading ? <ActivityIndicator /> : <Text style={styles.attachText}>📎</Text>}
+          <View style={[styles.inputBar, { paddingBottom: Math.max(insets.bottom, 10) }]}>
+            <Pressable
+              onPress={showAttach}
+              style={[styles.attachBtn, { backgroundColor: colors.surfaceAlt }]}
+              disabled={uploading || !!editingId}
+            >
+              {uploading ? <ActivityIndicator color={colors.primary} /> : <Text style={styles.attachText}>📎</Text>}
             </Pressable>
             <Pressable
               onPress={() => setStickersOpen((v) => !v)}
-              style={styles.attachBtn}
+              style={[styles.attachBtn, { backgroundColor: colors.surfaceAlt }]}
               disabled={!!editingId}
             >
               <Text style={styles.attachText}>{stickersOpen ? '⌨' : '😀'}</Text>
             </Pressable>
             <TextInput
-              style={styles.input}
+              style={[styles.input, { backgroundColor: colors.surfaceAlt, color: colors.text, borderColor: colors.border }]}
               value={input}
               onChangeText={onInputChange}
               placeholder={editingId ? 'Изменить сообщение...' : 'Сообщение...'}
-              placeholderTextColor="#999"
+              placeholderTextColor={colors.textMuted}
               multiline
               onFocus={() => setStickersOpen(false)}
             />
@@ -618,18 +624,25 @@ const styles = StyleSheet.create({
   inputBar: {
     flexDirection: 'row',
     alignItems: 'flex-end',
-    padding: 10,
+    paddingHorizontal: 10,
+    paddingTop: 10,
     borderTopWidth: 1,
-    borderTopColor: '#eee',
-    gap: 8,
+    borderTopColor: '#ffd4e1',
+    backgroundColor: '#fff',
+    gap: 6,
   },
-  attachBtn: { width: 40, height: 40, justifyContent: 'center', alignItems: 'center' },
-  attachText: { fontSize: 24 },
+  attachBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  attachText: { fontSize: 22 },
   input: {
     flex: 1,
     borderWidth: 1,
-    borderColor: '#ffd4e1',
-    borderRadius: 18,
+    borderRadius: 20,
     paddingHorizontal: 14,
     paddingVertical: 10,
     fontSize: 16,

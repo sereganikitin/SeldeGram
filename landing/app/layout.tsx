@@ -8,14 +8,14 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "SeldeGram — Остаемся на связи не смотря ни на что!",
+  title: "CraboGram — Самый нежный мессенджер",
   description:
-    "Простой и быстрый мессенджер: личные чаты, группы, каналы, медиа, стикеры, push-уведомления.",
+    "CraboGram — тёплые чаты, нежные розовые обои и милые стикеры. Остаёмся на связи несмотря ни на что.",
   openGraph: {
-    title: "SeldeGram",
-    description: "Остаемся на связи не смотря ни на что!",
+    title: "CraboGram — Самый нежный мессенджер",
+    description: "Тёплые чаты с заботой о деталях. Остаёмся на связи несмотря ни на что.",
     url: "https://infoseledka.ru",
-    siteName: "SeldeGram",
+    siteName: "CraboGram",
     locale: "ru_RU",
     type: "website",
   },

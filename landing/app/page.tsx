@@ -3,33 +3,33 @@ const APP_URL = "https://app.infoseledka.ru";
 const FEATURES = [
   {
     icon: "💬",
-    title: "Чаты, группы и каналы",
-    text: "Личные сообщения, групповые обсуждения и публичные каналы — всё в одном приложении.",
+    title: "Тёплые чаты",
+    text: "Личные весточки, уютные группы и душевные каналы — место для всех, кто вам дорог.",
   },
   {
     icon: "📷",
-    title: "Медиа до 50 МБ",
-    text: "Фотографии, видео и любые файлы — отправляйте быстро, без потери качества.",
+    title: "Моменты радости",
+    text: "Делитесь фото, видео и файлами. Пусть каждое воспоминание останется в сохранности.",
   },
   {
     icon: "🔔",
-    title: "Push-уведомления",
-    text: "Узнавайте о новых сообщениях мгновенно. Никаких пропущенных весточек.",
+    title: "Нежные уведомления",
+    text: "Вы узнаете о новом сообщении мгновенно — и ни одна важная мысль не потеряется.",
   },
   {
     icon: "😀",
-    title: "Стикеры",
-    text: "Установите готовые паки или создайте собственный — поделитесь с друзьями по @ссылке.",
+    title: "Милые стикеры",
+    text: "Готовые паки или ваши собственные — чтобы рассказать больше, чем словами.",
   },
   {
-    icon: "🌗",
-    title: "Тёмная тема и обои",
-    text: "Светлая, тёмная или системная. Свои обои для каждого чата — как захочется.",
+    icon: "🌸",
+    title: "Розовые обои",
+    text: "Нежные темы с рыбками и крабиками, светлая и тёмная — выбирайте настроение.",
   },
   {
-    icon: "⚡",
-    title: "Реалтайм",
-    text: "Сообщения, индикатор «печатает», прочитано/доставлено — всё мгновенно.",
+    icon: "🦀",
+    title: "С любовью к деталям",
+    text: "Реалтайм, голосовые, опросы, комментарии в каналах — всё, чтобы быть рядом.",
   },
 ];
 
@@ -95,7 +95,7 @@ function ChatPreview() {
           Привет! Как дела?
         </div>
         <div className="self-end max-w-[70%] bg-brand text-white px-3 py-2 rounded-2xl text-xs shadow-sm">
-          Отлично! Только что попробовал SeldeGram
+          Отлично! Только что попробовал CraboGram
         </div>
         <div className="self-start max-w-[70%] bg-white text-ink px-3 py-2 rounded-2xl text-xs shadow-sm">
           О, и как тебе? 😊
@@ -125,7 +125,7 @@ export default function Home() {
       <header className="relative w-full px-6 md:px-10 py-5 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <CrabLogo size={44} />
-          <span className="font-bold text-xl text-ink">SeldeGram</span>
+          <span className="font-bold text-xl text-ink">CraboGram</span>
         </div>
         <a
           href={APP_URL}
@@ -138,13 +138,16 @@ export default function Home() {
       {/* Hero */}
       <section className="relative px-6 md:px-10 pt-12 pb-24 md:pt-20 md:pb-32 max-w-6xl mx-auto grid md:grid-cols-2 gap-12 items-center">
         <div>
+          <div className="inline-block mb-4 px-4 py-1.5 rounded-full bg-brand/10 border border-brand/20">
+            <span className="text-brand-dark text-sm font-semibold">🦀 Самый нежный мессенджер</span>
+          </div>
           <h1 className="text-4xl md:text-6xl font-extrabold leading-tight tracking-tight text-ink">
-            Остаемся на связи{" "}
-            <span className="text-brand-dark">не смотря ни на что!</span>
+            Остаёмся на связи{" "}
+            <span className="text-brand-dark">несмотря ни на что</span>
           </h1>
           <p className="mt-6 text-lg text-ink-muted leading-relaxed">
-            SeldeGram — простой и быстрый мессенджер. Пишите друзьям, создавайте группы и каналы,
-            делитесь фото, видео и стикерами. Всё это с push-уведомлениями и тёмной темой.
+            CraboGram — место, где общаться так же уютно, как обниматься. Тёплые чаты,
+            милые стикеры, нежные розовые обои. Для тех, кто ценит заботу в каждой мелочи.
           </p>
           <div className="mt-10 flex flex-wrap gap-4">
             <a
@@ -168,9 +171,9 @@ export default function Home() {
       {/* Features */}
       <section className="relative bg-cream-alt px-6 md:px-10 py-24">
         <div className="max-w-6xl mx-auto">
-          <h2 className="text-3xl md:text-4xl font-bold text-center text-ink">Что умеет SeldeGram</h2>
+          <h2 className="text-3xl md:text-4xl font-bold text-center text-ink">Почему CraboGram</h2>
           <p className="mt-4 text-center text-ink-muted max-w-2xl mx-auto">
-            Всё необходимое для общения — без лишнего, но с заботой о деталях.
+            Потому что общаться с близкими должно быть легко, красиво и по-доброму.
           </p>
           <div className="mt-16 grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {FEATURES.map((f) => (
@@ -193,15 +196,16 @@ export default function Home() {
           <div className="flex justify-center mb-6">
             <CrabLogo size={64} />
           </div>
-          <h2 className="text-3xl md:text-4xl font-bold text-ink">Готовы попробовать?</h2>
+          <h2 className="text-3xl md:text-4xl font-bold text-ink">Приходите в гости 🦀</h2>
           <p className="mt-4 text-ink-muted text-lg">
-            Регистрация занимает 30 секунд. Никаких номеров телефонов — только email.
+            Регистрация — 30 секунд. Только email и немного тепла.
+            Мы будем рады вас видеть.
           </p>
           <a
             href={APP_URL}
             className="mt-10 inline-block bg-brand hover:bg-brand-dark text-white px-10 py-5 rounded-full font-semibold text-lg shadow-xl shadow-brand/30 transition"
           >
-            Открыть SeldeGram →
+            Открыть CraboGram →
           </a>
         </div>
       </section>
@@ -211,7 +215,7 @@ export default function Home() {
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4 text-ink-muted text-sm">
           <div className="flex items-center gap-2">
             <CrabLogo size={28} />
-            <span>© 2026 SeldeGram</span>
+            <span>© 2026 CraboGram</span>
           </div>
           <div className="flex gap-6">
             <a href={APP_URL} className="hover:text-brand-dark transition">

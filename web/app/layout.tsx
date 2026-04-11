@@ -8,8 +8,8 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "SeldeGram",
-  description: "Простой и быстрый мессенджер",
+  title: "CraboGram — Самый нежный мессенджер",
+  description: "Тёплые чаты с заботой о деталях",
 };
 
 export default function RootLayout({
