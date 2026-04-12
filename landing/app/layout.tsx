@@ -14,7 +14,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "CraboGram — Самый нежный мессенджер",
     description: "Тёплые чаты с заботой о деталях. Остаёмся на связи несмотря ни на что.",
-    url: "https://infoseledka.ru",
+    url: "https://pinkcrab.ru",
     siteName: "CraboGram",
     locale: "ru_RU",
     type: "website",

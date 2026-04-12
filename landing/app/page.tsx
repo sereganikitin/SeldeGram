@@ -1,4 +1,4 @@
-const APP_URL = "https://app.infoseledka.ru";
+const APP_URL = "https://app.pinkcrab.ru";
 
 const FEATURES = [
   {
@@ -221,7 +221,7 @@ export default function Home() {
             <a href={APP_URL} className="hover:text-brand-dark transition">
               Веб-приложение
             </a>
-            <a href="mailto:hello@infoseledka.ru" className="hover:text-brand-dark transition">
+            <a href="mailto:hello@pinkcrab.ru" className="hover:text-brand-dark transition">
               Контакты
             </a>
           </div>
