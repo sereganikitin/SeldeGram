@@ -53,15 +53,9 @@ export function getPublicKey(): string | null {
   return cachedPublicKey;
 }
 
-// Кэш публичных ключей других пользователей (не кэшируем null)
-const peerKeyCache = new Map<string, string>();
-
 export async function getPeerPublicKey(userId: string): Promise<string | null> {
-  const cached = peerKeyCache.get(userId);
-  if (cached) return cached;
   try {
     const { data } = await api.get<{ id: string; publicKey: string | null }>(`/users/${userId}/keys`);
-    if (data.publicKey) peerKeyCache.set(userId, data.publicKey);
     return data.publicKey;
   } catch {
     return null;
@@ -71,7 +65,6 @@ export async function getPeerPublicKey(userId: string): Promise<string | null> {
 export function clearKeys() {
   cachedSecretKey = null;
   cachedPublicKey = null;
-  peerKeyCache.clear();
   SecureStore.deleteItemAsync(SECRET_KEY_STORE).catch(() => undefined);
   SecureStore.deleteItemAsync(PUBLIC_KEY_STORE).catch(() => undefined);
 }

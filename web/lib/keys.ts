@@ -57,14 +57,10 @@ export function getPublicKey(): string | null {
   return cachedPublicKey;
 }
 
-const peerKeyCache = new Map<string, string | null>();
-
+// Без кэша — всегда свежий ключ с сервера (надёжнее при смене ключей)
 export async function getPeerPublicKey(userId: string): Promise<string | null> {
-  const cached = peerKeyCache.get(userId);
-  if (cached) return cached; // Не кэшируем null — перезапрашиваем каждый раз
   try {
     const { data } = await api.get<{ id: string; publicKey: string | null }>(`/users/${userId}/keys`);
-    if (data.publicKey) peerKeyCache.set(userId, data.publicKey); // Кэшируем только реальный ключ
     return data.publicKey;
   } catch {
     return null;
