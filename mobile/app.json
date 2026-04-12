@@ -35,7 +35,8 @@
     },
     "owner": "seldegram",
     "plugins": [
-      "expo-video"
+      "expo-video",
+      "expo-secure-store"
     ]
   }
 }

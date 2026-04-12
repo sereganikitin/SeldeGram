@@ -13,4 +13,8 @@ export class UpdateMeDto {
   @IsOptional()
   @IsString()
   defaultWallpaper?: string;
+
+  @IsOptional()
+  @IsString()
+  publicKey?: string;
 }

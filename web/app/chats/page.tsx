@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/store";
 import { useTheme } from "@/lib/theme";
 import { useWs, type WsState } from "@/lib/ws";
+import { initKeys } from "@/lib/keys";
 import { Chat } from "@/lib/types";
 import { ChatList } from "@/components/ChatList";
 import { ChatView } from "@/components/ChatView";
@@ -40,7 +41,10 @@ export default function ChatsPage() {
   }, [hydrated, user, router]);
 
   useEffect(() => {
-    if (user) wsConnect();
+    if (user) {
+      wsConnect();
+      initKeys();
+    }
     return () => wsDisconnect();
   }, [user, wsConnect, wsDisconnect]);
 

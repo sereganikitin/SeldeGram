@@ -15,6 +15,8 @@ import { VoiceRecorder } from "./VoiceRecorder";
 import { ThreadModal } from "./ThreadModal";
 import { formatDateLabel, messagePreview } from "@/lib/helpers";
 import { uploadFile } from "@/lib/media";
+import { encryptMessage, decryptMessage } from "@/lib/crypto";
+import { getSecretKey, getPeerPublicKey } from "@/lib/keys";
 
 interface Props {
   chat: Chat;
@@ -50,6 +52,7 @@ export function ChatView({ chat, onBack, onChatGone, onOpenStickers }: Props) {
   const [dragOver, setDragOver] = useState(false);
   const [voiceRecording, setVoiceRecording] = useState(false);
   const [threadParent, setThreadParent] = useState<Message | null>(null);
+  const [peerPubKey, setPeerPubKey] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const typingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -59,14 +62,22 @@ export function ChatView({ chat, onBack, onChatGone, onOpenStickers }: Props) {
   useEffect(() => {
     api.get<Message[]>(`/chats/${chat.id}/messages`).then(({ data }) => setMessages(data));
     api.get<{ userId: string; lastReadAt: string }[]>(`/chats/${chat.id}/reads`).then(({ data }) => setReads(data));
-    api.get<Chat>(`/chats/${chat.id}`).then(({ data }) => setWallpaper(data.viewerWallpaper ?? null));
+    api.get<Chat>(`/chats/${chat.id}`).then(({ data }) => {
+      setWallpaper(data.viewerWallpaper ?? null);
+      if (data.type === "direct") {
+        const other = data.members.find((m) => m.id !== meId);
+        if (other) getPeerPublicKey(other.id).then(setPeerPubKey);
+      } else {
+        setPeerPubKey(null);
+      }
+    });
     api.get<Message | null>(`/chats/${chat.id}/pinned`).then(({ data }) => setPinnedMsg(data));
     setEditingId(null);
     setReplyTo(null);
     setInput("");
     setSearchOpen(false);
     setSearchQ("");
-  }, [chat.id]);
+  }, [chat.id, meId]);
 
   useEffect(() => {
     return onPinned((cid, messageId) => {
@@ -169,10 +180,22 @@ export function ChatView({ chat, onBack, onChatGone, onOpenStickers }: Props) {
     return map;
   }, [chat]);
 
+  // Расшифровка для direct-чатов
+  const decryptedMessages = useMemo(() => {
+    if (chat.type !== "direct") return messages;
+    const mySecret = getSecretKey();
+    if (!mySecret || !peerPubKey) return messages;
+    return messages.map((m) => {
+      if (!m.content?.startsWith("enc:")) return m;
+      const decrypted = decryptMessage(m.content, peerPubKey, mySecret);
+      return { ...m, content: decrypted };
+    });
+  }, [messages, chat.type, peerPubKey]);
+
   const items = useMemo(() => {
     const result: Array<{ kind: "msg"; m: Message } | { kind: "date"; id: string; label: string }> = [];
     let lastDay = "";
-    for (const m of messages) {
+    for (const m of decryptedMessages) {
       if (m.deletedAt) continue;
       const day = new Date(m.createdAt).toDateString();
       if (day !== lastDay) {
@@ -191,11 +214,16 @@ export function ChatView({ chat, onBack, onChatGone, onOpenStickers }: Props) {
     const replyId = replyTo?.id;
     setReplyTo(null);
     try {
+      let contentToSend = text;
+      const mySecret = getSecretKey();
+      if (chat.type === "direct" && peerPubKey && mySecret && !editingId) {
+        contentToSend = encryptMessage(text, peerPubKey, mySecret);
+      }
       if (editingId) {
-        await api.patch(`/chats/${chat.id}/messages/${editingId}`, { content: text });
+        await api.patch(`/chats/${chat.id}/messages/${editingId}`, { content: contentToSend });
         setEditingId(null);
       } else {
-        await api.post(`/chats/${chat.id}/messages`, { content: text, replyToId: replyId });
+        await api.post(`/chats/${chat.id}/messages`, { content: contentToSend, replyToId: replyId });
       }
     } catch {
       setInput(text);

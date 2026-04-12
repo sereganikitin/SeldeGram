@@ -31,6 +31,8 @@ import { ChatBackground } from '../ui/ChatBackground';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColors } from '../theme';
 import { formatDateLabel, messagePreview } from '../helpers';
+import { encryptMessage, decryptMessage } from '../crypto';
+import { getSecretKey, getPeerPublicKey } from '../keys';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Chat'>;
 
@@ -70,6 +72,7 @@ export function ChatScreen({ route, navigation }: Props) {
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQ, setSearchQ] = useState('');
   const [searchResults, setSearchResults] = useState<Message[]>([]);
+  const [peerPubKey, setPeerPubKey] = useState<string | null>(null);
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const myUser = useAuth((s) => s.user);
@@ -84,15 +87,22 @@ export function ChatScreen({ route, navigation }: Props) {
   const typingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastTypingSentRef = useRef(0);
 
-  // Загрузка чата + сообщений + reads + pinned
+  // Загрузка чата + сообщений + reads + pinned + peer key
   useEffect(() => {
     api.get<Message[]>(`/chats/${chatId}/messages`).then(({ data }) => setMessages(data));
-    api.get<Chat>(`/chats/${chatId}`).then(({ data }) => setChat(data));
+    api.get<Chat>(`/chats/${chatId}`).then(({ data }) => {
+      setChat(data);
+      // Загружаем publicKey собеседника в direct-чатах
+      if (data.type === 'direct') {
+        const other = data.members.find((m) => m.id !== meId);
+        if (other) getPeerPublicKey(other.id).then(setPeerPubKey);
+      }
+    });
     api.get<ChatRead[]>(`/chats/${chatId}/reads`).then(({ data }) => setReads(data));
     api.get<Message | null>(`/chats/${chatId}/pinned`).then(({ data }) => setPinnedMsg(data));
     setActiveChat(chatId);
     return () => setActiveChat(null);
-  }, [chatId]);
+  }, [chatId, meId]);
 
   // WS: pin/unpin
   useEffect(() => {
@@ -213,7 +223,20 @@ export function ChatScreen({ route, navigation }: Props) {
     api.post(`/chats/${chatId}/read`, { messageId: last.id }).catch(() => undefined);
   }, [chatId, messages]);
 
-  const items = useMemo(() => buildItems(messages), [messages]);
+  // Расшифровка сообщений для direct-чатов
+  const decryptedMessages = useMemo(() => {
+    if (chat?.type !== 'direct') return messages;
+    const mySecret = getSecretKey();
+    if (!mySecret) return messages;
+    return messages.map((m) => {
+      if (!m.content?.startsWith('enc:')) return m;
+      // DH shared secret одинаков в обоих направлениях, поэтому всегда используем peerPubKey
+      const decrypted = decryptMessage(m.content, peerPubKey, mySecret);
+      return { ...m, content: decrypted };
+    });
+  }, [messages, chat?.type, meId, peerPubKey]);
+
+  const items = useMemo(() => buildItems(decryptedMessages), [decryptedMessages]);
 
   // Минимум lastReadAt среди других участников — нужно чтобы показать ✓✓ на своих сообщениях
   const minOtherLastRead = useMemo(() => {
@@ -236,11 +259,17 @@ export function ChatScreen({ route, navigation }: Props) {
     const replyId = replyTo?.id;
     setReplyTo(null);
     try {
+      // Шифруем текст в direct-чатах если у обоих есть ключи
+      let contentToSend = text;
+      const mySecret = getSecretKey();
+      if (chat?.type === 'direct' && peerPubKey && mySecret && !editingId) {
+        contentToSend = encryptMessage(text, peerPubKey, mySecret);
+      }
       if (editingId) {
-        await api.patch(`/chats/${chatId}/messages/${editingId}`, { content: text });
+        await api.patch(`/chats/${chatId}/messages/${editingId}`, { content: contentToSend });
         setEditingId(null);
       } else {
-        await api.post(`/chats/${chatId}/messages`, { content: text, replyToId: replyId });
+        await api.post(`/chats/${chatId}/messages`, { content: contentToSend, replyToId: replyId });
       }
     } catch (e) {
       setInput(text);

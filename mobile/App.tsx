@@ -31,6 +31,7 @@ import { ThreadScreen } from './src/screens/ThreadScreen';
 import { useAuth } from './src/store/auth';
 import { useWs } from './src/store/ws';
 import { registerPushToken } from './src/push';
+import { initKeys } from './src/keys';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -65,6 +66,7 @@ export default function App() {
     if (user) {
       wsConnect();
       registerPushToken();
+      initKeys();
     } else {
       wsDisconnect();
     }

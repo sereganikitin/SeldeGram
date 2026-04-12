@@ -1,4 +1,4 @@
-import { Body, Controller, Get, NotFoundException, Patch, Query, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, NotFoundException, Param, Patch, Query, Req, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { PrismaService } from '../prisma/prisma.service';
 import { UsersService } from './users.service';
@@ -12,6 +12,7 @@ const ME_SELECT = {
   isVerified: true,
   avatarKey: true,
   defaultWallpaper: true,
+  publicKey: true,
   createdAt: true,
 } as const;
 
@@ -42,6 +43,7 @@ export class UsersController {
         ...(dto.displayName !== undefined && { displayName: dto.displayName }),
         ...(dto.avatarKey !== undefined && { avatarKey: dto.avatarKey }),
         ...(dto.defaultWallpaper !== undefined && { defaultWallpaper: dto.defaultWallpaper }),
+        ...(dto.publicKey !== undefined && { publicKey: dto.publicKey }),
       },
       select: ME_SELECT,
     });
@@ -52,5 +54,16 @@ export class UsersController {
   @Get('users/search')
   search(@Req() req: { user: { userId: string } }, @Query('q') q: string) {
     return this.users.search(q ?? '', req.user.userId);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('users/:id/keys')
+  async getKeys(@Param('id') id: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id },
+      select: { id: true, publicKey: true },
+    });
+    if (!user) throw new NotFoundException('User not found');
+    return user;
   }
 }
