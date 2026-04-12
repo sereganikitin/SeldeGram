@@ -14,26 +14,32 @@ let cachedSecretKey: string | null = null;
 let cachedPublicKey: string | null = null;
 
 export async function initKeys(): Promise<void> {
-  // Проверяем, есть ли уже ключи
   cachedSecretKey = await SecureStore.getItemAsync(SECRET_KEY_STORE);
   cachedPublicKey = await SecureStore.getItemAsync(PUBLIC_KEY_STORE);
 
   if (cachedSecretKey && cachedPublicKey) {
-    // Ключи уже есть — убедимся что publicKey загружен на сервер
     try {
       await api.patch('/me', { publicKey: cachedPublicKey });
     } catch {}
     return;
   }
 
-  // Генерируем новую пару
+  // Ключей нет локально. Проверяем, есть ли на сервере.
+  // Если есть — другое устройство уже сгенерировало, НЕ перезаписываем.
+  try {
+    const { data } = await api.get<{ publicKey: string | null }>('/me');
+    if (data.publicKey) return; // Ключи на другом устройстве, работаем без E2EE
+  } catch {
+    return;
+  }
+
+  // Первая генерация
   const kp = generateKeyPair();
   await SecureStore.setItemAsync(SECRET_KEY_STORE, kp.secretKey);
   await SecureStore.setItemAsync(PUBLIC_KEY_STORE, kp.publicKey);
   cachedSecretKey = kp.secretKey;
   cachedPublicKey = kp.publicKey;
 
-  // Загружаем publicKey на сервер
   try {
     await api.patch('/me', { publicKey: kp.publicKey });
   } catch {}
