@@ -4,8 +4,15 @@
  * Формат зашифрованного сообщения: "enc:" + base64(nonce[24] + ciphertext[...])
  * Незашифрованные сообщения не имеют префикса "enc:" и показываются как есть.
  */
+import * as ExpoCrypto from 'expo-crypto';
 import nacl from 'tweetnacl';
 import { encodeBase64, decodeBase64, encodeUTF8, decodeUTF8 } from 'tweetnacl-util';
+
+// Polyfill PRNG для React Native — Hermes не имеет crypto.getRandomValues
+nacl.setPRNG((x: Uint8Array, n: number) => {
+  const bytes = ExpoCrypto.getRandomBytes(n);
+  for (let i = 0; i < n; i++) x[i] = bytes[i];
+});
 
 const ENC_PREFIX = 'enc:';
 
