@@ -46,6 +46,7 @@ interface PreviewMsg {
 
 export function messagePreview(msg: PreviewMsg): string {
   if (msg.deletedAt) return "удалено";
+  if (msg.content?.startsWith("enc:")) return "🔒 Зашифровано";
   if (msg.isSticker) return `${msg.content || ""} Стикер`.trim();
   if (msg.mediaType?.startsWith("audio/")) return "🎤 Голосовое";
   if (msg.content) return msg.content;

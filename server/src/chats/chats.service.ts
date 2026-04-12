@@ -431,9 +431,14 @@ export class ChatsService {
         select: { type: true, title: true },
       });
       const title = chat?.type === 'direct' ? sender?.displayName ?? 'New message' : chat?.title ?? 'New message';
-      const body = message.isSticker
-        ? `${message.content} Стикер`
-        : message.content || (message.mediaType?.startsWith('image/') ? '📷 Фото' : message.mediaKey ? '📄 Файл' : '');
+      let body: string;
+      if (message.content?.startsWith('enc:')) {
+        body = '🔒 Зашифрованное сообщение';
+      } else if (message.isSticker) {
+        body = `${message.content} Стикер`;
+      } else {
+        body = message.content || (message.mediaType?.startsWith('image/') ? '📷 Фото' : message.mediaKey ? '📄 Файл' : '');
+      }
       this.push
         .sendToUsers(recipientIds, { title, body, data: { chatId, messageId: message.id } })
         .catch(() => undefined);

@@ -70,24 +70,17 @@ export function MessageBubble({ message, mine, showSenderName, senderName, isRea
   const isSticker = !!message.isSticker && !isDeleted;
   const [menuOpen, setMenuOpen] = useState(false);
 
-  const handleContext = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    e.nativeEvent.stopImmediatePropagation();
-    setMenuOpen((v) => !v);
-  };
-
   if (isSticker) {
     return (
       <div
-        onContextMenu={handleContext}
-        className={`my-1 flex flex-col ${mine ? "items-end" : "items-start"} relative`}
+        className={`my-1 flex flex-col ${mine ? "items-end" : "items-start"} relative group`}
       >
         {showSenderName && !mine && <div className="text-xs font-bold text-brand-dark mb-1 ml-1">{senderName}</div>}
         <MediaContent message={message} mine={mine} />
         <div className="flex items-center gap-1 mt-1 text-[11px] text-ink-muted">
           <span>{formatTime(message.createdAt)}</span>
           {mine && <span>{isRead ? "✓✓" : "✓"}</span>}
+          <button onClick={() => setMenuOpen((v) => !v)} className="opacity-0 group-hover:opacity-100 ml-1 text-ink-muted hover:text-ink transition-opacity">⋯</button>
         </div>
         {menuOpen && <ActionMenu mine={mine} hasContent={false} onAction={onAction} onClose={() => setMenuOpen(false)} />}
       </div>
@@ -95,9 +88,8 @@ export function MessageBubble({ message, mine, showSenderName, senderName, isRea
   }
 
   return (
-    <div className={`flex my-1 ${mine ? "justify-end" : "justify-start"}`}>
+    <div className={`flex my-1 ${mine ? "justify-end" : "justify-start"} group`}>
       <div
-        onContextMenu={handleContext}
         className={`relative max-w-[78%] px-3 py-2 rounded-2xl ${
           mine ? "bg-brand text-white" : "bg-white dark:bg-slate-800 text-ink dark:text-white shadow-sm"
         }`}
@@ -137,6 +129,14 @@ export function MessageBubble({ message, mine, showSenderName, senderName, isRea
           {message.editedAt && !isDeleted && <span className="italic">изм.</span>}
           <span>{formatTime(message.createdAt)}</span>
           {mine && !isDeleted && <span>{isRead ? "✓✓" : "✓"}</span>}
+          {!isDeleted && (
+            <button
+              onClick={() => setMenuOpen((v) => !v)}
+              className="opacity-0 group-hover:opacity-100 ml-1 hover:opacity-80 transition-opacity"
+            >
+              ⋯
+            </button>
+          )}
         </div>
 
         {menuOpen && (

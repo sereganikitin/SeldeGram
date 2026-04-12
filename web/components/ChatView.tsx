@@ -184,9 +184,9 @@ export function ChatView({ chat, onBack, onChatGone, onOpenStickers }: Props) {
   const decryptedMessages = useMemo(() => {
     if (chat.type !== "direct") return messages;
     const mySecret = getSecretKey();
-    if (!mySecret || !peerPubKey) return messages;
     return messages.map((m) => {
       if (!m.content?.startsWith("enc:")) return m;
+      if (!mySecret || !peerPubKey) return { ...m, content: "🔒 Зашифровано" };
       const decrypted = decryptMessage(m.content, peerPubKey, mySecret);
       return { ...m, content: decrypted };
     });

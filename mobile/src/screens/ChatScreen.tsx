@@ -227,14 +227,13 @@ export function ChatScreen({ route, navigation }: Props) {
   const decryptedMessages = useMemo(() => {
     if (chat?.type !== 'direct') return messages;
     const mySecret = getSecretKey();
-    if (!mySecret) return messages;
     return messages.map((m) => {
       if (!m.content?.startsWith('enc:')) return m;
-      // DH shared secret одинаков в обоих направлениях, поэтому всегда используем peerPubKey
+      if (!mySecret || !peerPubKey) return { ...m, content: '🔒 Зашифровано' };
       const decrypted = decryptMessage(m.content, peerPubKey, mySecret);
       return { ...m, content: decrypted };
     });
-  }, [messages, chat?.type, meId, peerPubKey]);
+  }, [messages, chat?.type, peerPubKey]);
 
   const items = useMemo(() => buildItems(decryptedMessages), [decryptedMessages]);
 
