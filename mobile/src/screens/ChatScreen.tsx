@@ -104,6 +104,18 @@ export function ChatScreen({ route, navigation }: Props) {
     return () => setActiveChat(null);
   }, [chatId, meId]);
 
+  // Polling для peerPubKey и secretKey (ждём пока initKeys завершится)
+  useEffect(() => {
+    if (chat?.type !== 'direct' || peerPubKey) return;
+    const other = chat.members.find((m) => m.id !== meId);
+    if (!other) return;
+    const iv = setInterval(async () => {
+      const pk = await getPeerPublicKey(other.id);
+      if (pk) { setPeerPubKey(pk); clearInterval(iv); }
+    }, 500);
+    return () => clearInterval(iv);
+  }, [chat?.type, chat?.members, meId, peerPubKey]);
+
   // WS: pin/unpin
   useEffect(() => {
     return onPinned((cid, messageId) => {
