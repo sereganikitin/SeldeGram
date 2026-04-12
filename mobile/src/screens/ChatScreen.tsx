@@ -268,7 +268,8 @@ export function ChatScreen({ route, navigation }: Props) {
         await api.patch(`/chats/${chatId}/messages/${editingId}`, { content: contentToSend });
         setEditingId(null);
       } else {
-        await api.post(`/chats/${chatId}/messages`, { content: contentToSend, replyToId: replyId });
+        const pushPreview = contentToSend !== text ? text : undefined;
+        await api.post(`/chats/${chatId}/messages`, { content: contentToSend, replyToId: replyId, pushPreview });
       }
     } catch (e) {
       setInput(text);

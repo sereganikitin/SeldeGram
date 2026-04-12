@@ -39,4 +39,8 @@ export class SendMessageDto {
   @IsOptional()
   @IsString()
   threadOfId?: string;
+
+  @IsOptional()
+  @IsString()
+  pushPreview?: string;
 }

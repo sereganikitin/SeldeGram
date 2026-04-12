@@ -326,6 +326,7 @@ export class ChatsService {
       forwardedFromId?: string;
       stickerId?: string;
       threadOfId?: string;
+      pushPreview?: string;
     },
   ) {
     const member = await this.assertMember(chatId, userId);
@@ -431,14 +432,10 @@ export class ChatsService {
         select: { type: true, title: true },
       });
       const title = chat?.type === 'direct' ? sender?.displayName ?? 'New message' : chat?.title ?? 'New message';
-      let body: string;
-      if (message.content?.startsWith('enc:')) {
-        body = '🔒 Зашифрованное сообщение';
-      } else if (message.isSticker) {
-        body = `${message.content} Стикер`;
-      } else {
-        body = message.content || (message.mediaType?.startsWith('image/') ? '📷 Фото' : message.mediaKey ? '📄 Файл' : '');
-      }
+      const body = payload.pushPreview
+        || (message.isSticker ? `${message.content} Стикер` : '')
+        || message.content
+        || (message.mediaType?.startsWith('image/') ? '📷 Фото' : message.mediaKey ? '📄 Файл' : '');
       this.push
         .sendToUsers(recipientIds, { title, body, data: { chatId, messageId: message.id } })
         .catch(() => undefined);

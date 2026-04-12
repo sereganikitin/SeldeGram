@@ -223,7 +223,8 @@ export function ChatView({ chat, onBack, onChatGone, onOpenStickers }: Props) {
         await api.patch(`/chats/${chat.id}/messages/${editingId}`, { content: contentToSend });
         setEditingId(null);
       } else {
-        await api.post(`/chats/${chat.id}/messages`, { content: contentToSend, replyToId: replyId });
+        const pushPreview = contentToSend !== text ? text : undefined;
+        await api.post(`/chats/${chat.id}/messages`, { content: contentToSend, replyToId: replyId, pushPreview });
       }
     } catch {
       setInput(text);

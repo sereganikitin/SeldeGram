@@ -7,6 +7,8 @@ import { useAuth } from "@/lib/store";
 import { useWs, type WsState } from "@/lib/ws";
 import { Avatar } from "./Avatar";
 import { formatTime, messagePreview } from "@/lib/helpers";
+import { decryptMessage } from "@/lib/crypto";
+import { getSecretKey, getPeerPublicKey } from "@/lib/keys";
 
 interface Props {
   selectedId: string | null;
@@ -30,8 +32,22 @@ export function ChatList({ selectedId, onSelect, onLogout, onNewChat, onOpenStic
 
   const load = useCallback(async () => {
     const { data } = await api.get<Chat[]>("/chats");
+    const mySecret = getSecretKey();
+    if (mySecret) {
+      for (const c of data) {
+        if (c.type === "direct" && c.lastMessage?.content?.startsWith("enc:")) {
+          const other = c.members.find((m) => m.id !== meId);
+          if (other) {
+            const pk = await getPeerPublicKey(other.id);
+            if (pk) {
+              c.lastMessage = { ...c.lastMessage, content: decryptMessage(c.lastMessage.content, pk, mySecret) };
+            }
+          }
+        }
+      }
+    }
     setChats(data);
-  }, []);
+  }, [meId]);
 
   useEffect(() => {
     load();
@@ -42,18 +58,44 @@ export function ChatList({ selectedId, onSelect, onLogout, onNewChat, onOpenStic
 
   useEffect(
     () =>
-      onMessage((msg: Message) => {
+      onMessage(async (msg: Message) => {
+        // Расшифровываем для preview в списке чатов
+        let decMsg = msg;
+        if (msg.content?.startsWith("enc:")) {
+          const mySecret = getSecretKey();
+          if (mySecret && msg.senderId !== meId) {
+            const pk = await getPeerPublicKey(msg.senderId);
+            if (pk) decMsg = { ...msg, content: decryptMessage(msg.content, pk, mySecret) };
+          } else if (mySecret) {
+            // Своё сообщение — нужен ключ собеседника. Пока берём из чата.
+            setChats((prev) => {
+              const chat = prev.find((c) => c.id === msg.chatId);
+              if (chat?.type === "direct") {
+                const other = chat.members.find((m) => m.id !== meId);
+                if (other) {
+                  getPeerPublicKey(other.id).then((pk) => {
+                    if (pk) {
+                      const dec = decryptMessage(msg.content, pk, mySecret);
+                      setChats((p) => p.map((c) => c.id === msg.chatId ? { ...c, lastMessage: { ...msg, content: dec } } : c));
+                    }
+                  });
+                }
+              }
+              return prev;
+            });
+          }
+        }
         setChats((prev) => {
-          const idx = prev.findIndex((c) => c.id === msg.chatId);
+          const idx = prev.findIndex((c) => c.id === decMsg.chatId);
           if (idx === -1) {
             load();
             return prev;
           }
-          const isMine = msg.senderId === meId;
-          const isOpen = msg.chatId === selectedId;
+          const isMine = decMsg.senderId === meId;
+          const isOpen = decMsg.chatId === selectedId;
           const updated: Chat = {
             ...prev[idx],
-            lastMessage: msg,
+            lastMessage: decMsg,
             unreadCount: isMine || isOpen ? prev[idx].unreadCount ?? 0 : (prev[idx].unreadCount ?? 0) + 1,
           };
           return [updated, ...prev.filter((_, i) => i !== idx)];

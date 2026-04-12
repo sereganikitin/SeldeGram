@@ -11,6 +11,8 @@ import { Avatar } from '../ui/Avatar';
 import { messagePreview, formatTime } from '../helpers';
 import { useColors } from '../theme';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { decryptMessage } from '../crypto';
+import { getSecretKey, getPeerPublicKey } from '../keys';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'ChatList'>;
 
@@ -31,6 +33,21 @@ export function ChatListScreen({ navigation }: Props) {
 
   const load = async () => {
     const { data } = await api.get<Chat[]>('/chats');
+    // Расшифровываем lastMessage preview для direct-чатов
+    const mySecret = getSecretKey();
+    if (mySecret) {
+      for (const c of data) {
+        if (c.type === 'direct' && c.lastMessage?.content?.startsWith('enc:')) {
+          const other = c.members.find((m) => m.id !== meId);
+          if (other) {
+            const pk = await getPeerPublicKey(other.id);
+            if (pk) {
+              c.lastMessage = { ...c.lastMessage, content: decryptMessage(c.lastMessage.content, pk, mySecret) };
+            }
+          }
+        }
+      }
+    }
     setChats(data);
   };
 
@@ -56,23 +73,38 @@ export function ChatListScreen({ navigation }: Props) {
   }, [onChatDeleted]);
 
   useEffect(() => {
-    return onMessage((msg) => {
+    return onMessage(async (msg) => {
+      let decMsg = msg;
+      if (msg.content?.startsWith('enc:')) {
+        const mySecret = getSecretKey();
+        if (mySecret) {
+          // Расшифруем preview: нужен ключ собеседника
+          const chat = chats.find((c) => c.id === msg.chatId);
+          if (chat?.type === 'direct') {
+            const other = chat.members.find((m) => m.id !== meId);
+            if (other) {
+              const pk = await getPeerPublicKey(other.id);
+              if (pk) decMsg = { ...msg, content: decryptMessage(msg.content, pk, mySecret) };
+            }
+          }
+        }
+      }
       setChats((prev) => {
-        const idx = prev.findIndex((c) => c.id === msg.chatId);
+        const idx = prev.findIndex((c) => c.id === decMsg.chatId);
         if (idx === -1) {
           load();
           return prev;
         }
-        const isMine = msg.senderId === meId;
+        const isMine = decMsg.senderId === meId;
         const updated: Chat = {
           ...prev[idx],
-          lastMessage: msg,
+          lastMessage: decMsg,
           unreadCount: isMine ? prev[idx].unreadCount ?? 0 : (prev[idx].unreadCount ?? 0) + 1,
         };
         return [updated, ...prev.filter((_, i) => i !== idx)];
       });
     });
-  }, [meId, onMessage]);
+  }, [meId, onMessage, chats]);
 
   useEffect(() => {
     return onEdited((msg) => {
