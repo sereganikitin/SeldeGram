@@ -21,6 +21,6 @@ html, body {
 }
 
 /* Предотвращаем выход за правый край на мобильном вебе */
-*, *::before, *::after {
+img, video, canvas, svg {
   max-width: 100%;
 }
