@@ -59,15 +59,27 @@ export function ChatView({ chat, onBack, onChatGone, onOpenStickers }: Props) {
   const typingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastTypingSentRef = useRef(0);
 
-  // Дожидаемся пока initKeys() завершится и ключ станет доступен
+  // Дожидаемся пока initKeys() завершится
   useEffect(() => {
     if (mySecret) return;
     const iv = setInterval(() => {
       const k = getSecretKey();
       if (k) { setMySecret(k); clearInterval(iv); }
-    }, 300);
+    }, 200);
     return () => clearInterval(iv);
   }, [mySecret]);
+
+  // Дожидаемся peerPubKey (тоже async)
+  useEffect(() => {
+    if (chat.type !== "direct" || peerPubKey) return;
+    const other = chat.members.find((m) => m.id !== meId);
+    if (!other) return;
+    const iv = setInterval(async () => {
+      const pk = await getPeerPublicKey(other.id);
+      if (pk) { setPeerPubKey(pk); clearInterval(iv); }
+    }, 500);
+    return () => clearInterval(iv);
+  }, [chat.type, chat.id, chat.members, meId, peerPubKey]);
 
   // Загрузка
   useEffect(() => {
