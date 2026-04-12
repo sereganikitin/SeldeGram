@@ -53,10 +53,21 @@ export function ChatView({ chat, onBack, onChatGone, onOpenStickers }: Props) {
   const [voiceRecording, setVoiceRecording] = useState(false);
   const [threadParent, setThreadParent] = useState<Message | null>(null);
   const [peerPubKey, setPeerPubKey] = useState<string | null>(null);
+  const [mySecret, setMySecret] = useState<string | null>(getSecretKey());
   const fileInputRef = useRef<HTMLInputElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const typingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastTypingSentRef = useRef(0);
+
+  // Дожидаемся пока initKeys() завершится и ключ станет доступен
+  useEffect(() => {
+    if (mySecret) return;
+    const iv = setInterval(() => {
+      const k = getSecretKey();
+      if (k) { setMySecret(k); clearInterval(iv); }
+    }, 300);
+    return () => clearInterval(iv);
+  }, [mySecret]);
 
   // Загрузка
   useEffect(() => {
@@ -183,14 +194,13 @@ export function ChatView({ chat, onBack, onChatGone, onOpenStickers }: Props) {
   // Расшифровка для direct-чатов
   const decryptedMessages = useMemo(() => {
     if (chat.type !== "direct") return messages;
-    const mySecret = getSecretKey();
     return messages.map((m) => {
       if (!m.content?.startsWith("enc:")) return m;
       if (!mySecret || !peerPubKey) return { ...m, content: "🔒 Зашифровано" };
       const decrypted = decryptMessage(m.content, peerPubKey, mySecret);
       return { ...m, content: decrypted };
     });
-  }, [messages, chat.type, peerPubKey]);
+  }, [messages, chat.type, peerPubKey, mySecret]);
 
   const items = useMemo(() => {
     const result: Array<{ kind: "msg"; m: Message } | { kind: "date"; id: string; label: string }> = [];
@@ -215,7 +225,6 @@ export function ChatView({ chat, onBack, onChatGone, onOpenStickers }: Props) {
     setReplyTo(null);
     try {
       let contentToSend = text;
-      const mySecret = getSecretKey();
       if (chat.type === "direct" && peerPubKey && mySecret && !editingId) {
         contentToSend = encryptMessage(text, peerPubKey, mySecret);
       }

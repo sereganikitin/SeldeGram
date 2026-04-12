@@ -90,7 +90,7 @@ export function MessageBubble({ message, mine, showSenderName, senderName, isRea
   return (
     <div className={`flex my-1 ${mine ? "justify-end" : "justify-start"} group`}>
       <div
-        className={`relative max-w-[78%] px-3 py-2 rounded-2xl ${
+        className={`relative max-w-[78%] px-3 py-2 rounded-2xl overflow-hidden ${
           mine ? "bg-brand text-white" : "bg-white dark:bg-slate-800 text-ink dark:text-white shadow-sm"
         }`}
       >
@@ -120,7 +120,7 @@ export function MessageBubble({ message, mine, showSenderName, senderName, isRea
             {message.content?.startsWith("📊 ") ? (
               <PollBubble messageId={message.id} mine={mine} />
             ) : message.content ? (
-              <div className="text-base whitespace-pre-wrap break-words mt-1">{message.content}</div>
+              <div className="text-base whitespace-pre-wrap break-all mt-1">{message.content}</div>
             ) : null}
           </>
         )}
