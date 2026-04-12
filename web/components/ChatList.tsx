@@ -93,7 +93,7 @@ export function ChatList({ selectedId, onSelect, onLogout, onNewChat, onOpenStic
   const filtered = chats.filter((c) => (c.title ?? "").toLowerCase().includes(search.toLowerCase()));
 
   return (
-    <aside className="w-full md:w-80 lg:w-96 border-r border-cream-border dark:border-slate-800 flex flex-col bg-white dark:bg-slate-950">
+    <aside className="w-full md:w-80 lg:w-96 border-r border-cream-border dark:border-slate-800 flex flex-col bg-white dark:bg-slate-950 overflow-x-hidden">
       <header className="p-4 border-b border-cream-border dark:border-slate-800 flex items-center gap-3">
         {me && <Avatar id={me.id} name={me.displayName} avatarKey={me.avatarKey} size={40} />}
         <div className="flex-1 min-w-0">

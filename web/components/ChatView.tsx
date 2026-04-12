@@ -303,7 +303,7 @@ export function ChatView({ chat, onBack, onChatGone, onOpenStickers }: Props) {
   return (
     <ChatBackground wallpaper={effectiveWallpaper}>
     <section
-      className="flex-1 flex flex-col min-h-0 relative"
+      className="flex-1 flex flex-col min-h-0 relative overflow-x-hidden w-full"
       onDragOver={(e) => {
         e.preventDefault();
         setDragOver(true);

@@ -16,4 +16,11 @@
 
 html, body {
   font-family: var(--font-sans), system-ui, -apple-system, sans-serif;
+  overflow-x: hidden;
+  max-width: 100vw;
+}
+
+/* Предотвращаем выход за правый край на мобильном вебе */
+*, *::before, *::after {
+  max-width: 100%;
 }

@@ -62,7 +62,7 @@ export default function ChatsPage() {
 
   return (
     <>
-      <div className="flex-1 flex min-h-0 overflow-hidden">
+      <div className="flex-1 flex min-h-0 overflow-hidden w-full max-w-full">
         <div className={`${selected ? "hidden md:flex" : "flex"} w-full md:w-auto`}>
           <ChatList
             selectedId={selected?.id ?? null}
