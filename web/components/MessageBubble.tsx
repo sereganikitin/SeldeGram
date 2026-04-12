@@ -72,6 +72,8 @@ export function MessageBubble({ message, mine, showSenderName, senderName, isRea
 
   const handleContext = (e: React.MouseEvent) => {
     e.preventDefault();
+    e.stopPropagation();
+    e.nativeEvent.stopImmediatePropagation();
     setMenuOpen((v) => !v);
   };
 
@@ -158,7 +160,7 @@ function ActionMenu({
 }) {
   return (
     <>
-      <div className="fixed inset-0 z-40" onClick={onClose} />
+      <div className="fixed inset-0 z-40" onClick={onClose} onContextMenu={(e) => { e.preventDefault(); e.stopPropagation(); onClose(); }} />
       <div className="absolute z-50 bottom-full mb-1 right-0 bg-white dark:bg-slate-800 dark:text-white shadow-xl rounded-lg border border-cream-border dark:border-slate-700 py-1 min-w-[160px]">
         <button onClick={() => onAction("reply")} className="w-full text-left px-3 py-2 text-sm hover:bg-cream dark:hover:bg-slate-700">
           ↩ Ответить
