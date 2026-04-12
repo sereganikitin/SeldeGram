@@ -44,10 +44,11 @@ export function getPublicKey(): string | null {
 const peerKeyCache = new Map<string, string | null>();
 
 export async function getPeerPublicKey(userId: string): Promise<string | null> {
-  if (peerKeyCache.has(userId)) return peerKeyCache.get(userId)!;
+  const cached = peerKeyCache.get(userId);
+  if (cached) return cached; // Не кэшируем null — перезапрашиваем каждый раз
   try {
     const { data } = await api.get<{ id: string; publicKey: string | null }>(`/users/${userId}/keys`);
-    peerKeyCache.set(userId, data.publicKey);
+    if (data.publicKey) peerKeyCache.set(userId, data.publicKey); // Кэшируем только реальный ключ
     return data.publicKey;
   } catch {
     return null;

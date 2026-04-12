@@ -47,14 +47,15 @@ export function getPublicKey(): string | null {
   return cachedPublicKey;
 }
 
-// Кэш публичных ключей других пользователей
-const peerKeyCache = new Map<string, string | null>();
+// Кэш публичных ключей других пользователей (не кэшируем null)
+const peerKeyCache = new Map<string, string>();
 
 export async function getPeerPublicKey(userId: string): Promise<string | null> {
-  if (peerKeyCache.has(userId)) return peerKeyCache.get(userId)!;
+  const cached = peerKeyCache.get(userId);
+  if (cached) return cached;
   try {
     const { data } = await api.get<{ id: string; publicKey: string | null }>(`/users/${userId}/keys`);
-    peerKeyCache.set(userId, data.publicKey);
+    if (data.publicKey) peerKeyCache.set(userId, data.publicKey);
     return data.publicKey;
   } catch {
     return null;
