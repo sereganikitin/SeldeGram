@@ -57,6 +57,23 @@ export function ChatView({ chat, onBack, onChatGone, onOpenStickers }: Props) {
   const typingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastTypingSentRef = useRef(0);
 
+  // WS: реакции
+  useEffect(() => {
+    const ws = useWs.getState().socket;
+    if (!ws) return;
+    const handler = (event: MessageEvent) => {
+      try {
+        const data = JSON.parse(event.data);
+        if (data.type === "message:reactions" && data.payload.chatId === chat.id) {
+          const { messageId: mid, reactions } = data.payload;
+          setMessages((prev) => prev.map((m) => m.id === mid ? { ...m, reactions } : m));
+        }
+      } catch {}
+    };
+    ws.addEventListener("message", handler);
+    return () => ws.removeEventListener("message", handler);
+  }, [chat.id]);
+
   // WS: обновление статуса собеседника
   const onPresence = useWs((s: WsState) => s.onPresence);
   useEffect(() => {
@@ -459,6 +476,7 @@ export function ChatView({ chat, onBack, onChatGone, onOpenStickers }: Props) {
                 senderName={senderNameById.get(m.senderId)}
                 isRead={isRead}
                 onAction={handleAction(m)}
+                onReact={(emoji) => api.post(`/chats/${chat.id}/messages/${m.id}/react`, { emoji }).catch(() => {})}
                 canComment={chat.type === "channel" && !m.threadOfId}
               />
             </div>

@@ -65,6 +65,16 @@ export function messagePreview(msg: {
   return '';
 }
 
+export function groupReactions(reactions: Array<{ emoji: string; userId: string }>): Array<{ emoji: string; count: number; userIds: string[] }> {
+  const map = new Map<string, string[]>();
+  for (const r of reactions) {
+    const arr = map.get(r.emoji) || [];
+    arr.push(r.userId);
+    map.set(r.emoji, arr);
+  }
+  return Array.from(map.entries()).map(([emoji, userIds]) => ({ emoji, count: userIds.length, userIds }));
+}
+
 export function lastSeenText(lastSeenAt: string | null | undefined, isOnline?: boolean): string {
   if (isOnline) return 'в сети';
   if (!lastSeenAt) return 'был давно';

@@ -33,7 +33,14 @@ export interface Message {
   threadOfId?: string | null;
   editedAt?: string | null;
   deletedAt?: string | null;
+  reactions?: Array<{ emoji: string; userId: string }>;
   createdAt: string;
+}
+
+export interface ReactionGroup {
+  emoji: string;
+  count: number;
+  userIds: string[];
 }
 
 export interface Sticker {

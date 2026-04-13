@@ -29,6 +29,7 @@ model User {
   messages           Message[]
   chatReads          ChatRead[]
   polls              Poll[]
+  reactions          MessageReaction[]
   blocksInitiated    Block[]           @relation("Blocker")
   blocksReceived     Block[]           @relation("Blocked")
   stickerPacks       StickerPack[]
@@ -145,9 +146,25 @@ model Message {
   threadOf      Message?  @relation("MessageThread", fields: [threadOfId], references: [id], onDelete: Cascade)
   threadReplies Message[] @relation("MessageThread")
   poll          Poll?
+  reactions     MessageReaction[]
 
   @@index([chatId, createdAt])
   @@map("messages")
+}
+
+model MessageReaction {
+  id        String   @id @default(uuid())
+  messageId String
+  userId    String
+  emoji     String
+  createdAt DateTime @default(now())
+
+  message Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([messageId, userId, emoji])
+  @@index([messageId])
+  @@map("message_reactions")
 }
 
 model StickerPack {

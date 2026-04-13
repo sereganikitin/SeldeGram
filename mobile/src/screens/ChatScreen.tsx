@@ -107,6 +107,23 @@ export function ChatScreen({ route, navigation }: Props) {
     return () => setActiveChat(null);
   }, [chatId, meId]);
 
+  // WS: реакции — слушаем через raw WS
+  useEffect(() => {
+    const ws = useWs.getState().socket;
+    if (!ws) return;
+    const handler = (event: { data: string }) => {
+      try {
+        const data = JSON.parse(event.data);
+        if (data.type === 'message:reactions' && data.payload.chatId === chatId) {
+          const { messageId: mid, reactions } = data.payload;
+          setMessages((prev) => prev.map((m) => m.id === mid ? { ...m, reactions } : m));
+        }
+      } catch {}
+    };
+    ws.addEventListener('message', handler as any);
+    return () => ws.removeEventListener('message', handler as any);
+  }, [chatId]);
+
   // WS: статус собеседника
   useEffect(() => {
     if (chat?.type !== 'direct') return;
@@ -406,7 +423,12 @@ export function ChatScreen({ route, navigation }: Props) {
     const mine = msg.senderId === meId;
     const canPin = chat?.type === 'direct' || chat?.viewerRole === 'admin';
     const isChannelPost = chat?.type === 'channel' && !msg.threadOfId;
+    const quickReactions = ['❤️', '👍', '😂', '😮', '😢', '🔥'];
     const options: { text: string; onPress?: () => void; style?: 'destructive' | 'cancel' }[] = [
+      ...quickReactions.map((emoji) => ({
+        text: emoji,
+        onPress: () => api.post(`/chats/${chatId}/messages/${msg.id}/react`, { emoji }).catch(() => undefined),
+      })),
       { text: 'Ответить', onPress: () => setReplyTo(msg) },
       { text: 'Переслать', onPress: () => navigation.navigate('Forward', { messageId: msg.id }) },
     ];

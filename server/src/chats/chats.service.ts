@@ -16,6 +16,9 @@ const messageInclude = {
       deletedAt: true,
     },
   },
+  reactions: {
+    select: { emoji: true, userId: true },
+  },
 } as const;
 
 @Injectable()
@@ -615,6 +618,50 @@ export class ChatsService {
       where: { id: chat.pinnedMessageId },
       include: messageInclude,
     });
+  }
+
+  async toggleReaction(chatId: string, userId: string, messageId: string, emoji: string) {
+    await this.assertMember(chatId, userId);
+    const msg = await this.prisma.message.findUnique({ where: { id: messageId } });
+    if (!msg || msg.chatId !== chatId) throw new NotFoundException('Message not found');
+
+    const existing = await this.prisma.messageReaction.findUnique({
+      where: { messageId_userId_emoji: { messageId, userId, emoji } },
+    });
+
+    if (existing) {
+      await this.prisma.messageReaction.delete({ where: { id: existing.id } });
+    } else {
+      await this.prisma.messageReaction.create({ data: { messageId, userId, emoji } });
+    }
+
+    // Собираем актуальные реакции и рассылаем
+    const reactions = await this.getReactions(messageId);
+    const members = await this.prisma.chatMember.findMany({ where: { chatId }, select: { userId: true } });
+    this.hub.sendToUsers(
+      members.map((m) => m.userId),
+      { type: 'message:reactions', payload: { chatId, messageId, reactions } },
+    );
+    return reactions;
+  }
+
+  async getReactions(messageId: string) {
+    const rows = await this.prisma.messageReaction.findMany({
+      where: { messageId },
+      select: { emoji: true, userId: true },
+    });
+    // Группируем: { emoji, count, userIds, myReaction? }
+    const map = new Map<string, string[]>();
+    for (const r of rows) {
+      const arr = map.get(r.emoji) || [];
+      arr.push(r.userId);
+      map.set(r.emoji, arr);
+    }
+    return Array.from(map.entries()).map(([emoji, userIds]) => ({
+      emoji,
+      count: userIds.length,
+      userIds,
+    }));
   }
 
   async setWallpaper(chatId: string, userId: string, wallpaper: string | null) {

@@ -5,7 +5,7 @@ import { MediaBubble } from './MediaBubble';
 import { StickerImage } from './StickerImage';
 import { AudioPlayer } from './AudioPlayer';
 import { PollBubble } from './PollBubble';
-import { formatTime, messagePreview } from '../helpers';
+import { formatTime, messagePreview, groupReactions } from '../helpers';
 
 interface Props {
   message: Message;
@@ -101,6 +101,16 @@ export function MessageBubble({
         </>
       )}
 
+      {message.reactions && message.reactions.length > 0 && !isDeleted && (
+        <View style={styles.reactionsRow}>
+          {groupReactions(message.reactions).map((r) => (
+            <View key={r.emoji} style={[styles.reactionBadge, mine ? styles.reactionBadgeMine : styles.reactionBadgeOther]}>
+              <Text style={styles.reactionEmoji}>{r.emoji}</Text>
+              {r.count > 1 && <Text style={[styles.reactionCount, { color: mine ? '#ffd4e1' : '#8c6471' }]}>{r.count}</Text>}
+            </View>
+          ))}
+        </View>
+      )}
       <View style={styles.meta}>
         {message.editedAt && !isDeleted && (
           <Text style={mine ? styles.editedMine : styles.editedOther}>изм. </Text>
@@ -143,6 +153,12 @@ const styles = StyleSheet.create({
   editedMine: { color: '#ffd4e1', fontSize: 11, fontStyle: 'italic' },
   editedOther: { color: '#8c6471', fontSize: 11, fontStyle: 'italic' },
   checks: { color: '#ffd4e1', fontSize: 12, marginLeft: 2 },
+  reactionsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 4, marginTop: 4 },
+  reactionBadge: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 10 },
+  reactionBadgeMine: { backgroundColor: '#ffffff22' },
+  reactionBadgeOther: { backgroundColor: '#ff7a9915' },
+  reactionEmoji: { fontSize: 14 },
+  reactionCount: { fontSize: 11, marginLeft: 3 },
   stickerWrap: { marginVertical: 4 },
   stickerMeta: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2, paddingHorizontal: 4 },
   stickerTime: { color: '#888', fontSize: 11 },

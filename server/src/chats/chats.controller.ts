@@ -185,4 +185,15 @@ export class ChatsController {
   typing(@Req() req: { user: { userId: string } }, @Param('id') id: string) {
     return this.chats.typing(id, req.user.userId);
   }
+
+  @Post(':id/messages/:msgId/react')
+  @HttpCode(200)
+  react(
+    @Req() req: { user: { userId: string } },
+    @Param('id') id: string,
+    @Param('msgId') msgId: string,
+    @Body() dto: { emoji: string },
+  ) {
+    return this.chats.toggleReaction(id, req.user.userId, msgId, dto.emoji);
+  }
 }

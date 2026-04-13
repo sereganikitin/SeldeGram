@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Message } from "@/lib/types";
-import { formatTime, messagePreview, getMediaUrl } from "@/lib/helpers";
+import { formatTime, messagePreview, getMediaUrl, groupReactions } from "@/lib/helpers";
 import { AudioPlayer } from "./AudioPlayer";
 import { PollBubble } from "./PollBubble";
 
@@ -13,6 +13,7 @@ interface Props {
   senderName?: string;
   isRead: boolean;
   onAction: (action: "reply" | "edit" | "delete" | "copy" | "pin" | "thread") => void;
+  onReact?: (emoji: string) => void;
   canComment?: boolean;
 }
 
@@ -65,7 +66,7 @@ function MediaContent({ message, mine }: { message: Message; mine: boolean }) {
   );
 }
 
-export function MessageBubble({ message, mine, showSenderName, senderName, isRead, onAction, canComment }: Props) {
+export function MessageBubble({ message, mine, showSenderName, senderName, isRead, onAction, onReact, canComment }: Props) {
   const isDeleted = !!message.deletedAt;
   const isSticker = !!message.isSticker && !isDeleted;
   const [menuOpen, setMenuOpen] = useState(false);
@@ -125,17 +126,30 @@ export function MessageBubble({ message, mine, showSenderName, senderName, isRea
           </>
         )}
 
+        {message.reactions && message.reactions.length > 0 && !isDeleted && (
+          <div className="flex flex-wrap gap-1 mt-1">
+            {groupReactions(message.reactions).map((r) => (
+              <button
+                key={r.emoji}
+                onClick={() => onReact?.(r.emoji)}
+                className={`text-xs px-1.5 py-0.5 rounded-full ${mine ? "bg-white/20 hover:bg-white/30" : "bg-brand/10 hover:bg-brand/20"}`}
+              >
+                {r.emoji}{r.count > 1 ? ` ${r.count}` : ""}
+              </button>
+            ))}
+          </div>
+        )}
         <div className={`flex items-center gap-1 justify-end text-[11px] mt-1 ${mine ? "text-white/70" : "text-ink-muted"}`}>
           {message.editedAt && !isDeleted && <span className="italic">изм.</span>}
           <span>{formatTime(message.createdAt)}</span>
           {mine && !isDeleted && <span>{isRead ? "✓✓" : "✓"}</span>}
           {!isDeleted && (
-            <button
-              onClick={() => setMenuOpen((v) => !v)}
-              className="opacity-0 group-hover:opacity-100 ml-1 hover:opacity-80 transition-opacity"
-            >
-              ⋯
-            </button>
+            <span className="opacity-0 group-hover:opacity-100 ml-1 flex gap-0.5 transition-opacity">
+              {["❤️", "👍", "😂"].map((e) => (
+                <button key={e} onClick={() => onReact?.(e)} className="hover:scale-125 transition-transform">{e}</button>
+              ))}
+              <button onClick={() => setMenuOpen((v) => !v)} className="hover:opacity-80">⋯</button>
+            </span>
           )}
         </div>
 
