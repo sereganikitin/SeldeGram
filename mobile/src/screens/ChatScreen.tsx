@@ -31,8 +31,6 @@ import { ChatBackground } from '../ui/ChatBackground';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColors } from '../theme';
 import { formatDateLabel, messagePreview, lastSeenText } from '../helpers';
-import { encryptMessage, decryptMessage } from '../crypto';
-import { getSecretKey, getPeerPublicKey } from '../keys';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Chat'>;
 
@@ -72,7 +70,6 @@ export function ChatScreen({ route, navigation }: Props) {
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQ, setSearchQ] = useState('');
   const [searchResults, setSearchResults] = useState<Message[]>([]);
-  const [peerPubKey, setPeerPubKey] = useState<string | null>(null);
   const [peerOnline, setPeerOnline] = useState<boolean | undefined>(undefined);
   const [peerLastSeen, setPeerLastSeen] = useState<string | null>(null);
   const colors = useColors();
@@ -99,7 +96,6 @@ export function ChatScreen({ route, navigation }: Props) {
       if (data.type === 'direct') {
         const other = data.members.find((m) => m.id !== meId);
         if (other) {
-          getPeerPublicKey(other.id).then(setPeerPubKey);
           setPeerOnline(other.isOnline);
           setPeerLastSeen(other.lastSeenAt ?? null);
         }
@@ -124,17 +120,6 @@ export function ChatScreen({ route, navigation }: Props) {
     });
   }, [chat?.type, chat?.members, meId, onPresence]);
 
-  // Polling для peerPubKey и secretKey (ждём пока initKeys завершится)
-  useEffect(() => {
-    if (chat?.type !== 'direct' || peerPubKey) return;
-    const other = chat.members.find((m) => m.id !== meId);
-    if (!other) return;
-    const iv = setInterval(async () => {
-      const pk = await getPeerPublicKey(other.id);
-      if (pk) { setPeerPubKey(pk); clearInterval(iv); }
-    }, 500);
-    return () => clearInterval(iv);
-  }, [chat?.type, chat?.members, meId, peerPubKey]);
 
   // WS: pin/unpin
   useEffect(() => {
@@ -261,19 +246,7 @@ export function ChatScreen({ route, navigation }: Props) {
     api.post(`/chats/${chatId}/read`, { messageId: last.id }).catch(() => undefined);
   }, [chatId, messages]);
 
-  // Расшифровка сообщений для direct-чатов
-  const decryptedMessages = useMemo(() => {
-    if (chat?.type !== 'direct') return messages;
-    const mySecret = getSecretKey();
-    return messages.map((m) => {
-      if (!m.content?.startsWith('enc:')) return m;
-      if (!mySecret || !peerPubKey) return { ...m, content: '🔒 Зашифровано' };
-      const decrypted = decryptMessage(m.content, peerPubKey, mySecret);
-      return { ...m, content: decrypted };
-    });
-  }, [messages, chat?.type, peerPubKey]);
-
-  const items = useMemo(() => buildItems(decryptedMessages), [decryptedMessages]);
+  const items = useMemo(() => buildItems(messages), [messages]);
 
   // Минимум lastReadAt среди других участников — нужно чтобы показать ✓✓ на своих сообщениях
   const minOtherLastRead = useMemo(() => {
@@ -296,18 +269,11 @@ export function ChatScreen({ route, navigation }: Props) {
     const replyId = replyTo?.id;
     setReplyTo(null);
     try {
-      // Шифруем текст в direct-чатах если у обоих есть ключи
-      let contentToSend = text;
-      const mySecret = getSecretKey();
-      if (chat?.type === 'direct' && peerPubKey && mySecret && !editingId) {
-        contentToSend = encryptMessage(text, peerPubKey, mySecret);
-      }
       if (editingId) {
-        await api.patch(`/chats/${chatId}/messages/${editingId}`, { content: contentToSend });
+        await api.patch(`/chats/${chatId}/messages/${editingId}`, { content: text });
         setEditingId(null);
       } else {
-        const pushPreview = contentToSend !== text ? text : undefined;
-        await api.post(`/chats/${chatId}/messages`, { content: contentToSend, replyToId: replyId, pushPreview });
+        await api.post(`/chats/${chatId}/messages`, { content: text, replyToId: replyId });
       }
     } catch (e) {
       setInput(text);

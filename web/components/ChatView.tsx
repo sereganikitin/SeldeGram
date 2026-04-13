@@ -15,8 +15,6 @@ import { VoiceRecorder } from "./VoiceRecorder";
 import { ThreadModal } from "./ThreadModal";
 import { formatDateLabel, messagePreview, lastSeenText } from "@/lib/helpers";
 import { uploadFile } from "@/lib/media";
-import { encryptMessage, decryptMessage } from "@/lib/crypto";
-import { getSecretKey, getPeerPublicKey } from "@/lib/keys";
 
 interface Props {
   chat: Chat;
@@ -52,24 +50,12 @@ export function ChatView({ chat, onBack, onChatGone, onOpenStickers }: Props) {
   const [dragOver, setDragOver] = useState(false);
   const [voiceRecording, setVoiceRecording] = useState(false);
   const [threadParent, setThreadParent] = useState<Message | null>(null);
-  const [peerPubKey, setPeerPubKey] = useState<string | null>(null);
-  const [mySecret, setMySecret] = useState<string | null>(getSecretKey());
   const [peerOnline, setPeerOnline] = useState<boolean | undefined>(undefined);
   const [peerLastSeen, setPeerLastSeen] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const typingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastTypingSentRef = useRef(0);
-
-  // Дожидаемся пока initKeys() завершится
-  useEffect(() => {
-    if (mySecret) return;
-    const iv = setInterval(() => {
-      const k = getSecretKey();
-      if (k) { setMySecret(k); clearInterval(iv); }
-    }, 200);
-    return () => clearInterval(iv);
-  }, [mySecret]);
 
   // WS: обновление статуса собеседника
   const onPresence = useWs((s: WsState) => s.onPresence);
@@ -85,18 +71,6 @@ export function ChatView({ chat, onBack, onChatGone, onOpenStickers }: Props) {
     });
   }, [chat.type, chat.members, meId, onPresence]);
 
-  // Дожидаемся peerPubKey (тоже async)
-  useEffect(() => {
-    if (chat.type !== "direct" || peerPubKey) return;
-    const other = chat.members.find((m) => m.id !== meId);
-    if (!other) return;
-    const iv = setInterval(async () => {
-      const pk = await getPeerPublicKey(other.id);
-      if (pk) { setPeerPubKey(pk); clearInterval(iv); }
-    }, 500);
-    return () => clearInterval(iv);
-  }, [chat.type, chat.id, chat.members, meId, peerPubKey]);
-
   // Загрузка
   useEffect(() => {
     api.get<Message[]>(`/chats/${chat.id}/messages`).then(({ data }) => setMessages(data));
@@ -106,12 +80,9 @@ export function ChatView({ chat, onBack, onChatGone, onOpenStickers }: Props) {
       if (data.type === "direct") {
         const other = data.members.find((m) => m.id !== meId);
         if (other) {
-          getPeerPublicKey(other.id).then(setPeerPubKey);
           setPeerOnline(other.isOnline);
           setPeerLastSeen(other.lastSeenAt ?? null);
         }
-      } else {
-        setPeerPubKey(null);
       }
     });
     api.get<Message | null>(`/chats/${chat.id}/pinned`).then(({ data }) => setPinnedMsg(data));
@@ -223,21 +194,10 @@ export function ChatView({ chat, onBack, onChatGone, onOpenStickers }: Props) {
     return map;
   }, [chat]);
 
-  // Расшифровка для direct-чатов
-  const decryptedMessages = useMemo(() => {
-    if (chat.type !== "direct") return messages;
-    return messages.map((m) => {
-      if (!m.content?.startsWith("enc:")) return m;
-      if (!mySecret || !peerPubKey) return { ...m, content: "🔒 Зашифровано" };
-      const decrypted = decryptMessage(m.content, peerPubKey, mySecret);
-      return { ...m, content: decrypted };
-    });
-  }, [messages, chat.type, peerPubKey, mySecret]);
-
   const items = useMemo(() => {
     const result: Array<{ kind: "msg"; m: Message } | { kind: "date"; id: string; label: string }> = [];
     let lastDay = "";
-    for (const m of decryptedMessages) {
+    for (const m of messages) {
       if (m.deletedAt) continue;
       const day = new Date(m.createdAt).toDateString();
       if (day !== lastDay) {
@@ -256,16 +216,11 @@ export function ChatView({ chat, onBack, onChatGone, onOpenStickers }: Props) {
     const replyId = replyTo?.id;
     setReplyTo(null);
     try {
-      let contentToSend = text;
-      if (chat.type === "direct" && peerPubKey && mySecret && !editingId) {
-        contentToSend = encryptMessage(text, peerPubKey, mySecret);
-      }
       if (editingId) {
-        await api.patch(`/chats/${chat.id}/messages/${editingId}`, { content: contentToSend });
+        await api.patch(`/chats/${chat.id}/messages/${editingId}`, { content: text });
         setEditingId(null);
       } else {
-        const pushPreview = contentToSend !== text ? text : undefined;
-        await api.post(`/chats/${chat.id}/messages`, { content: contentToSend, replyToId: replyId, pushPreview });
+        await api.post(`/chats/${chat.id}/messages`, { content: text, replyToId: replyId });
       }
     } catch {
       setInput(text);
