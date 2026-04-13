@@ -24,3 +24,15 @@ html, body {
 img, video, canvas, svg {
   max-width: 100%;
 }
+
+/* Принудительный overflow для мобильного веба */
+#__next, main, section, aside, div {
+  max-width: 100vw;
+  box-sizing: border-box;
+}
+
+/* Длинные строки (enc: base64, URL) не раздвигают контейнер */
+p, span, div {
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
