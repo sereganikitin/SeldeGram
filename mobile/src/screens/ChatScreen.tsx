@@ -500,8 +500,8 @@ export function ChatScreen({ route, navigation }: Props) {
   return (
     <KeyboardAvoidingView
       style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      keyboardVerticalOffset={90}
     >
       <ChatBackground wallpaper={wallpaper}>
       {pinnedMsg && !pinnedMsg.deletedAt && (

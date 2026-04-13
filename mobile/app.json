@@ -22,7 +22,6 @@
         "backgroundColor": "#ffd4e1"
       },
       "edgeToEdgeEnabled": false,
-      "softwareKeyboardLayoutMode": "pan",
       "package": "ru.infoseledka.seldegram"
     },
     "web": {

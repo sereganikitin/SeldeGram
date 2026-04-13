@@ -16,28 +16,13 @@ export async function initKeys(): Promise<void> {
   cachedPublicKey = localStorage.getItem(PUBLIC_KEY_STORE);
 
   if (cachedSecretKey && cachedPublicKey) {
-    // Ключи уже есть — загружаем publicKey на сервер (идемпотентно)
     try {
       await api.patch("/me", { publicKey: cachedPublicKey });
     } catch {}
     return;
   }
 
-  // Ключей нет локально. Проверяем, есть ли publicKey на сервере.
-  // Если есть — значит ключи генерировались на другом устройстве, НЕ перезаписываем.
-  // Если нет — первая генерация, создаём keypair.
-  try {
-    const { data } = await api.get<{ publicKey: string | null }>("/me");
-    if (data.publicKey) {
-      // На сервере уже есть ключ, но у нас нет secretKey → не можем расшифровывать.
-      // Работаем без E2EE на этом устройстве.
-      return;
-    }
-  } catch {
-    return;
-  }
-
-  // Первая генерация ключей
+  // Ключей нет — генерируем (новый браузер / очистка данных)
   const kp = generateKeyPair();
   localStorage.setItem(SECRET_KEY_STORE, kp.secretKey);
   localStorage.setItem(PUBLIC_KEY_STORE, kp.publicKey);

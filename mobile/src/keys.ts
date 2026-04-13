@@ -24,16 +24,7 @@ export async function initKeys(): Promise<void> {
     return;
   }
 
-  // Ключей нет локально. Проверяем, есть ли на сервере.
-  // Если есть — другое устройство уже сгенерировало, НЕ перезаписываем.
-  try {
-    const { data } = await api.get<{ publicKey: string | null }>('/me');
-    if (data.publicKey) return; // Ключи на другом устройстве, работаем без E2EE
-  } catch {
-    return;
-  }
-
-  // Первая генерация
+  // Ключей нет — генерируем новые (новое устройство / переустановка)
   const kp = generateKeyPair();
   await SecureStore.setItemAsync(SECRET_KEY_STORE, kp.secretKey);
   await SecureStore.setItemAsync(PUBLIC_KEY_STORE, kp.publicKey);
