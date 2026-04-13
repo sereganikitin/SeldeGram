@@ -12,6 +12,7 @@ type ChatDeletedListener = (chatId: string) => void;
 type ReadListener = (chatId: string, userId: string, lastReadAt: string) => void;
 type TypingListener = (chatId: string, userId: string) => void;
 type PinnedListener = (chatId: string, messageId: string | null) => void;
+type PresenceListener = (userId: string, online: boolean, lastSeenAt: string) => void;
 
 export interface WsState {
   socket: WebSocket | null;
@@ -24,6 +25,7 @@ export interface WsState {
   readListeners: Set<ReadListener>;
   typingListeners: Set<TypingListener>;
   pinnedListeners: Set<PinnedListener>;
+  presenceListeners: Set<PresenceListener>;
   connect: () => void;
   disconnect: () => void;
   onMessage: (l: MessageListener) => () => void;
@@ -34,6 +36,7 @@ export interface WsState {
   onRead: (l: ReadListener) => () => void;
   onTyping: (l: TypingListener) => () => void;
   onPinned: (l: PinnedListener) => () => void;
+  onPresence: (l: PresenceListener) => () => void;
 }
 
 function makeSubscriber<T>(getSet: () => Set<T>) {
@@ -56,6 +59,7 @@ export const useWs = create<WsState>()((set, get) => ({
   readListeners: new Set(),
   typingListeners: new Set(),
   pinnedListeners: new Set(),
+  presenceListeners: new Set(),
 
   connect: () => {
     if (typeof window === "undefined") return;
@@ -102,6 +106,9 @@ export const useWs = create<WsState>()((set, get) => ({
           case "chat:pinned":
             for (const l of get().pinnedListeners) l(data.payload.chatId, data.payload.messageId);
             break;
+          case "presence":
+            for (const l of get().presenceListeners) l(data.payload.userId, data.payload.online, data.payload.lastSeenAt);
+            break;
         }
       } catch {}
     };
@@ -126,4 +133,5 @@ export const useWs = create<WsState>()((set, get) => ({
   onRead: makeSubscriber(() => useWs.getState().readListeners),
   onTyping: makeSubscriber(() => useWs.getState().typingListeners),
   onPinned: makeSubscriber(() => useWs.getState().pinnedListeners),
+  onPresence: makeSubscriber(() => useWs.getState().presenceListeners),
 }));

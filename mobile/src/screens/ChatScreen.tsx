@@ -30,7 +30,7 @@ import { VoiceRecorder } from '../ui/VoiceRecorder';
 import { ChatBackground } from '../ui/ChatBackground';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColors } from '../theme';
-import { formatDateLabel, messagePreview } from '../helpers';
+import { formatDateLabel, messagePreview, lastSeenText } from '../helpers';
 import { encryptMessage, decryptMessage } from '../crypto';
 import { getSecretKey, getPeerPublicKey } from '../keys';
 
@@ -73,6 +73,8 @@ export function ChatScreen({ route, navigation }: Props) {
   const [searchQ, setSearchQ] = useState('');
   const [searchResults, setSearchResults] = useState<Message[]>([]);
   const [peerPubKey, setPeerPubKey] = useState<string | null>(null);
+  const [peerOnline, setPeerOnline] = useState<boolean | undefined>(undefined);
+  const [peerLastSeen, setPeerLastSeen] = useState<string | null>(null);
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const myUser = useAuth((s) => s.user);
@@ -83,6 +85,7 @@ export function ChatScreen({ route, navigation }: Props) {
   const onRead = useWs((s) => s.onRead);
   const onTyping = useWs((s) => s.onTyping);
   const onPinned = useWs((s) => s.onPinned);
+  const onPresence = useWs((s) => s.onPresence);
   const listRef = useRef<FlatList<ListItem>>(null);
   const typingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastTypingSentRef = useRef(0);
@@ -95,7 +98,11 @@ export function ChatScreen({ route, navigation }: Props) {
       // Загружаем publicKey собеседника в direct-чатах
       if (data.type === 'direct') {
         const other = data.members.find((m) => m.id !== meId);
-        if (other) getPeerPublicKey(other.id).then(setPeerPubKey);
+        if (other) {
+          getPeerPublicKey(other.id).then(setPeerPubKey);
+          setPeerOnline(other.isOnline);
+          setPeerLastSeen(other.lastSeenAt ?? null);
+        }
       }
     });
     api.get<ChatRead[]>(`/chats/${chatId}/reads`).then(({ data }) => setReads(data));
@@ -103,6 +110,19 @@ export function ChatScreen({ route, navigation }: Props) {
     setActiveChat(chatId);
     return () => setActiveChat(null);
   }, [chatId, meId]);
+
+  // WS: статус собеседника
+  useEffect(() => {
+    if (chat?.type !== 'direct') return;
+    const other = chat.members.find((m) => m.id !== meId);
+    if (!other) return;
+    return onPresence((userId, online, lastSeenAt) => {
+      if (userId === other.id) {
+        setPeerOnline(online);
+        setPeerLastSeen(lastSeenAt);
+      }
+    });
+  }, [chat?.type, chat?.members, meId, onPresence]);
 
   // Polling для peerPubKey и secretKey (ждём пока initKeys завершится)
   useEffect(() => {
@@ -128,10 +148,16 @@ export function ChatScreen({ route, navigation }: Props) {
     });
   }, [chatId, onPinned]);
 
-  // Подмена заголовка
+  // Подмена заголовка с онлайн-статусом
   useEffect(() => {
-    if (chat?.title) navigation.setOptions({ title: chat.title });
-  }, [chat?.title, navigation]);
+    if (!chat?.title) return;
+    if (chat.type === 'direct' && peerOnline !== undefined) {
+      const status = peerOnline ? ' 🟢' : '';
+      navigation.setOptions({ title: chat.title + status });
+    } else {
+      navigation.setOptions({ title: chat.title });
+    }
+  }, [chat?.title, chat?.type, peerOnline, navigation]);
 
   // Обработчик header кнопки info — выбираем экран по типу чата
   useEffect(() => {

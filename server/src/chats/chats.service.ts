@@ -44,7 +44,7 @@ export class ChatsService {
           { members: { some: { userId: other.id } } },
         ],
       },
-      include: { members: { include: { user: { select: { id: true, username: true, displayName: true, avatarKey: true } } } } },
+      include: { members: { include: { user: { select: { id: true, username: true, displayName: true, avatarKey: true, isOnline: true, lastSeenAt: true } } } } },
     });
     if (existing) return this.serializeChat(existing, userId);
 
@@ -53,7 +53,7 @@ export class ChatsService {
         type: 'direct',
         members: { create: [{ userId }, { userId: other.id }] },
       },
-      include: { members: { include: { user: { select: { id: true, username: true, displayName: true, avatarKey: true } } } } },
+      include: { members: { include: { user: { select: { id: true, username: true, displayName: true, avatarKey: true, isOnline: true, lastSeenAt: true } } } } },
     });
     this.hub.sendToUsers([userId, other.id], { type: 'chat:updated', payload: { chatId: chat.id } });
     return this.serializeChat(chat, userId);
@@ -63,7 +63,7 @@ export class ChatsService {
     const chats = await this.prisma.chat.findMany({
       where: { members: { some: { userId } } },
       include: {
-        members: { include: { user: { select: { id: true, username: true, displayName: true, avatarKey: true } } } },
+        members: { include: { user: { select: { id: true, username: true, displayName: true, avatarKey: true, isOnline: true, lastSeenAt: true } } } },
         messages: { orderBy: { createdAt: 'desc' }, take: 1 },
         reads: { where: { userId } },
       },
@@ -118,7 +118,7 @@ export class ChatsService {
       where: { id: chatId },
       include: {
         members: {
-          include: { user: { select: { id: true, username: true, displayName: true, avatarKey: true } } },
+          include: { user: { select: { id: true, username: true, displayName: true, avatarKey: true, isOnline: true, lastSeenAt: true } } },
           orderBy: { joinedAt: 'asc' },
         },
       },
@@ -140,7 +140,7 @@ export class ChatsService {
         members: { create: [{ userId: creatorId, role: 'admin' }] },
       },
       include: {
-        members: { include: { user: { select: { id: true, username: true, displayName: true, avatarKey: true } } } },
+        members: { include: { user: { select: { id: true, username: true, displayName: true, avatarKey: true, isOnline: true, lastSeenAt: true } } } },
       },
     });
     this.hub.sendToUsers([creatorId], { type: 'chat:updated', payload: { chatId: chat.id } });
@@ -151,7 +151,7 @@ export class ChatsService {
     const chat = await this.prisma.chat.findUnique({
       where: { slug: slug.toLowerCase() },
       include: {
-        members: { include: { user: { select: { id: true, username: true, displayName: true, avatarKey: true } } } },
+        members: { include: { user: { select: { id: true, username: true, displayName: true, avatarKey: true, isOnline: true, lastSeenAt: true } } } },
       },
     });
     if (!chat || chat.type !== 'channel') throw new NotFoundException('Channel not found');
@@ -166,7 +166,7 @@ export class ChatsService {
     const updated = await this.prisma.chat.findUnique({
       where: { id: chat.id },
       include: {
-        members: { include: { user: { select: { id: true, username: true, displayName: true, avatarKey: true } } } },
+        members: { include: { user: { select: { id: true, username: true, displayName: true, avatarKey: true, isOnline: true, lastSeenAt: true } } } },
       },
     });
     this.hub.sendToUsers([userId], { type: 'chat:updated', payload: { chatId: chat.id } });
@@ -210,7 +210,7 @@ export class ChatsService {
 
     const chat = await this.prisma.chat.create({
       data: { type: 'group', title, members: { create: memberData } },
-      include: { members: { include: { user: { select: { id: true, username: true, displayName: true, avatarKey: true } } } } },
+      include: { members: { include: { user: { select: { id: true, username: true, displayName: true, avatarKey: true, isOnline: true, lastSeenAt: true } } } } },
     });
 
     this.hub.sendToUsers(

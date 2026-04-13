@@ -65,6 +65,19 @@ export function messagePreview(msg: {
   return '';
 }
 
+export function lastSeenText(lastSeenAt: string | null | undefined, isOnline?: boolean): string {
+  if (isOnline) return 'в сети';
+  if (!lastSeenAt) return 'был давно';
+  const diff = Date.now() - new Date(lastSeenAt).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return 'только что';
+  if (mins < 60) return `был ${mins} мин назад`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `был ${hours} ч назад`;
+  const days = Math.floor(hours / 24);
+  return `был ${days} дн назад`;
+}
+
 export function formatFileSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;

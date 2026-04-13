@@ -36,4 +36,9 @@ export class WsHub {
   sendToUsers(userIds: string[], payload: unknown) {
     for (const id of userIds) this.sendToUser(id, payload);
   }
+
+  isConnected(userId: string): boolean {
+    const set = this.sockets.get(userId);
+    return !!set && set.size > 0;
+  }
 }

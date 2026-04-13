@@ -13,7 +13,7 @@ import { ChatBackground } from "./ChatBackground";
 import { WallpaperPickerModal } from "./WallpaperPickerModal";
 import { VoiceRecorder } from "./VoiceRecorder";
 import { ThreadModal } from "./ThreadModal";
-import { formatDateLabel, messagePreview } from "@/lib/helpers";
+import { formatDateLabel, messagePreview, lastSeenText } from "@/lib/helpers";
 import { uploadFile } from "@/lib/media";
 import { encryptMessage, decryptMessage } from "@/lib/crypto";
 import { getSecretKey, getPeerPublicKey } from "@/lib/keys";
@@ -54,6 +54,8 @@ export function ChatView({ chat, onBack, onChatGone, onOpenStickers }: Props) {
   const [threadParent, setThreadParent] = useState<Message | null>(null);
   const [peerPubKey, setPeerPubKey] = useState<string | null>(null);
   const [mySecret, setMySecret] = useState<string | null>(getSecretKey());
+  const [peerOnline, setPeerOnline] = useState<boolean | undefined>(undefined);
+  const [peerLastSeen, setPeerLastSeen] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const typingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -68,6 +70,20 @@ export function ChatView({ chat, onBack, onChatGone, onOpenStickers }: Props) {
     }, 200);
     return () => clearInterval(iv);
   }, [mySecret]);
+
+  // WS: обновление статуса собеседника
+  const onPresence = useWs((s: WsState) => s.onPresence);
+  useEffect(() => {
+    if (chat.type !== "direct") return;
+    const other = chat.members.find((m) => m.id !== meId);
+    if (!other) return;
+    return onPresence((userId, online, lastSeenAt) => {
+      if (userId === other.id) {
+        setPeerOnline(online);
+        setPeerLastSeen(lastSeenAt);
+      }
+    });
+  }, [chat.type, chat.members, meId, onPresence]);
 
   // Дожидаемся peerPubKey (тоже async)
   useEffect(() => {
@@ -89,7 +105,11 @@ export function ChatView({ chat, onBack, onChatGone, onOpenStickers }: Props) {
       setWallpaper(data.viewerWallpaper ?? null);
       if (data.type === "direct") {
         const other = data.members.find((m) => m.id !== meId);
-        if (other) getPeerPublicKey(other.id).then(setPeerPubKey);
+        if (other) {
+          getPeerPublicKey(other.id).then(setPeerPubKey);
+          setPeerOnline(other.isOnline);
+          setPeerLastSeen(other.lastSeenAt ?? null);
+        }
       } else {
         setPeerPubKey(null);
       }
@@ -387,7 +407,9 @@ export function ChatView({ chat, onBack, onChatGone, onOpenStickers }: Props) {
               <div className="text-xs text-brand-dark italic">{typingName} печатает...</div>
             ) : (
               <div className="text-xs text-ink-muted dark:text-ink-muted">
-                {chat.type === "direct" ? "был в сети" : `${chat.memberCount ?? chat.members.length} участников`}
+                {chat.type === "direct"
+                  ? lastSeenText(peerLastSeen ?? other?.lastSeenAt, peerOnline ?? other?.isOnline)
+                  : `${chat.memberCount ?? chat.members.length} участников`}
               </div>
             )}
           </div>

@@ -3,6 +3,8 @@ export interface ChatMember {
   username: string;
   displayName: string;
   avatarKey?: string | null;
+  isOnline?: boolean;
+  lastSeenAt?: string | null;
   role?: 'admin' | 'member';
 }
 
