@@ -13,8 +13,11 @@ import { MailService } from '../mail/mail.service';
 import { RegisterDto } from './dto/register.dto';
 import { VerifyDto } from './dto/verify.dto';
 import { LoginDto } from './dto/login.dto';
+import { ForgotPasswordDto } from './dto/forgot-password.dto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
 
 const VERIFICATION_TTL_MIN = 15;
+const PASSWORD_RESET_TTL_MIN = 15;
 const REFRESH_TTL_DAYS = 30;
 
 @Injectable()
@@ -87,6 +90,59 @@ export class AuthService {
     if (!user.isVerified) {
       throw new UnauthorizedException('Email not verified');
     }
+
+    return this.issueTokens(user.id);
+  }
+
+  async forgotPassword(dto: ForgotPasswordDto) {
+    const user = await this.prisma.user.findUnique({ where: { email: dto.email } });
+    // Всегда отвечаем одинаково, чтобы не раскрывать существование email
+    if (user) {
+      const code = ('' + Math.floor(100000 + Math.random() * 900000)).slice(0, 6);
+      await this.prisma.passwordReset.create({
+        data: {
+          userId: user.id,
+          code,
+          expiresAt: new Date(Date.now() + PASSWORD_RESET_TTL_MIN * 60 * 1000),
+        },
+      });
+      await this.mail.sendPasswordResetCode(user.email, code);
+    }
+    return { ok: true };
+  }
+
+  async resetPassword(dto: ResetPasswordDto) {
+    const user = await this.prisma.user.findUnique({ where: { email: dto.email } });
+    if (!user) throw new BadRequestException('Invalid email or code');
+
+    const record = await this.prisma.passwordReset.findFirst({
+      where: {
+        userId: user.id,
+        code: dto.code,
+        consumed: false,
+        expiresAt: { gt: new Date() },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+    if (!record) throw new BadRequestException('Invalid email or code');
+
+    const passwordHash = await argon2.hash(dto.newPassword);
+
+    await this.prisma.$transaction([
+      this.prisma.passwordReset.update({
+        where: { id: record.id },
+        data: { consumed: true },
+      }),
+      this.prisma.user.update({
+        where: { id: user.id },
+        data: { passwordHash },
+      }),
+      // отзываем все активные refresh-токены — пользователь должен войти заново
+      this.prisma.refreshToken.updateMany({
+        where: { userId: user.id, revoked: false },
+        data: { revoked: true },
+      }),
+    ]);
 
     return this.issueTokens(user.id);
   }

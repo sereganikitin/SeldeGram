@@ -34,4 +34,15 @@ export class MailService {
     });
     this.logger.log(`Verification code sent to ${email}`);
   }
+
+  async sendPasswordResetCode(email: string, code: string): Promise<void> {
+    await this.transporter.sendMail({
+      from: this.from,
+      to: email,
+      subject: 'CraboGram — восстановление пароля',
+      text: `Код для восстановления пароля: ${code}\n\nКод действителен 15 минут. Если вы не запрашивали восстановление, проигнорируйте это письмо.`,
+      html: `<p>Код для восстановления пароля: <b>${code}</b></p><p>Код действителен 15 минут. Если вы не запрашивали восстановление, проигнорируйте это письмо.</p>`,
+    });
+    this.logger.log(`Password reset code sent to ${email}`);
+  }
 }
