@@ -6,6 +6,8 @@ import { Chat, Message } from "@/lib/types";
 import { useAuth } from "@/lib/store";
 import { useWs, type WsState } from "@/lib/ws";
 import { Avatar } from "./Avatar";
+import { IconButton } from "./IconButton";
+import { Plus, Smile, Phone, User, Megaphone, Users } from "lucide-react";
 import { formatTime, messagePreview } from "@/lib/helpers";
 
 interface Props {
@@ -101,34 +103,10 @@ export function ChatList({ selectedId, onSelect, onLogout, onNewChat, onOpenStic
           <div className="font-semibold truncate dark:text-white">{me?.displayName}</div>
           <div className="text-xs text-ink-muted dark:text-ink-muted truncate">@{me?.username}</div>
         </div>
-        <button
-          onClick={onNewChat}
-          className="w-9 h-9 rounded-full bg-brand hover:bg-brand-dark text-white text-xl flex items-center justify-center"
-          title="Новый чат"
-        >
-          +
-        </button>
-        <button
-          onClick={onOpenStickers}
-          className="w-9 h-9 rounded-full hover:bg-cream-alt dark:hover:bg-slate-800 text-xl flex items-center justify-center"
-          title="Стикерпаки"
-        >
-          😀
-        </button>
-        <button
-          onClick={onOpenCalls}
-          className="w-9 h-9 rounded-full hover:bg-cream-alt dark:hover:bg-slate-800 text-xl flex items-center justify-center"
-          title="История звонков"
-        >
-          📞
-        </button>
-        <button
-          onClick={onLogout}
-          className="w-9 h-9 rounded-full hover:bg-cream-alt dark:hover:bg-slate-800 flex items-center justify-center"
-          title="Профиль"
-        >
-          👤
-        </button>
+        <IconButton icon={Plus} onClick={onNewChat} title="Новый чат" size="md" />
+        <IconButton icon={Smile} onClick={onOpenStickers} title="Стикерпаки" size="md" variant="ghost" />
+        <IconButton icon={Phone} onClick={onOpenCalls} title="История звонков" size="md" variant="ghost" />
+        <IconButton icon={User} onClick={onLogout} title="Профиль" size="md" variant="ghost" />
       </header>
 
       <div className="p-3 border-b border-cream-border dark:border-slate-800">
@@ -160,10 +138,10 @@ export function ChatList({ selectedId, onSelect, onLogout, onNewChat, onOpenStic
               <Avatar id={other?.id ?? chat.id} name={chat.title ?? "?"} avatarKey={other?.avatarKey} size={48} />
               <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between gap-2">
-                  <div className="font-semibold truncate dark:text-white">
-                    {chat.type === "channel" && "📢 "}
-                    {chat.type === "group" && "👥 "}
-                    {chat.title}
+                  <div className="font-semibold truncate dark:text-white flex items-center gap-1">
+                    {chat.type === "channel" && <Megaphone size={14} className="text-brand-dark flex-shrink-0" />}
+                    {chat.type === "group" && <Users size={14} className="text-brand-dark flex-shrink-0" />}
+                    <span className="truncate">{chat.title}</span>
                   </div>
                   {chat.lastMessage && (
                     <div className="text-xs text-ink-muted dark:text-ink-muted flex-shrink-0">{formatTime(chat.lastMessage.createdAt)}</div>

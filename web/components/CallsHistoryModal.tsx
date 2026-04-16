@@ -3,10 +3,12 @@
 import { useCallback, useEffect, useState } from "react";
 import { Modal } from "./Modal";
 import { Avatar } from "./Avatar";
+import { IconButton } from "./IconButton";
 import { api } from "@/lib/api";
 import { useAuth } from "@/lib/store";
 import { useCall } from "@/lib/call";
 import { formatTime } from "@/lib/helpers";
+import { Phone, PhoneIncoming, PhoneOutgoing, PhoneMissed } from "lucide-react";
 
 interface CallPeer {
   id: string;
@@ -83,6 +85,7 @@ export function CallsHistoryModal({ open, onClose }: Props) {
           const isIncoming = r.calleeId === meId;
           const peer = isIncoming ? r.caller : r.callee;
           const isMissed = isIncoming && (r.status === "missed" || r.status === "rejected");
+          const DirIcon = isMissed ? PhoneMissed : isIncoming ? PhoneIncoming : PhoneOutgoing;
           return (
             <div
               key={r.id}
@@ -93,18 +96,12 @@ export function CallsHistoryModal({ open, onClose }: Props) {
                 <div className={`font-semibold truncate ${isMissed ? "text-red-600" : "dark:text-white"}`}>
                   {peer.displayName}
                 </div>
-                <div className="text-xs text-ink-muted">
-                  {isIncoming ? "↙ " : "↗ "}
+                <div className="text-xs text-ink-muted flex items-center gap-1">
+                  <DirIcon size={12} className={isMissed ? "text-red-600" : "text-brand-dark"} />
                   {statusLabel(r, isIncoming)} · {formatTime(r.startedAt)}
                 </div>
               </div>
-              <button
-                onClick={() => callBack(peer)}
-                className="text-brand-dark text-xl px-2"
-                title="Позвонить"
-              >
-                📞
-              </button>
+              <IconButton icon={Phone} size="md" onClick={() => callBack(peer)} title="Позвонить" />
             </div>
           );
         })}

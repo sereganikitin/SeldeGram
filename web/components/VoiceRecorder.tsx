@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { Square } from "lucide-react";
 
 interface Props {
   onRecorded: (blob: Blob, durationMs: number) => void;
@@ -80,9 +81,10 @@ export function VoiceRecorder({ onRecorded, onCancel }: Props) {
       </button>
       <button
         onClick={stop}
-        className="w-11 h-11 rounded-full bg-brand hover:bg-brand-dark text-white flex items-center justify-center text-xl"
+        className="w-11 h-11 rounded-full bg-gradient-to-br from-brand to-brand-dark hover:from-brand-dark hover:to-brand-dark text-white flex items-center justify-center shadow-sm"
+        title="Остановить"
       >
-        ⏹
+        <Square size={18} fill="currentColor" />
       </button>
     </div>
   );

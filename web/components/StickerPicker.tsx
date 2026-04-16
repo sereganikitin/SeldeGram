@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
 import { Sticker, StickerPack } from "@/lib/types";
 import { StickerImage } from "./StickerImage";
+import { Settings } from "lucide-react";
 
 interface Tab {
   id: string;
@@ -82,9 +83,10 @@ export function StickerPicker({ onPick, onOpenManage }: Props) {
         ))}
         <button
           onClick={onOpenManage}
-          className="ml-auto px-3 py-2 text-sm text-brand-dark font-semibold"
+          className="ml-auto px-3 py-2 text-brand-dark"
+          title="Управление стикерами"
         >
-          ⚙
+          <Settings size={18} />
         </button>
       </div>
     </div>

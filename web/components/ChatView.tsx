@@ -16,6 +16,8 @@ import { ThreadModal } from "./ThreadModal";
 import { formatDateLabel, messagePreview, lastSeenText } from "@/lib/helpers";
 import { uploadFile } from "@/lib/media";
 import { useCall } from "@/lib/call";
+import { IconButton } from "./IconButton";
+import { Phone, Search, Info, Megaphone, Users, ArrowLeft, Pin, X, Paperclip, Smile, Mic, Send, Check, BarChart3, Keyboard } from "lucide-react";
 
 interface Props {
   chat: Chat;
@@ -361,8 +363,8 @@ export function ChatView({ chat, onBack, onChatGone, onOpenStickers }: Props) {
       )}
       <header className="bg-white dark:bg-slate-950 border-b border-cream-border dark:border-slate-800 px-4 py-3 flex items-center gap-3">
         {onBack && (
-          <button onClick={onBack} className="md:hidden text-ink-muted mr-1">
-            ←
+          <button onClick={onBack} className="md:hidden text-ink-muted mr-1" title="Назад">
+            <ArrowLeft size={22} />
           </button>
         )}
         <button
@@ -371,10 +373,10 @@ export function ChatView({ chat, onBack, onChatGone, onOpenStickers }: Props) {
         >
           <Avatar id={other?.id ?? chat.id} name={chat.title ?? "?"} avatarKey={other?.avatarKey} size={40} />
           <div className="flex-1 min-w-0">
-            <div className="font-semibold truncate dark:text-white">
-              {chat.type === "channel" && "📢 "}
-              {chat.type === "group" && "👥 "}
-              {chat.title}
+            <div className="font-semibold truncate dark:text-white flex items-center gap-1">
+              {chat.type === "channel" && <Megaphone size={14} className="text-brand-dark flex-shrink-0" />}
+              {chat.type === "group" && <Users size={14} className="text-brand-dark flex-shrink-0" />}
+              <span className="truncate">{chat.title}</span>
             </div>
             {typingName ? (
               <div className="text-xs text-brand-dark italic">{typingName} печатает...</div>
@@ -388,7 +390,9 @@ export function ChatView({ chat, onBack, onChatGone, onOpenStickers }: Props) {
           </div>
         </button>
         {chat.type === "direct" && other && (
-          <button
+          <IconButton
+            icon={Phone}
+            size="md"
             onClick={() => {
               useCall.getState().initiate({
                 id: other.id,
@@ -397,45 +401,30 @@ export function ChatView({ chat, onBack, onChatGone, onOpenStickers }: Props) {
                 avatarKey: other.avatarKey ?? null,
               }, "audio");
             }}
-            className="text-brand-dark text-lg px-2"
             title="Позвонить"
-          >
-            📞
-          </button>
+          />
         )}
-        <button
-          onClick={() => setSearchOpen((v) => !v)}
-          className="text-brand-dark text-lg px-2"
-          title="Поиск"
-        >
-          🔎
-        </button>
-        <button
-          onClick={() => setInfoOpen(true)}
-          className="text-brand-dark text-xl px-2"
-          title="Информация"
-        >
-          ⓘ
-        </button>
+        <IconButton icon={Search} size="md" variant="ghost" onClick={() => setSearchOpen((v) => !v)} title="Поиск" />
+        <IconButton icon={Info} size="md" variant="ghost" onClick={() => setInfoOpen(true)} title="Информация" />
       </header>
 
       {pinnedMsg && !pinnedMsg.deletedAt && (
         <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur border-b border-cream-border dark:border-slate-800 px-4 py-2 flex items-center gap-2">
-          <span className="text-brand-dark">📌</span>
+          <Pin size={16} className="text-brand-dark flex-shrink-0" />
           <div className="flex-1 min-w-0">
             <div className="text-xs text-brand-dark font-semibold">Закреплённое</div>
             <div className="text-sm text-ink dark:text-slate-300 truncate">
-              {pinnedMsg.content || "📷 Медиа"}
+              {pinnedMsg.content || "Медиа"}
             </div>
           </div>
           {(chat.type === "direct" || chat.viewerRole === "admin") && (
-            <button
+            <IconButton
+              icon={X}
+              size="sm"
+              variant="ghost"
               onClick={() => api.delete(`/chats/${chat.id}/pin`).catch(() => {})}
-              className="text-ink-muted hover:text-ink dark:hover:text-white text-lg px-2"
               title="Открепить"
-            >
-              ✕
-            </button>
+            />
           )}
         </div>
       )}
@@ -507,16 +496,17 @@ export function ChatView({ chat, onBack, onChatGone, onOpenStickers }: Props) {
             <div className="text-xs text-brand-dark font-semibold">{editingId ? "Изменение" : "Ответ"}</div>
             <div className="text-sm text-ink-muted truncate">{editingId ? input : messagePreview(replyTo!)}</div>
           </div>
-          <button
+          <IconButton
+            icon={X}
+            size="sm"
+            variant="ghost"
             onClick={() => {
               setReplyTo(null);
               setEditingId(null);
               if (editingId) setInput("");
             }}
-            className="text-ink-muted hover:text-ink px-2"
-          >
-            ✕
-          </button>
+            title="Отмена"
+          />
         </div>
       )}
 
@@ -533,15 +523,19 @@ export function ChatView({ chat, onBack, onChatGone, onOpenStickers }: Props) {
                 e.target.value = "";
               }}
             />
-            <button
+            <IconButton
+              icon={Paperclip}
+              size="md"
+              variant="ghost"
               onClick={() => fileInputRef.current?.click()}
               disabled={uploading || !!editingId}
-              className="w-10 h-10 rounded-full hover:bg-cream-alt flex items-center justify-center text-xl flex-shrink-0 disabled:opacity-40"
               title="Прикрепить"
-            >
-              {uploading ? "⏳" : "📎"}
-            </button>
-            <button
+              className="flex-shrink-0 disabled:opacity-40"
+            />
+            <IconButton
+              icon={BarChart3}
+              size="md"
+              variant="ghost"
               onClick={() => {
                 const q = prompt("Вопрос опроса:");
                 if (!q?.trim()) return;
@@ -551,19 +545,18 @@ export function ChatView({ chat, onBack, onChatGone, onOpenStickers }: Props) {
                 api.post(`/chats/${chat.id}/poll`, { question: q.trim(), options: opts }).catch(() => {});
               }}
               disabled={!!editingId}
-              className="w-10 h-10 rounded-full hover:bg-cream-alt dark:hover:bg-slate-800 flex items-center justify-center text-xl flex-shrink-0 disabled:opacity-40"
               title="Опрос"
-            >
-              📊
-            </button>
-            <button
+              className="flex-shrink-0 disabled:opacity-40"
+            />
+            <IconButton
+              icon={stickersOpen ? Keyboard : Smile}
+              size="md"
+              variant="ghost"
               onClick={() => setStickersOpen((v) => !v)}
               disabled={!!editingId}
-              className="w-10 h-10 rounded-full hover:bg-cream-alt dark:hover:bg-slate-800 flex items-center justify-center text-xl flex-shrink-0 disabled:opacity-40"
               title="Стикеры"
-            >
-              {stickersOpen ? "⌨" : "😀"}
-            </button>
+              className="flex-shrink-0 disabled:opacity-40"
+            />
             <textarea
               value={input}
               onChange={(e) => onInputChange(e.target.value)}
@@ -579,21 +572,23 @@ export function ChatView({ chat, onBack, onChatGone, onOpenStickers }: Props) {
               className="flex-1 resize-none px-4 py-2 bg-cream-alt dark:bg-slate-800 dark:text-white dark:placeholder:text-ink-muted rounded-2xl focus:outline-none focus:ring-2 focus:ring-brand max-h-32"
             />
             {input.trim() || editingId ? (
-              <button
+              <IconButton
+                icon={editingId ? Check : Send}
+                size="md"
                 onClick={send}
                 disabled={!input.trim()}
-                className="w-10 h-10 rounded-full bg-brand hover:bg-brand-dark disabled:opacity-40 text-white flex items-center justify-center text-xl"
-              >
-                {editingId ? "✓" : "↑"}
-              </button>
+                title={editingId ? "Сохранить" : "Отправить"}
+                className="flex-shrink-0 disabled:opacity-40"
+              />
             ) : (
-              <button
+              <IconButton
+                icon={Mic}
+                size="md"
                 onClick={() => setVoiceRecording(true)}
                 disabled={uploading}
-                className="w-10 h-10 rounded-full bg-brand hover:bg-brand-dark disabled:opacity-40 text-white flex items-center justify-center text-xl"
-              >
-                🎤
-              </button>
+                title="Голосовое сообщение"
+                className="flex-shrink-0 disabled:opacity-40"
+              />
             )}
           </div>
           {voiceRecording && <VoiceRecorder onRecorded={sendVoice} onCancel={() => setVoiceRecording(false)} />}

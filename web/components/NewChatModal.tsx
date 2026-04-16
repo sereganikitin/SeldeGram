@@ -5,6 +5,7 @@ import { api } from "@/lib/api";
 import { Chat, UserSearchResult, ChannelSearchResult } from "@/lib/types";
 import { Avatar } from "./Avatar";
 import { Modal } from "./Modal";
+import { MessageCircle, Users, Megaphone, Search, Check, X, type LucideIcon } from "lucide-react";
 
 interface Props {
   open: boolean;
@@ -25,19 +26,19 @@ export function NewChatModal({ open, onClose, onCreated }: Props) {
     <Modal open={open} onClose={onClose} title="Новый чат" width="max-w-lg">
       <div className="flex border-b border-cream-border sticky top-0 bg-white z-10">
         {([
-          ["direct", "💬 Личный"],
-          ["group", "👥 Группа"],
-          ["channel", "📢 Канал"],
-          ["find", "🔎 Найти"],
-        ] as Array<[Tab, string]>).map(([k, label]) => (
+          ["direct", MessageCircle, "Личный"],
+          ["group", Users, "Группа"],
+          ["channel", Megaphone, "Канал"],
+          ["find", Search, "Найти"],
+        ] as Array<[Tab, LucideIcon, string]>).map(([k, Icon, label]) => (
           <button
             key={k}
             onClick={() => setTab(k)}
-            className={`flex-1 py-3 text-sm font-medium transition ${
+            className={`flex-1 py-3 text-sm font-medium transition flex items-center justify-center gap-1.5 ${
               tab === k ? "text-brand-dark border-b-2 border-brand" : "text-ink-muted hover:text-ink"
             }`}
           >
-            {label}
+            <Icon size={16} /> {label}
           </button>
         ))}
       </div>
@@ -162,9 +163,9 @@ function GroupTab({ onCreated }: { onCreated: (c: Chat) => void }) {
             <button
               key={u.id}
               onClick={() => toggle(u)}
-              className="bg-brand text-white px-3 py-1 rounded-full text-sm"
+              className="bg-brand text-white px-3 py-1 rounded-full text-sm flex items-center gap-1"
             >
-              {u.displayName} ✕
+              {u.displayName} <X size={14} />
             </button>
           ))}
         </div>
@@ -190,7 +191,7 @@ function GroupTab({ onCreated }: { onCreated: (c: Chat) => void }) {
                 <div className="font-semibold text-sm">{u.displayName}</div>
                 <div className="text-xs text-ink-muted">@{u.username}</div>
               </div>
-              {isSel && <span className="text-brand-dark">✓</span>}
+              {isSel && <Check size={18} className="text-brand-dark" />}
             </button>
           );
         })}

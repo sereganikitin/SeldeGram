@@ -7,6 +7,7 @@ import { useAuth } from "@/lib/store";
 import { useTheme, type ThemeMode } from "@/lib/theme";
 import { api } from "@/lib/api";
 import { uploadFile } from "@/lib/media";
+import { Image as ImageIcon, Ban, LogOut } from "lucide-react";
 
 interface Props {
   open: boolean;
@@ -103,23 +104,23 @@ export function ProfileModal({ open, onClose, onLogout, onOpenWallpaper, onOpenB
 
         <button
           onClick={onOpenWallpaper}
-          className="w-full bg-cream-alt dark:bg-slate-800 dark:text-white hover:bg-cream-alt dark:hover:bg-slate-700 py-3 rounded-lg font-semibold"
+          className="w-full bg-cream-alt dark:bg-slate-800 dark:text-white hover:bg-cream-border dark:hover:bg-slate-700 py-3 rounded-lg font-semibold flex items-center justify-center gap-2"
         >
-          🖼 Обои по умолчанию
+          <ImageIcon size={18} className="text-brand-dark" /> Обои по умолчанию
         </button>
 
         <button
           onClick={onOpenBlockList}
-          className="w-full bg-cream-alt dark:bg-slate-800 dark:text-white hover:bg-cream-alt dark:hover:bg-slate-700 py-3 rounded-lg font-semibold"
+          className="w-full bg-cream-alt dark:bg-slate-800 dark:text-white hover:bg-cream-border dark:hover:bg-slate-700 py-3 rounded-lg font-semibold flex items-center justify-center gap-2"
         >
-          🚫 Заблокированные
+          <Ban size={18} className="text-brand-dark" /> Заблокированные
         </button>
 
         <button
           onClick={onLogout}
-          className="w-full bg-red-50 text-red-600 hover:bg-red-100 dark:bg-red-900/20 dark:hover:bg-red-900/40 py-3 rounded-lg font-semibold"
+          className="w-full bg-red-50 text-red-600 hover:bg-red-100 dark:bg-red-900/20 dark:hover:bg-red-900/40 py-3 rounded-lg font-semibold flex items-center justify-center gap-2"
         >
-          Выйти
+          <LogOut size={18} /> Выйти
         </button>
       </div>
     </Modal>

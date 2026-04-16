@@ -7,6 +7,8 @@ import { api } from "@/lib/api";
 import { Message } from "@/lib/types";
 import { useAuth } from "@/lib/store";
 import { useWs, type WsState } from "@/lib/ws";
+import { IconButton } from "./IconButton";
+import { Send } from "lucide-react";
 
 interface Props {
   open: boolean;
@@ -95,13 +97,7 @@ export function ThreadModal({ open, onClose, chatId, parent }: Props) {
           rows={1}
           className="flex-1 resize-none px-4 py-2 bg-cream-alt dark:bg-slate-800 dark:text-white rounded-2xl focus:outline-none focus:ring-2 focus:ring-brand max-h-32"
         />
-        <button
-          onClick={send}
-          disabled={!input.trim() || sending}
-          className="w-10 h-10 rounded-full bg-brand hover:bg-brand-dark disabled:opacity-40 text-white flex items-center justify-center text-xl"
-        >
-          ↑
-        </button>
+        <IconButton icon={Send} size="md" onClick={send} disabled={!input.trim() || sending} title="Отправить" className="flex-shrink-0 disabled:opacity-40" />
       </div>
     </Modal>
   );

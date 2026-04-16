@@ -5,6 +5,7 @@ import { Message } from "@/lib/types";
 import { formatTime, messagePreview, getMediaUrl, groupReactions } from "@/lib/helpers";
 import { AudioPlayer } from "./AudioPlayer";
 import { PollBubble } from "./PollBubble";
+import { Reply, Pin, MessageSquare, Copy, Pencil, Trash2, FileText, MoreHorizontal, Share2, Check, CheckCheck } from "lucide-react";
 
 interface Props {
   message: Message;
@@ -55,7 +56,7 @@ function MediaContent({ message, mine }: { message: Message; mine: boolean }) {
       rel="noreferrer"
       className="flex items-center gap-2 text-current hover:opacity-80"
     >
-      <span className="text-2xl">📄</span>
+      <FileText size={26} className="flex-shrink-0" />
       <div>
         <div className="text-sm font-semibold">{message.mediaName ?? "Файл"}</div>
         {message.mediaSize != null && (
@@ -167,8 +168,10 @@ export function MessageBubble({ message, mine, showSenderName, senderName, isRea
         <MediaContent message={message} mine={mine} />
         <div className="flex items-center gap-1 mt-1 text-[11px] text-ink-muted">
           <span>{formatTime(message.createdAt)}</span>
-          {mine && <span>{isRead ? "✓✓" : "✓"}</span>}
-          <button onClick={() => setMenuOpen((v) => !v)} className="opacity-0 group-hover:opacity-100 ml-1 text-ink-muted hover:text-ink transition-opacity">⋯</button>
+          {mine && (isRead ? <CheckCheck size={12} /> : <Check size={12} />)}
+          <button onClick={() => setMenuOpen((v) => !v)} className="opacity-0 group-hover:opacity-100 ml-1 text-ink-muted hover:text-ink transition-opacity" title="Ещё">
+            <MoreHorizontal size={14} />
+          </button>
         </div>
         {menuOpen && <ActionMenu mine={mine} hasContent={false} canComment={canComment} onAction={(a) => { setMenuOpen(false); onAction(a); }} onClose={() => setMenuOpen(false)} />}
       </div>
@@ -188,7 +191,9 @@ export function MessageBubble({ message, mine, showSenderName, senderName, isRea
         )}
 
         {message.forwardedFromId && !isDeleted && (
-          <div className={`text-xs italic mb-1 ${mine ? "text-white/70" : "text-ink-muted"}`}>↪ Переслано</div>
+          <div className={`text-xs italic mb-1 flex items-center gap-1 ${mine ? "text-white/70" : "text-ink-muted"}`}>
+            <Share2 size={12} /> Переслано
+          </div>
         )}
 
         {message.replyTo && !isDeleted && (
@@ -230,13 +235,15 @@ export function MessageBubble({ message, mine, showSenderName, senderName, isRea
         <div className={`flex items-center gap-1 justify-end text-[11px] mt-1 ${mine ? "text-white/70" : "text-ink-muted"}`}>
           {message.editedAt && !isDeleted && <span className="italic">изм.</span>}
           <span>{formatTime(message.createdAt)}</span>
-          {mine && !isDeleted && <span>{isRead ? "✓✓" : "✓"}</span>}
+          {mine && !isDeleted && (isRead ? <CheckCheck size={12} /> : <Check size={12} />)}
           {!isDeleted && (
-            <span className="opacity-0 group-hover:opacity-100 ml-1 flex gap-0.5 transition-opacity">
+            <span className="opacity-0 group-hover:opacity-100 ml-1 flex items-center gap-0.5 transition-opacity">
               {["❤️", "👍", "😂"].map((e) => (
                 <button key={e} onClick={() => onReact?.(e)} className="hover:scale-125 transition-transform">{e}</button>
               ))}
-              <button onClick={() => setMenuOpen((v) => !v)} className="hover:opacity-80">⋯</button>
+              <button onClick={() => setMenuOpen((v) => !v)} className="hover:opacity-80" title="Ещё">
+                <MoreHorizontal size={14} />
+              </button>
             </span>
           )}
         </div>
@@ -291,33 +298,33 @@ function ActionMenu({
       className={`absolute z-50 bottom-full mb-1 ${mine ? "right-2" : "left-2"} bg-white dark:bg-slate-800 dark:text-white shadow-xl rounded-lg border border-cream-border dark:border-slate-700 py-1 min-w-[160px]`}
       onContextMenu={(e) => e.preventDefault()}
     >
-        <button onClick={() => onAction("reply")} className="w-full text-left px-3 py-2 text-sm hover:bg-cream dark:hover:bg-slate-700">
-          ↩ Ответить
+        <button onClick={() => onAction("reply")} className="w-full text-left px-3 py-2 text-sm hover:bg-cream dark:hover:bg-slate-700 flex items-center gap-2">
+          <Reply size={16} className="text-brand-dark" /> Ответить
         </button>
-        <button onClick={() => onAction("pin")} className="w-full text-left px-3 py-2 text-sm hover:bg-cream dark:hover:bg-slate-700">
-          📌 Закрепить
+        <button onClick={() => onAction("pin")} className="w-full text-left px-3 py-2 text-sm hover:bg-cream dark:hover:bg-slate-700 flex items-center gap-2">
+          <Pin size={16} className="text-brand-dark" /> Закрепить
         </button>
         {canComment && (
-          <button onClick={() => onAction("thread")} className="w-full text-left px-3 py-2 text-sm hover:bg-cream dark:hover:bg-slate-700">
-            💬 Комментарии
+          <button onClick={() => onAction("thread")} className="w-full text-left px-3 py-2 text-sm hover:bg-cream dark:hover:bg-slate-700 flex items-center gap-2">
+            <MessageSquare size={16} className="text-brand-dark" /> Комментарии
           </button>
         )}
         {hasContent && (
-          <button onClick={() => onAction("copy")} className="w-full text-left px-3 py-2 text-sm hover:bg-cream dark:hover:bg-slate-700">
-            📋 Копировать
+          <button onClick={() => onAction("copy")} className="w-full text-left px-3 py-2 text-sm hover:bg-cream dark:hover:bg-slate-700 flex items-center gap-2">
+            <Copy size={16} className="text-brand-dark" /> Копировать
           </button>
         )}
         {mine && hasContent && (
-          <button onClick={() => onAction("edit")} className="w-full text-left px-3 py-2 text-sm hover:bg-cream dark:hover:bg-slate-700">
-            ✏ Изменить
+          <button onClick={() => onAction("edit")} className="w-full text-left px-3 py-2 text-sm hover:bg-cream dark:hover:bg-slate-700 flex items-center gap-2">
+            <Pencil size={16} className="text-brand-dark" /> Изменить
           </button>
         )}
         {mine && (
           <button
             onClick={() => onAction("delete")}
-            className="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30"
+            className="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 flex items-center gap-2"
           >
-            🗑 Удалить
+            <Trash2 size={16} /> Удалить
           </button>
         )}
     </div>

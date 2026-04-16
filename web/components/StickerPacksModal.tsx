@@ -7,6 +7,7 @@ import { useAuth } from "@/lib/store";
 import { uploadStickerFile } from "@/lib/media";
 import { StickerImage } from "./StickerImage";
 import { Modal } from "./Modal";
+import { Search, ArrowLeft, X } from "lucide-react";
 
 interface Props {
   open: boolean;
@@ -46,9 +47,9 @@ export function StickerPacksModal({ open, onClose }: Props) {
           <div className="flex gap-2 mb-4">
             <button
               onClick={() => setView("search")}
-              className="flex-1 bg-cream-alt hover:bg-cream-alt py-2 rounded-lg font-semibold text-sm"
+              className="flex-1 bg-cream-alt hover:bg-cream-border py-2 rounded-lg font-semibold text-sm flex items-center justify-center gap-2"
             >
-              🔎 Поиск
+              <Search size={16} /> Поиск
             </button>
             <button
               onClick={() => setView("create")}
@@ -115,7 +116,7 @@ function SearchView({ onBack }: { onBack: () => void }) {
 
   return (
     <div className="p-5">
-      <button onClick={onBack} className="text-brand-dark text-sm mb-3">← Назад</button>
+      <button onClick={onBack} className="text-brand-dark text-sm mb-3 flex items-center gap-1"><ArrowLeft size={16} /> Назад</button>
       <input
         type="text"
         autoFocus
@@ -159,7 +160,7 @@ function CreateView({ onCreated, onCancel }: { onCreated: (id: string) => void; 
 
   return (
     <div className="p-5 space-y-3">
-      <button onClick={onCancel} className="text-brand-dark text-sm">← Назад</button>
+      <button onClick={onCancel} className="text-brand-dark text-sm flex items-center gap-1"><ArrowLeft size={16} /> Назад</button>
       <input
         value={name}
         onChange={(e) => setName(e.target.value)}
@@ -254,7 +255,7 @@ function PackView({ packId, meId, onBack }: { packId: string; meId: string | und
 
   return (
     <div className="p-5">
-      <button onClick={onBack} className="text-brand-dark text-sm mb-3">← Назад</button>
+      <button onClick={onBack} className="text-brand-dark text-sm mb-3 flex items-center gap-1"><ArrowLeft size={16} /> Назад</button>
       <div className="text-center mb-4">
         <div className="text-xl font-bold">{pack.name}</div>
         <div className="text-sm text-ink-muted">@{pack.slug} · {pack.stickers.length} стикеров</div>
@@ -267,9 +268,10 @@ function PackView({ packId, meId, onBack }: { packId: string; meId: string | und
             {isAuthor && (
               <button
                 onClick={() => removeSticker(s.id)}
-                className="absolute top-0 right-0 bg-red-500 text-white rounded-full w-5 h-5 text-xs opacity-0 group-hover:opacity-100"
+                className="absolute top-0 right-0 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center opacity-0 group-hover:opacity-100"
+                title="Удалить"
               >
-                ✕
+                <X size={12} />
               </button>
             )}
           </div>

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
 import { useAuth } from "@/lib/store";
+import { Check } from "lucide-react";
 
 interface PollData {
   id: string;
@@ -53,8 +54,8 @@ export function PollBubble({ messageId, mine }: Props) {
               className={`absolute inset-0 rounded-lg ${mine ? "bg-white/20" : "bg-brand/10 dark:bg-brand/20"}`}
               style={{ width: `${pct}%` }}
             />
-            <span className={`flex-1 text-sm z-[1] ${isMyVote ? "font-bold" : ""} ${mine ? "text-white" : "dark:text-white"}`}>
-              {isMyVote ? "✓ " : ""}{opt}
+            <span className={`flex-1 text-sm z-[1] flex items-center gap-1 ${isMyVote ? "font-bold" : ""} ${mine ? "text-white" : "dark:text-white"}`}>
+              {isMyVote && <Check size={14} />}{opt}
             </span>
             <span className={`text-xs z-[1] ml-2 ${mine ? "text-white/70" : "text-ink-muted"}`}>{pct}%</span>
           </button>

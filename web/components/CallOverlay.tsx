@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useCall } from "@/lib/call";
 import { Avatar } from "./Avatar";
+import { Phone, PhoneOff, Mic, MicOff, X, Check } from "lucide-react";
 
 function formatDuration(ms: number): string {
   const s = Math.floor(ms / 1000);
@@ -84,17 +85,17 @@ export function CallOverlay() {
             <>
               <button
                 onClick={reject}
-                className="w-16 h-16 rounded-full bg-red-600 hover:bg-red-700 flex items-center justify-center text-3xl transition"
+                className="w-16 h-16 rounded-full bg-gradient-to-br from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 flex items-center justify-center text-white transition shadow-lg"
                 title="Отклонить"
               >
-                ✕
+                <PhoneOff size={28} />
               </button>
               <button
                 onClick={accept}
-                className="w-16 h-16 rounded-full bg-green-600 hover:bg-green-700 flex items-center justify-center text-3xl transition"
+                className="w-16 h-16 rounded-full bg-gradient-to-br from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 flex items-center justify-center text-white transition shadow-lg"
                 title="Принять"
               >
-                ✓
+                <Phone size={28} />
               </button>
             </>
           ) : (
@@ -102,20 +103,20 @@ export function CallOverlay() {
               {(state === "active" || state === "connecting") && (
                 <button
                   onClick={toggleMute}
-                  className={`w-14 h-14 rounded-full flex items-center justify-center text-2xl transition ${
-                    muted ? "bg-white text-brand-dark" : "bg-white/20 hover:bg-white/30"
+                  className={`w-14 h-14 rounded-full flex items-center justify-center transition ${
+                    muted ? "bg-white text-brand-dark" : "bg-white/20 hover:bg-white/30 text-white"
                   }`}
                   title={muted ? "Включить микрофон" : "Выключить микрофон"}
                 >
-                  {muted ? "🔇" : "🎙️"}
+                  {muted ? <MicOff size={24} /> : <Mic size={24} />}
                 </button>
               )}
               <button
                 onClick={hangup}
-                className="w-16 h-16 rounded-full bg-red-600 hover:bg-red-700 flex items-center justify-center text-3xl transition"
+                className="w-16 h-16 rounded-full bg-gradient-to-br from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 flex items-center justify-center text-white transition shadow-lg"
                 title={isCaller && state === "outgoing-ringing" ? "Отменить" : "Завершить"}
               >
-                ✕
+                <PhoneOff size={28} />
               </button>
             </>
           )}

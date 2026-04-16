@@ -6,6 +6,7 @@ import { Chat, UserSearchResult } from "@/lib/types";
 import { useAuth } from "@/lib/store";
 import { Avatar } from "./Avatar";
 import { Modal } from "./Modal";
+import { Check, X, Image as ImageIcon, Ban, ShieldCheck } from "lucide-react";
 
 interface Props {
   chatId: string;
@@ -144,8 +145,8 @@ export function ChatInfoModal({ chatId, open, onClose, onChatGone, onOpenWallpap
                 className="flex-1 text-center text-xl font-bold border-b border-brand bg-transparent focus:outline-none"
                 autoFocus
               />
-              <button onClick={saveTitle} className="text-brand-dark text-2xl">
-                ✓
+              <button onClick={saveTitle} className="text-brand-dark" title="Сохранить">
+                <Check size={24} />
               </button>
             </div>
           ) : (
@@ -208,9 +209,10 @@ export function ChatInfoModal({ chatId, open, onClose, onChatGone, onOpenWallpap
                 {canRemove && (
                   <button
                     onClick={() => removeUser(m.id, isMe)}
-                    className="text-red-600 text-sm font-semibold"
+                    className="text-red-600 text-sm font-semibold flex items-center gap-1"
+                    title={isMe ? "Выйти" : "Удалить"}
                   >
-                    {isMe ? "Выйти" : "✕"}
+                    {isMe ? "Выйти" : <X size={18} />}
                   </button>
                 )}
               </div>
@@ -221,18 +223,18 @@ export function ChatInfoModal({ chatId, open, onClose, onChatGone, onOpenWallpap
         {onOpenWallpaper && (
           <button
             onClick={onOpenWallpaper}
-            className="w-full bg-cream-alt hover:bg-cream-alt dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-white font-semibold py-3 rounded-lg mb-2"
+            className="w-full bg-cream-alt hover:bg-cream-border dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-white font-semibold py-3 rounded-lg mb-2 flex items-center justify-center gap-2"
           >
-            🖼 Обои чата
+            <ImageIcon size={18} className="text-brand-dark" /> Обои чата
           </button>
         )}
         {isDirect && (
           <>
             <button
               onClick={toggleBlock}
-              className="w-full bg-cream-alt hover:bg-cream-alt dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-white font-semibold py-3 rounded-lg mb-2"
+              className="w-full bg-cream-alt hover:bg-cream-border dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-white font-semibold py-3 rounded-lg mb-2 flex items-center justify-center gap-2"
             >
-              {blocked ? "✓ Разблокировать" : "🚫 Заблокировать"}
+              {blocked ? (<><ShieldCheck size={18} className="text-brand-dark" /> Разблокировать</>) : (<><Ban size={18} className="text-brand-dark" /> Заблокировать</>)}
             </button>
             <button
               onClick={deleteChat}

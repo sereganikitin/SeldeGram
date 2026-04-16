@@ -47,11 +47,11 @@ interface PreviewMsg {
 export function messagePreview(msg: PreviewMsg): string {
   if (msg.deletedAt) return "удалено";
   if (msg.isSticker) return `${msg.content || ""} Стикер`.trim();
-  if (msg.mediaType?.startsWith("audio/")) return "🎤 Голосовое";
+  if (msg.mediaType?.startsWith("audio/")) return "Голосовое";
   if (msg.content) return msg.content;
-  if (msg.mediaType?.startsWith("image/")) return "📷 Фото";
-  if (msg.mediaType?.startsWith("video/")) return "📹 Видео";
-  if (msg.mediaKey) return "📄 Файл";
+  if (msg.mediaType?.startsWith("image/")) return "Фото";
+  if (msg.mediaType?.startsWith("video/")) return "Видео";
+  if (msg.mediaKey) return "Файл";
   return "";
 }
 

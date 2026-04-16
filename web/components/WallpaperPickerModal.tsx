@@ -6,6 +6,7 @@ import { WALLPAPER_PRESETS } from "@/lib/wallpapers";
 import { api } from "@/lib/api";
 import { uploadFile } from "@/lib/media";
 import { useAuth } from "@/lib/store";
+import { Camera } from "lucide-react";
 
 interface Props {
   open: boolean;
@@ -78,8 +79,8 @@ export function WallpaperPickerModal({ open, onClose, chatId, onApplied }: Props
           ))}
         </div>
 
-        <label className="block w-full bg-brand hover:bg-brand-dark text-white text-center py-3 rounded-lg font-semibold cursor-pointer mb-2">
-          {uploading ? "Загрузка..." : "📷 Загрузить своё фото"}
+        <label className="flex items-center justify-center gap-2 w-full bg-gradient-to-br from-brand to-brand-dark hover:from-brand-dark hover:to-brand-dark text-white text-center py-3 rounded-lg font-semibold cursor-pointer mb-2 shadow-sm">
+          {uploading ? "Загрузка..." : (<><Camera size={18} /> Загрузить своё фото</>)}
           <input type="file" accept="image/*" hidden onChange={onPickFile} />
         </label>
 
