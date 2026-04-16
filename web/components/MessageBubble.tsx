@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Message } from "@/lib/types";
 import { formatTime, messagePreview, getMediaUrl, groupReactions } from "@/lib/helpers";
 import { AudioPlayer } from "./AudioPlayer";
@@ -70,11 +70,59 @@ export function MessageBubble({ message, mine, showSenderName, senderName, isRea
   const isDeleted = !!message.deletedAt;
   const isSticker = !!message.isSticker && !isDeleted;
   const [menuOpen, setMenuOpen] = useState(false);
+  const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const longPressFired = useRef(false);
+
+  const openMenu = () => {
+    if (!isDeleted) setMenuOpen(true);
+  };
+
+  const onContextMenu = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    openMenu();
+  };
+
+  const onTouchStart = () => {
+    longPressFired.current = false;
+    if (longPressTimer.current) clearTimeout(longPressTimer.current);
+    longPressTimer.current = setTimeout(() => {
+      longPressFired.current = true;
+      openMenu();
+    }, 500);
+  };
+
+  const cancelLongPress = () => {
+    if (longPressTimer.current) {
+      clearTimeout(longPressTimer.current);
+      longPressTimer.current = null;
+    }
+  };
+
+  const onClickCapture = (e: React.MouseEvent) => {
+    // Клик, завершивший long-press, не должен тыкать в вложенные кнопки (реакции и т.д.)
+    if (longPressFired.current) {
+      e.preventDefault();
+      e.stopPropagation();
+      longPressFired.current = false;
+    }
+  };
+
+  const pressHandlers = {
+    onContextMenu,
+    onTouchStart,
+    onTouchEnd: cancelLongPress,
+    onTouchMove: cancelLongPress,
+    onTouchCancel: cancelLongPress,
+    onClickCapture,
+    style: { WebkitTouchCallout: "none" as const, WebkitUserSelect: "none" as const, userSelect: "none" as const },
+  };
 
   if (isSticker) {
     return (
       <div
         className={`my-1 flex flex-col ${mine ? "items-end" : "items-start"} relative group`}
+        {...pressHandlers}
       >
         {showSenderName && !mine && <div className="text-xs font-bold text-brand-dark mb-1 ml-1">{senderName}</div>}
         <MediaContent message={message} mine={mine} />
@@ -83,7 +131,7 @@ export function MessageBubble({ message, mine, showSenderName, senderName, isRea
           {mine && <span>{isRead ? "✓✓" : "✓"}</span>}
           <button onClick={() => setMenuOpen((v) => !v)} className="opacity-0 group-hover:opacity-100 ml-1 text-ink-muted hover:text-ink transition-opacity">⋯</button>
         </div>
-        {menuOpen && <ActionMenu mine={mine} hasContent={false} onAction={onAction} onClose={() => setMenuOpen(false)} />}
+        {menuOpen && <ActionMenu mine={mine} hasContent={false} canComment={canComment} onAction={(a) => { setMenuOpen(false); onAction(a); }} onClose={() => setMenuOpen(false)} />}
       </div>
     );
   }
@@ -94,6 +142,7 @@ export function MessageBubble({ message, mine, showSenderName, senderName, isRea
         className={`relative max-w-[78%] px-3 py-2 rounded-2xl overflow-hidden ${
           mine ? "bg-brand text-white" : "bg-white dark:bg-slate-800 text-ink dark:text-white shadow-sm"
         }`}
+        {...pressHandlers}
       >
         {showSenderName && !mine && !isDeleted && (
           <div className="text-xs font-bold text-brand-dark mb-1">{senderName}</div>
@@ -154,7 +203,7 @@ export function MessageBubble({ message, mine, showSenderName, senderName, isRea
         </div>
 
         {menuOpen && (
-          <ActionMenu mine={mine} hasContent={!!message.content && !isDeleted} onAction={(a) => { setMenuOpen(false); onAction(a); }} onClose={() => setMenuOpen(false)} />
+          <ActionMenu mine={mine} hasContent={!!message.content && !isDeleted} canComment={canComment} onAction={(a) => { setMenuOpen(false); onAction(a); }} onClose={() => setMenuOpen(false)} />
         )}
       </div>
     </div>
@@ -164,12 +213,14 @@ export function MessageBubble({ message, mine, showSenderName, senderName, isRea
 function ActionMenu({
   mine,
   hasContent,
+  canComment,
   onAction,
   onClose,
 }: {
   mine: boolean;
   hasContent: boolean;
-  onAction: (a: "reply" | "edit" | "delete" | "copy") => void;
+  canComment?: boolean;
+  onAction: (a: "reply" | "edit" | "delete" | "copy" | "pin" | "thread") => void;
   onClose: () => void;
 }) {
   return (
