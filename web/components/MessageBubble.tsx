@@ -70,62 +70,90 @@ export function MessageBubble({ message, mine, showSenderName, senderName, isRea
   const isDeleted = !!message.deletedAt;
   const isSticker = !!message.isSticker && !isDeleted;
   const [menuOpen, setMenuOpen] = useState(false);
-  const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const longPressFired = useRef(false);
+  const rowRef = useRef<HTMLDivElement>(null);
 
-  const openMenu = () => {
-    if (!isDeleted) setMenuOpen(true);
-  };
+  useEffect(() => {
+    const el = rowRef.current;
+    if (!el || isDeleted) return;
 
-  const onContextMenu = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    openMenu();
-  };
+    let pressTimer: ReturnType<typeof setTimeout> | null = null;
+    let startX = 0;
+    let startY = 0;
+    let fired = false;
 
-  const onMouseDown = (e: React.MouseEvent) => {
-    // Fallback на случай если browser/ext глушит contextmenu внутри вложенных button
-    if (e.button === 2) {
+    const open = () => {
+      console.log("[msg] open menu");
+      setMenuOpen(true);
+    };
+
+    const handleContextMenu = (e: Event) => {
+      console.log("[msg] contextmenu");
       e.preventDefault();
-      e.stopPropagation();
-      openMenu();
-    }
-  };
+      open();
+    };
 
-  const onTouchStart = () => {
-    longPressFired.current = false;
-    if (longPressTimer.current) clearTimeout(longPressTimer.current);
-    longPressTimer.current = setTimeout(() => {
-      longPressFired.current = true;
-      openMenu();
-    }, 500);
-  };
+    const handlePointerDown = (e: PointerEvent) => {
+      if (e.button === 2) {
+        console.log("[msg] right mousedown");
+        e.preventDefault();
+        open();
+        return;
+      }
+      if (e.pointerType !== "touch" && e.pointerType !== "pen") return;
+      startX = e.clientX;
+      startY = e.clientY;
+      fired = false;
+      if (pressTimer) clearTimeout(pressTimer);
+      pressTimer = setTimeout(() => {
+        fired = true;
+        console.log("[msg] long-press fired");
+        open();
+      }, 500);
+    };
 
-  const cancelLongPress = () => {
-    if (longPressTimer.current) {
-      clearTimeout(longPressTimer.current);
-      longPressTimer.current = null;
-    }
-  };
+    const handlePointerMove = (e: PointerEvent) => {
+      if (!pressTimer) return;
+      if (Math.abs(e.clientX - startX) > 10 || Math.abs(e.clientY - startY) > 10) {
+        clearTimeout(pressTimer);
+        pressTimer = null;
+      }
+    };
 
-  const onClickCapture = (e: React.MouseEvent) => {
-    // Клик, завершивший long-press, не должен тыкать в вложенные кнопки (реакции и т.д.)
-    if (longPressFired.current) {
-      e.preventDefault();
-      e.stopPropagation();
-      longPressFired.current = false;
-    }
-  };
+    const cancel = () => {
+      if (pressTimer) {
+        clearTimeout(pressTimer);
+        pressTimer = null;
+      }
+    };
 
-  const pressHandlers = {
-    onContextMenu,
-    onMouseDown,
-    onTouchStart,
-    onTouchEnd: cancelLongPress,
-    onTouchMove: cancelLongPress,
-    onTouchCancel: cancelLongPress,
-    onClickCapture,
-  };
+    const handleClickCapture = (e: MouseEvent) => {
+      if (fired) {
+        e.preventDefault();
+        e.stopPropagation();
+        fired = false;
+      }
+    };
+
+    el.addEventListener("contextmenu", handleContextMenu);
+    el.addEventListener("pointerdown", handlePointerDown);
+    el.addEventListener("pointermove", handlePointerMove);
+    el.addEventListener("pointerup", cancel);
+    el.addEventListener("pointercancel", cancel);
+    el.addEventListener("pointerleave", cancel);
+    el.addEventListener("click", handleClickCapture, { capture: true });
+
+    return () => {
+      el.removeEventListener("contextmenu", handleContextMenu);
+      el.removeEventListener("pointerdown", handlePointerDown);
+      el.removeEventListener("pointermove", handlePointerMove);
+      el.removeEventListener("pointerup", cancel);
+      el.removeEventListener("pointercancel", cancel);
+      el.removeEventListener("pointerleave", cancel);
+      el.removeEventListener("click", handleClickCapture, { capture: true });
+      cancel();
+    };
+  }, [isDeleted]);
+
   const noSelectStyle = {
     WebkitTouchCallout: "none" as const,
     WebkitUserSelect: "none" as const,
@@ -135,8 +163,8 @@ export function MessageBubble({ message, mine, showSenderName, senderName, isRea
   if (isSticker) {
     return (
       <div
+        ref={rowRef}
         className={`my-1 flex flex-col ${mine ? "items-end" : "items-start"} relative group`}
-        {...pressHandlers}
         style={noSelectStyle}
       >
         {showSenderName && !mine && <div className="text-xs font-bold text-brand-dark mb-1 ml-1">{senderName}</div>}
@@ -152,7 +180,7 @@ export function MessageBubble({ message, mine, showSenderName, senderName, isRea
   }
 
   return (
-    <div className={`flex my-1 ${mine ? "justify-end" : "justify-start"} group`} {...pressHandlers}>
+    <div ref={rowRef} className={`flex my-1 ${mine ? "justify-end" : "justify-start"} group`}>
       <div
         className={`relative max-w-[78%] px-3 py-2 rounded-2xl overflow-hidden ${
           mine ? "bg-brand text-white" : "bg-white dark:bg-slate-800 text-ink dark:text-white shadow-sm"
