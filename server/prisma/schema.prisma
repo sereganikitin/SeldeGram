@@ -36,8 +36,42 @@ model User {
   stickerPacks       StickerPack[]
   installedPacks     UserStickerPack[]
   recentStickers     RecentSticker[]
+  callsMade          Call[]            @relation("CallCaller")
+  callsReceived      Call[]            @relation("CallCallee")
 
   @@map("users")
+}
+
+enum CallStatus {
+  ringing
+  accepted
+  rejected
+  missed
+  ended
+}
+
+enum CallKind {
+  audio
+  video
+}
+
+model Call {
+  id         String     @id @default(uuid())
+  callerId   String
+  calleeId   String
+  kind       CallKind   @default(audio)
+  status     CallStatus @default(ringing)
+  startedAt  DateTime   @default(now())
+  acceptedAt DateTime?
+  endedAt    DateTime?
+  durationSec Int?
+
+  caller User @relation("CallCaller", fields: [callerId], references: [id], onDelete: Cascade)
+  callee User @relation("CallCallee", fields: [calleeId], references: [id], onDelete: Cascade)
+
+  @@index([callerId, startedAt])
+  @@index([calleeId, startedAt])
+  @@map("calls")
 }
 
 model EmailVerification {

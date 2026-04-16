@@ -12,6 +12,7 @@ import { PushModule } from './push/push.module';
 import { StickersModule } from './stickers/stickers.module';
 import { PollsModule } from './polls/polls.module';
 import { BlocksModule } from './blocks/blocks.module';
+import { CallsModule } from './calls/calls.module';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { BlocksModule } from './blocks/blocks.module';
     StickersModule,
     PollsModule,
     BlocksModule,
+    CallsModule,
   ],
   controllers: [HealthController],
 })

@@ -15,6 +15,7 @@ import { VoiceRecorder } from "./VoiceRecorder";
 import { ThreadModal } from "./ThreadModal";
 import { formatDateLabel, messagePreview, lastSeenText } from "@/lib/helpers";
 import { uploadFile } from "@/lib/media";
+import { useCall } from "@/lib/call";
 
 interface Props {
   chat: Chat;
@@ -386,6 +387,22 @@ export function ChatView({ chat, onBack, onChatGone, onOpenStickers }: Props) {
             )}
           </div>
         </button>
+        {chat.type === "direct" && other && (
+          <button
+            onClick={() => {
+              useCall.getState().initiate({
+                id: other.id,
+                username: other.username,
+                displayName: other.displayName,
+                avatarKey: other.avatarKey ?? null,
+              }, "audio");
+            }}
+            className="text-brand-dark text-lg px-2"
+            title="Позвонить"
+          >
+            📞
+          </button>
+        )}
         <button
           onClick={() => setSearchOpen((v) => !v)}
           className="text-brand-dark text-lg px-2"

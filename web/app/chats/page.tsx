@@ -13,6 +13,9 @@ import { StickerPacksModal } from "@/components/StickerPacksModal";
 import { ProfileModal } from "@/components/ProfileModal";
 import { WallpaperPickerModal } from "@/components/WallpaperPickerModal";
 import { BlockListModal } from "@/components/BlockListModal";
+import { CallOverlay } from "@/components/CallOverlay";
+import { CallsHistoryModal } from "@/components/CallsHistoryModal";
+import { initCallBridge } from "@/lib/call";
 
 export default function ChatsPage() {
   const router = useRouter();
@@ -29,6 +32,7 @@ export default function ChatsPage() {
   const [profileOpen, setProfileOpen] = useState(false);
   const [wallpaperOpen, setWallpaperOpen] = useState(false);
   const [blockListOpen, setBlockListOpen] = useState(false);
+  const [callsOpen, setCallsOpen] = useState(false);
 
   useEffect(() => {
     hydrate();
@@ -42,6 +46,7 @@ export default function ChatsPage() {
   useEffect(() => {
     if (user) {
       wsConnect();
+      initCallBridge();
     }
     return () => wsDisconnect();
   }, [user, wsConnect, wsDisconnect]);
@@ -72,6 +77,7 @@ export default function ChatsPage() {
             onLogout={() => setProfileOpen(true)}
             onNewChat={() => setNewChatOpen(true)}
             onOpenStickers={() => setStickersOpen(true)}
+            onOpenCalls={() => setCallsOpen(true)}
           />
         </div>
         <div className={`${selected ? "flex" : "hidden md:flex"} flex-1`}>
@@ -107,6 +113,8 @@ export default function ChatsPage() {
       />
       <WallpaperPickerModal open={wallpaperOpen} onClose={() => setWallpaperOpen(false)} />
       <BlockListModal open={blockListOpen} onClose={() => setBlockListOpen(false)} />
+      <CallsHistoryModal open={callsOpen} onClose={() => setCallsOpen(false)} />
+      <CallOverlay />
     </>
   );
 }

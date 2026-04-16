@@ -14,9 +14,10 @@ interface Props {
   onLogout: () => void;
   onNewChat: () => void;
   onOpenStickers: () => void;
+  onOpenCalls: () => void;
 }
 
-export function ChatList({ selectedId, onSelect, onLogout, onNewChat, onOpenStickers }: Props) {
+export function ChatList({ selectedId, onSelect, onLogout, onNewChat, onOpenStickers, onOpenCalls }: Props) {
   const meId = useAuth((s) => s.user?.id);
   const me = useAuth((s) => s.user);
   const onMessage = useWs((s: WsState) => s.onMessage);
@@ -113,6 +114,13 @@ export function ChatList({ selectedId, onSelect, onLogout, onNewChat, onOpenStic
           title="Стикерпаки"
         >
           😀
+        </button>
+        <button
+          onClick={onOpenCalls}
+          className="w-9 h-9 rounded-full hover:bg-cream-alt dark:hover:bg-slate-800 text-xl flex items-center justify-center"
+          title="История звонков"
+        >
+          📞
         </button>
         <button
           onClick={onLogout}

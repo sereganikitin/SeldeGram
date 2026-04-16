@@ -97,4 +97,22 @@ export class WsGateway implements OnGatewayConnection, OnGatewayDisconnect {
   onPing(@ConnectedSocket() client: AuthedSocket, @MessageBody() data: unknown) {
     return { event: 'pong', data: { echo: data, userId: client.userId } };
   }
+
+  @SubscribeMessage('call:signal')
+  onCallSignal(
+    @ConnectedSocket() client: AuthedSocket,
+    @MessageBody()
+    data: { to: string; callId: string; kind: 'offer' | 'answer' | 'ice'; data: unknown },
+  ) {
+    if (!client.userId || !data?.to || !data?.callId || !data?.kind) return;
+    this.hub.sendToUser(data.to, {
+      type: 'call:signal',
+      payload: {
+        from: client.userId,
+        callId: data.callId,
+        kind: data.kind,
+        data: data.data,
+      },
+    });
+  }
 }
