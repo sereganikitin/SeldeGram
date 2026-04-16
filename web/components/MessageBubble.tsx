@@ -266,19 +266,13 @@ function ActionMenu({
 
   useEffect(() => {
     const handler = (e: Event) => {
-      console.log("[menu] doc event:", e.type, "target:", e.target);
-      if (menuRef.current && menuRef.current.contains(e.target as Node)) {
-        console.log("[menu] target inside menu, ignoring");
-        return;
-      }
-      console.log("[menu] closing");
+      if (menuRef.current && menuRef.current.contains(e.target as Node)) return;
       onClose();
     };
     const handleEsc = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
     };
     const t = setTimeout(() => {
-      console.log("[menu] listeners attached");
       document.addEventListener("mousedown", handler);
       document.addEventListener("touchstart", handler);
       document.addEventListener("keydown", handleEsc);
