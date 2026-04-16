@@ -47,6 +47,7 @@ let pc: RTCPeerConnection | null = null;
 let localStream: MediaStream | null = null;
 let remoteStream: MediaStream | null = null;
 let pendingIce: RTCIceCandidateInit[] = [];
+let pendingOffer: RTCSessionDescriptionInit | null = null;
 const remoteAudioId = "__seldegram_call_audio__";
 
 function getRemoteAudio(): HTMLAudioElement {
@@ -75,6 +76,7 @@ function cleanupPeer() {
   }
   remoteStream = null;
   pendingIce = [];
+  pendingOffer = null;
   const el = document.getElementById(remoteAudioId) as HTMLAudioElement | null;
   if (el) el.srcObject = null;
 }
@@ -114,11 +116,12 @@ async function setupPeer(callId: string, peerId: string, kind: CallKind): Promis
   pc.onconnectionstatechange = () => {
     if (!pc) return;
     const s = pc.connectionState;
+    console.log("[call] connectionState:", s);
     if (s === "connected") {
       useCall.setState({ state: "active", acceptedAt: Date.now() });
-    } else if (s === "failed" || s === "disconnected" || s === "closed") {
+    } else if (s === "failed") {
       const cur = useCall.getState();
-      if (cur.state !== "ended") {
+      if (cur.state !== "idle") {
         useCall.getState().hangup().catch(() => undefined);
       }
     }
@@ -167,11 +170,30 @@ export const useCall = create<CallStore>()((set, get) => ({
     if (!callId || !peer) return;
     set({ state: "connecting" });
     try {
-      await api.post(`/calls/${callId}/accept`);
+      // Сначала готовим pc и микрофон — иначе caller успеет прислать offer в пустоту
       await setupPeer(callId, peer.id, kind);
-      // Ждём offer от caller → обработается в _onSignal
+      await api.post(`/calls/${callId}/accept`);
+      // Если offer уже успел прийти до setupPeer — обработаем его сейчас
+      if (pendingOffer && pc) {
+        const offer = pendingOffer;
+        pendingOffer = null;
+        await pc.setRemoteDescription(offer);
+        for (const c of pendingIce) {
+          try { await pc.addIceCandidate(c); } catch {}
+        }
+        pendingIce = [];
+        const answer = await pc.createAnswer();
+        await pc.setLocalDescription(answer);
+        useWs.getState().send("call:signal", {
+          to: peer.id,
+          callId,
+          kind: "answer",
+          data: answer,
+        });
+      }
     } catch (e) {
       const err = e as { response?: { data?: { message?: string } }; message?: string };
+      console.error("acceptIncoming error", e);
       set({ error: err.response?.data?.message ?? err.message ?? "Ошибка" });
       cleanupPeer();
       set({ state: "idle", callId: null, peer: null });
@@ -278,10 +300,16 @@ export const useCall = create<CallStore>()((set, get) => ({
 
   _onSignal: async ({ callId, kind, data }) => {
     const cur = get();
-    if (cur.callId !== callId || !pc) return;
+    if (cur.callId !== callId) return;
     try {
       if (kind === "offer") {
-        await pc.setRemoteDescription(data as RTCSessionDescriptionInit);
+        const offer = data as RTCSessionDescriptionInit;
+        if (!pc) {
+          // pc ещё не создан — запомним, обработаем в acceptIncoming
+          pendingOffer = offer;
+          return;
+        }
+        await pc.setRemoteDescription(offer);
         for (const c of pendingIce) {
           try { await pc.addIceCandidate(c); } catch {}
         }
@@ -297,6 +325,7 @@ export const useCall = create<CallStore>()((set, get) => ({
           });
         }
       } else if (kind === "answer") {
+        if (!pc) return;
         await pc.setRemoteDescription(data as RTCSessionDescriptionInit);
         for (const c of pendingIce) {
           try { await pc.addIceCandidate(c); } catch {}
@@ -304,7 +333,7 @@ export const useCall = create<CallStore>()((set, get) => ({
         pendingIce = [];
       } else if (kind === "ice") {
         const c = data as RTCIceCandidateInit;
-        if (pc.remoteDescription) {
+        if (pc && pc.remoteDescription) {
           try { await pc.addIceCandidate(c); } catch {}
         } else {
           pendingIce.push(c);
