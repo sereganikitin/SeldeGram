@@ -265,16 +265,20 @@ function ActionMenu({
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    // Закрывать по клику в любое другое место, но НЕ в этом же тике открытия
-    // (иначе тот же самый mouseup после right-click сразу закрывает меню).
-    const handler = (e: MouseEvent) => {
-      if (menuRef.current && menuRef.current.contains(e.target as Node)) return;
+    const handler = (e: Event) => {
+      console.log("[menu] doc event:", e.type, "target:", e.target);
+      if (menuRef.current && menuRef.current.contains(e.target as Node)) {
+        console.log("[menu] target inside menu, ignoring");
+        return;
+      }
+      console.log("[menu] closing");
       onClose();
     };
     const handleEsc = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
     };
     const t = setTimeout(() => {
+      console.log("[menu] listeners attached");
       document.addEventListener("mousedown", handler);
       document.addEventListener("touchstart", handler);
       document.addEventListener("keydown", handleEsc);
