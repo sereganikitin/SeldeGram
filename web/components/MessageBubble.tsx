@@ -83,6 +83,15 @@ export function MessageBubble({ message, mine, showSenderName, senderName, isRea
     openMenu();
   };
 
+  const onMouseDown = (e: React.MouseEvent) => {
+    // Fallback на случай если browser/ext глушит contextmenu внутри вложенных button
+    if (e.button === 2) {
+      e.preventDefault();
+      e.stopPropagation();
+      openMenu();
+    }
+  };
+
   const onTouchStart = () => {
     longPressFired.current = false;
     if (longPressTimer.current) clearTimeout(longPressTimer.current);
@@ -110,12 +119,17 @@ export function MessageBubble({ message, mine, showSenderName, senderName, isRea
 
   const pressHandlers = {
     onContextMenu,
+    onMouseDown,
     onTouchStart,
     onTouchEnd: cancelLongPress,
     onTouchMove: cancelLongPress,
     onTouchCancel: cancelLongPress,
     onClickCapture,
-    style: { WebkitTouchCallout: "none" as const, WebkitUserSelect: "none" as const, userSelect: "none" as const },
+  };
+  const noSelectStyle = {
+    WebkitTouchCallout: "none" as const,
+    WebkitUserSelect: "none" as const,
+    userSelect: "none" as const,
   };
 
   if (isSticker) {
@@ -123,6 +137,7 @@ export function MessageBubble({ message, mine, showSenderName, senderName, isRea
       <div
         className={`my-1 flex flex-col ${mine ? "items-end" : "items-start"} relative group`}
         {...pressHandlers}
+        style={noSelectStyle}
       >
         {showSenderName && !mine && <div className="text-xs font-bold text-brand-dark mb-1 ml-1">{senderName}</div>}
         <MediaContent message={message} mine={mine} />
@@ -137,12 +152,12 @@ export function MessageBubble({ message, mine, showSenderName, senderName, isRea
   }
 
   return (
-    <div className={`flex my-1 ${mine ? "justify-end" : "justify-start"} group`}>
+    <div className={`flex my-1 ${mine ? "justify-end" : "justify-start"} group`} {...pressHandlers}>
       <div
         className={`relative max-w-[78%] px-3 py-2 rounded-2xl overflow-hidden ${
           mine ? "bg-brand text-white" : "bg-white dark:bg-slate-800 text-ink dark:text-white shadow-sm"
         }`}
-        {...pressHandlers}
+        style={noSelectStyle}
       >
         {showSenderName && !mine && !isDeleted && (
           <div className="text-xs font-bold text-brand-dark mb-1">{senderName}</div>
