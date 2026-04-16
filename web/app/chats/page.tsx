@@ -80,7 +80,7 @@ export default function ChatsPage() {
             onOpenCalls={() => setCallsOpen(true)}
           />
         </div>
-        <div className={`${selected ? "flex" : "hidden md:flex"} flex-1`}>
+        <div className={`${selected ? "flex" : "hidden md:flex"} flex-1 min-w-0`}>
           {selected ? (
             <ChatView
               chat={selected}

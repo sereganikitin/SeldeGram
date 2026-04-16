@@ -82,11 +82,27 @@ function cleanupPeer() {
 }
 
 async function setupPeer(callId: string, peerId: string, kind: CallKind): Promise<RTCPeerConnection> {
+  if (!navigator.mediaDevices?.getUserMedia) {
+    throw new Error("Микрофон недоступен в этом браузере. Проверьте, что сайт открыт по HTTPS.");
+  }
   const constraints: MediaStreamConstraints = {
     audio: true,
     video: kind === "video",
   };
-  localStream = await navigator.mediaDevices.getUserMedia(constraints);
+  try {
+    localStream = await navigator.mediaDevices.getUserMedia(constraints);
+  } catch (e) {
+    const err = e as DOMException;
+    if (err.name === "NotAllowedError" || err.name === "SecurityError") {
+      throw new Error(
+        "Нет доступа к микрофону. Разрешите доступ в настройках браузера и попробуйте снова.",
+      );
+    }
+    if (err.name === "NotFoundError") {
+      throw new Error("Микрофон не найден на устройстве.");
+    }
+    throw e;
+  }
 
   pc = new RTCPeerConnection({ iceServers: ICE_SERVERS });
 
@@ -250,6 +266,7 @@ export const useCall = create<CallStore>()((set, get) => ({
       kind,
       isCaller: false,
       startedAt: Date.now(),
+      error: null,
     });
   },
 
