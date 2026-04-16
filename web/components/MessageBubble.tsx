@@ -180,7 +180,7 @@ export function MessageBubble({ message, mine, showSenderName, senderName, isRea
   }
 
   return (
-    <div ref={rowRef} className={`flex my-1 ${mine ? "justify-end" : "justify-start"} group`}>
+    <div ref={rowRef} className={`relative flex my-1 ${mine ? "justify-end" : "justify-start"} group`}>
       <div
         className={`relative max-w-[78%] px-3 py-2 rounded-2xl overflow-hidden ${
           mine ? "bg-brand text-white" : "bg-white dark:bg-slate-800 text-ink dark:text-white shadow-sm"
@@ -245,10 +245,10 @@ export function MessageBubble({ message, mine, showSenderName, senderName, isRea
           )}
         </div>
 
-        {menuOpen && (
-          <ActionMenu mine={mine} hasContent={!!message.content && !isDeleted} canComment={canComment} onAction={(a) => { setMenuOpen(false); onAction(a); }} onClose={() => setMenuOpen(false)} />
-        )}
       </div>
+      {menuOpen && (
+        <ActionMenu mine={mine} hasContent={!!message.content && !isDeleted} canComment={canComment} onAction={(a) => { setMenuOpen(false); onAction(a); }} onClose={() => setMenuOpen(false)} />
+      )}
     </div>
   );
 }
@@ -269,7 +269,7 @@ function ActionMenu({
   return (
     <>
       <div className="fixed inset-0 z-40" onClick={onClose} onContextMenu={(e) => { e.preventDefault(); e.stopPropagation(); onClose(); }} />
-      <div className="absolute z-50 bottom-full mb-1 right-0 bg-white dark:bg-slate-800 dark:text-white shadow-xl rounded-lg border border-cream-border dark:border-slate-700 py-1 min-w-[160px]">
+      <div className={`absolute z-50 bottom-full mb-1 ${mine ? "right-2" : "left-2"} bg-white dark:bg-slate-800 dark:text-white shadow-xl rounded-lg border border-cream-border dark:border-slate-700 py-1 min-w-[160px]`}>
         <button onClick={() => onAction("reply")} className="w-full text-left px-3 py-2 text-sm hover:bg-cream dark:hover:bg-slate-700">
           ↩ Ответить
         </button>
