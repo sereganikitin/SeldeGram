@@ -9,7 +9,7 @@ import { useAuth } from '../store/auth';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Login'>;
 
-export function LoginScreen({}: Props) {
+export function LoginScreen({ navigation }: Props) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -36,6 +36,9 @@ export function LoginScreen({}: Props) {
       <Input label="Email" value={email} onChangeText={setEmail} keyboardType="email-address" />
       <Input label="Пароль" value={password} onChangeText={setPassword} secureTextEntry />
       <Button title="Войти" onPress={submit} loading={loading} />
+      <Text style={styles.link} onPress={() => navigation.navigate('ForgotPassword')}>
+        Забыли пароль?
+      </Text>
     </View>
   );
 }
@@ -43,4 +46,5 @@ export function LoginScreen({}: Props) {
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 24, backgroundColor: '#fff5f9' },
   title: { fontSize: 28, fontWeight: '700', marginBottom: 24 },
+  link: { marginTop: 16, color: '#e84e76', fontWeight: '600', textAlign: 'center' },
 });

@@ -12,6 +12,7 @@ import { WelcomeScreen } from './src/screens/WelcomeScreen';
 import { RegisterScreen } from './src/screens/RegisterScreen';
 import { VerifyScreen } from './src/screens/VerifyScreen';
 import { LoginScreen } from './src/screens/LoginScreen';
+import { ForgotPasswordScreen } from './src/screens/ForgotPasswordScreen';
 import { ChatListScreen } from './src/screens/ChatListScreen';
 import { NewChatScreen } from './src/screens/NewChatScreen';
 import { NewGroupScreen } from './src/screens/NewGroupScreen';
@@ -116,6 +117,7 @@ export default function App() {
             <Stack.Screen name="Register" component={RegisterScreen} options={{ title: 'Регистрация' }} />
             <Stack.Screen name="Verify" component={VerifyScreen} options={{ title: 'Подтверждение' }} />
             <Stack.Screen name="Login" component={LoginScreen} options={{ title: 'Вход' }} />
+            <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} options={{ title: 'Восстановление' }} />
           </>
         )}
       </Stack.Navigator>
