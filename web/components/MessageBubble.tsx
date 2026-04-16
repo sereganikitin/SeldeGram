@@ -82,19 +82,16 @@ export function MessageBubble({ message, mine, showSenderName, senderName, isRea
     let fired = false;
 
     const open = () => {
-      console.log("[msg] open menu");
       setMenuOpen(true);
     };
 
     const handleContextMenu = (e: Event) => {
-      console.log("[msg] contextmenu");
       e.preventDefault();
       open();
     };
 
     const handlePointerDown = (e: PointerEvent) => {
       if (e.button === 2) {
-        console.log("[msg] right mousedown");
         e.preventDefault();
         open();
         return;
@@ -106,7 +103,6 @@ export function MessageBubble({ message, mine, showSenderName, senderName, isRea
       if (pressTimer) clearTimeout(pressTimer);
       pressTimer = setTimeout(() => {
         fired = true;
-        console.log("[msg] long-press fired");
         open();
       }, 500);
     };
@@ -266,10 +262,37 @@ function ActionMenu({
   onAction: (a: "reply" | "edit" | "delete" | "copy" | "pin" | "thread") => void;
   onClose: () => void;
 }) {
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    // Закрывать по клику в любое другое место, но НЕ в этом же тике открытия
+    // (иначе тот же самый mouseup после right-click сразу закрывает меню).
+    const handler = (e: MouseEvent) => {
+      if (menuRef.current && menuRef.current.contains(e.target as Node)) return;
+      onClose();
+    };
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    const t = setTimeout(() => {
+      document.addEventListener("mousedown", handler);
+      document.addEventListener("touchstart", handler);
+      document.addEventListener("keydown", handleEsc);
+    }, 0);
+    return () => {
+      clearTimeout(t);
+      document.removeEventListener("mousedown", handler);
+      document.removeEventListener("touchstart", handler);
+      document.removeEventListener("keydown", handleEsc);
+    };
+  }, [onClose]);
+
   return (
-    <>
-      <div className="fixed inset-0 z-40" onClick={onClose} onContextMenu={(e) => { e.preventDefault(); e.stopPropagation(); onClose(); }} />
-      <div className={`absolute z-50 bottom-full mb-1 ${mine ? "right-2" : "left-2"} bg-white dark:bg-slate-800 dark:text-white shadow-xl rounded-lg border border-cream-border dark:border-slate-700 py-1 min-w-[160px]`}>
+    <div
+      ref={menuRef}
+      className={`absolute z-50 bottom-full mb-1 ${mine ? "right-2" : "left-2"} bg-white dark:bg-slate-800 dark:text-white shadow-xl rounded-lg border border-cream-border dark:border-slate-700 py-1 min-w-[160px]`}
+      onContextMenu={(e) => e.preventDefault()}
+    >
         <button onClick={() => onAction("reply")} className="w-full text-left px-3 py-2 text-sm hover:bg-cream dark:hover:bg-slate-700">
           ↩ Ответить
         </button>
@@ -299,7 +322,6 @@ function ActionMenu({
             🗑 Удалить
           </button>
         )}
-      </div>
-    </>
+    </div>
   );
 }
