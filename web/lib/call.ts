@@ -82,7 +82,6 @@ function cleanupPeer() {
 }
 
 async function setupPeer(callId: string, peerId: string, kind: CallKind): Promise<RTCPeerConnection> {
-  console.log("[call] setupPeer start", { callId, peerId, kind });
   if (!navigator.mediaDevices?.getUserMedia) {
     throw new Error("Микрофон недоступен в этом браузере. Проверьте, что сайт открыт по HTTPS.");
   }
@@ -92,10 +91,8 @@ async function setupPeer(callId: string, peerId: string, kind: CallKind): Promis
   };
   try {
     localStream = await navigator.mediaDevices.getUserMedia(constraints);
-    console.log("[call] got local stream, tracks:", localStream.getTracks().map((t) => t.kind));
   } catch (e) {
     const err = e as DOMException;
-    console.error("[call] getUserMedia error", err.name, err.message);
     if (err.name === "NotAllowedError" || err.name === "SecurityError") {
       throw new Error(
         "Нет доступа к микрофону. Разрешите доступ в настройках браузера и попробуйте снова.",
@@ -114,7 +111,6 @@ async function setupPeer(callId: string, peerId: string, kind: CallKind): Promis
   }
 
   pc.ontrack = (ev) => {
-    console.log("[call] ontrack", ev.track.kind);
     if (!remoteStream) {
       remoteStream = new MediaStream();
       getRemoteAudio().srcObject = remoteStream;
@@ -124,26 +120,18 @@ async function setupPeer(callId: string, peerId: string, kind: CallKind): Promis
 
   pc.onicecandidate = (ev) => {
     if (ev.candidate) {
-      console.log("[call] local ICE candidate → peer");
       useWs.getState().send("call:signal", {
         to: peerId,
         callId,
         kind: "ice",
         data: ev.candidate.toJSON(),
       });
-    } else {
-      console.log("[call] local ICE gathering done");
     }
-  };
-
-  pc.oniceconnectionstatechange = () => {
-    console.log("[call] iceConnectionState:", pc?.iceConnectionState);
   };
 
   pc.onconnectionstatechange = () => {
     if (!pc) return;
     const s = pc.connectionState;
-    console.log("[call] connectionState:", s);
     if (s === "connected") {
       useCall.setState({ state: "active", acceptedAt: Date.now() });
     } else if (s === "failed") {
@@ -194,17 +182,14 @@ export const useCall = create<CallStore>()((set, get) => ({
 
   acceptIncoming: async () => {
     const { callId, peer, kind } = get();
-    console.log("[call] acceptIncoming", { callId, peerId: peer?.id });
     if (!callId || !peer) return;
     set({ state: "connecting" });
     try {
       // Сначала готовим pc и микрофон — иначе caller успеет прислать offer в пустоту
       await setupPeer(callId, peer.id, kind);
-      console.log("[call] POST /accept");
       await api.post(`/calls/${callId}/accept`);
       // Если offer уже успел прийти до setupPeer — обработаем его сейчас
       if (pendingOffer && pc) {
-        console.log("[call] processing buffered offer");
         const offer = pendingOffer;
         pendingOffer = null;
         await pc.setRemoteDescription(offer);
@@ -214,19 +199,15 @@ export const useCall = create<CallStore>()((set, get) => ({
         pendingIce = [];
         const answer = await pc.createAnswer();
         await pc.setLocalDescription(answer);
-        console.log("[call] sending buffered answer");
         useWs.getState().send("call:signal", {
           to: peer.id,
           callId,
           kind: "answer",
           data: answer,
         });
-      } else {
-        console.log("[call] waiting for offer");
       }
     } catch (e) {
       const err = e as { response?: { data?: { message?: string } }; message?: string };
-      console.error("acceptIncoming error", e);
       set({ error: err.response?.data?.message ?? err.message ?? "Ошибка" });
       cleanupPeer();
       set({ state: "idle", callId: null, peer: null });
@@ -289,15 +270,12 @@ export const useCall = create<CallStore>()((set, get) => ({
 
   _onAccepted: async ({ callId }) => {
     const cur = get();
-    console.log("[call] _onAccepted received", { callId, isCaller: cur.isCaller });
     if (cur.callId !== callId || !cur.isCaller || !cur.peer) return;
     set({ state: "connecting" });
     try {
       const conn = await setupPeer(cur.callId, cur.peer.id, cur.kind);
-      console.log("[call] creating offer");
       const offer = await conn.createOffer();
       await conn.setLocalDescription(offer);
-      console.log("[call] sending offer");
       useWs.getState().send("call:signal", {
         to: cur.peer.id,
         callId,
@@ -306,7 +284,6 @@ export const useCall = create<CallStore>()((set, get) => ({
       });
     } catch (e) {
       const err = e as Error;
-      console.error("[call] _onAccepted error", err);
       set({ error: err.message });
       get().hangup();
     }
@@ -338,21 +315,15 @@ export const useCall = create<CallStore>()((set, get) => ({
 
   _onSignal: async ({ callId, kind, data }) => {
     const cur = get();
-    console.log("[call] _onSignal", kind, { callId, hasPc: !!pc });
-    if (cur.callId !== callId) {
-      console.log("[call] signal ignored: callId mismatch", { cur: cur.callId, got: callId });
-      return;
-    }
+    if (cur.callId !== callId) return;
     try {
       if (kind === "offer") {
         const offer = data as RTCSessionDescriptionInit;
         if (!pc) {
           // pc ещё не создан — запомним, обработаем в acceptIncoming
-          console.log("[call] offer buffered (pc not ready)");
           pendingOffer = offer;
           return;
         }
-        console.log("[call] applying offer → creating answer");
         await pc.setRemoteDescription(offer);
         for (const c of pendingIce) {
           try { await pc.addIceCandidate(c); } catch {}
@@ -361,7 +332,6 @@ export const useCall = create<CallStore>()((set, get) => ({
         const answer = await pc.createAnswer();
         await pc.setLocalDescription(answer);
         if (cur.peer) {
-          console.log("[call] sending answer");
           useWs.getState().send("call:signal", {
             to: cur.peer.id,
             callId,
@@ -370,11 +340,7 @@ export const useCall = create<CallStore>()((set, get) => ({
           });
         }
       } else if (kind === "answer") {
-        if (!pc) {
-          console.log("[call] answer ignored: no pc");
-          return;
-        }
-        console.log("[call] applying answer");
+        if (!pc) return;
         await pc.setRemoteDescription(data as RTCSessionDescriptionInit);
         for (const c of pendingIce) {
           try { await pc.addIceCandidate(c); } catch {}
