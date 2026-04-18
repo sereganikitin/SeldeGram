@@ -172,7 +172,7 @@ export function ChatListScreen({ navigation }: Props) {
           { borderTopColor: colors.border, paddingBottom: Math.max(insets.bottom, 12) },
         ]}
       >
-        <Pressable onPress={() => navigation.navigate('NewChat')} style={[styles.newBtn, { backgroundColor: colors.primary, flexDirection: 'row', gap: 6 }]}>
+        <Pressable onPress={() => navigation.navigate('NewChat')} style={[styles.newBtn, { backgroundColor: colors.primary }]}>
           <Plus size={18} color="#fff" />
           <Text style={styles.newBtnText}>Новый чат</Text>
         </Pressable>
@@ -232,7 +232,7 @@ const styles = StyleSheet.create({
     paddingTop: 12,
     gap: 12,
   },
-  newBtn: { flex: 1, paddingVertical: 14, borderRadius: 12, alignItems: 'center' },
+  newBtn: { flex: 1, paddingVertical: 14, borderRadius: 12, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 },
   newBtnText: { color: '#fff', fontSize: 16, fontWeight: '600' },
   iconBtn: { paddingVertical: 14, paddingHorizontal: 18, borderRadius: 12, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
 });

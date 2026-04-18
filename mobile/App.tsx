@@ -90,8 +90,14 @@ export default function App() {
   return (
     <SafeAreaProvider>
     <NavigationContainer ref={navRef} theme={navTheme}>
-      <StatusBar style={isDark ? 'light' : 'dark'} />
-      <Stack.Navigator>
+      <StatusBar style={isDark ? 'light' : 'dark'} translucent={false} backgroundColor={colors.surface} />
+      <Stack.Navigator
+        screenOptions={{
+          statusBarTranslucent: false,
+          statusBarStyle: isDark ? 'light' : 'dark',
+          statusBarBackgroundColor: colors.surface,
+        }}
+      >
         {user ? (
           <>
             <Stack.Screen name="ChatList" component={ChatListScreen} options={{ title: 'Чаты' }} />
