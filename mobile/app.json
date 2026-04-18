@@ -31,6 +31,8 @@
         "android.permission.RECORD_AUDIO",
         "android.permission.MODIFY_AUDIO_SETTINGS",
         "android.permission.ACCESS_NETWORK_STATE",
+        "android.permission.INTERNET",
+        "android.permission.WAKE_LOCK",
         "android.permission.BLUETOOTH",
         "android.permission.BLUETOOTH_CONNECT"
       ]
@@ -46,8 +48,7 @@
     "owner": "seldegram",
     "plugins": [
       "expo-video",
-      "expo-secure-store",
-      "@config-plugins/react-native-webrtc"
+      "expo-secure-store"
     ]
   }
 }
