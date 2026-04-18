@@ -29,6 +29,9 @@ import { ProfileScreen } from './src/screens/ProfileScreen';
 import { WallpaperPickerScreen } from './src/screens/WallpaperPickerScreen';
 import { BlockListScreen } from './src/screens/BlockListScreen';
 import { ThreadScreen } from './src/screens/ThreadScreen';
+import { CallsHistoryScreen } from './src/screens/CallsHistoryScreen';
+import { CallOverlay } from './src/ui/CallOverlay';
+import { initCallBridge } from './src/store/call';
 import { useAuth } from './src/store/auth';
 import { useWs } from './src/store/ws';
 import { registerPushToken } from './src/push';
@@ -65,6 +68,7 @@ export default function App() {
   useEffect(() => {
     if (user) {
       wsConnect();
+      initCallBridge();
       registerPushToken();
     } else {
       wsDisconnect();
@@ -110,6 +114,7 @@ export default function App() {
             <Stack.Screen name="WallpaperPicker" component={WallpaperPickerScreen} options={{ title: 'Обои' }} />
             <Stack.Screen name="BlockList" component={BlockListScreen} options={{ title: 'Заблокированные' }} />
             <Stack.Screen name="Thread" component={ThreadScreen} options={{ title: 'Комментарии' }} />
+            <Stack.Screen name="CallsHistory" component={CallsHistoryScreen} options={{ title: 'Звонки' }} />
           </>
         ) : (
           <>
@@ -121,6 +126,7 @@ export default function App() {
           </>
         )}
       </Stack.Navigator>
+      {user && <CallOverlay />}
     </NavigationContainer>
     </SafeAreaProvider>
   );

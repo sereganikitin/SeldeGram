@@ -31,8 +31,9 @@ import { ChatBackground } from '../ui/ChatBackground';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColors } from '../theme';
 import { formatDateLabel, messagePreview, lastSeenText } from '../helpers';
-import { Search, Info, Pin, X, Paperclip, Smile, Keyboard as KeyboardIcon, Mic, Send, Check, Circle } from 'lucide-react-native';
+import { Search, Info, Pin, X, Paperclip, Smile, Keyboard as KeyboardIcon, Mic, Send, Check, Circle, Phone } from 'lucide-react-native';
 import { IconButton } from '../ui/IconButton';
+import { useCall } from '../store/call';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Chat'>;
 
@@ -176,6 +177,23 @@ export function ChatScreen({ route, navigation }: Props) {
     navigation.setOptions({
       headerRight: () => (
         <View style={{ flexDirection: 'row', gap: 8, paddingHorizontal: 4 }}>
+          {chat.type === 'direct' && (
+            <Pressable
+              onPress={() => {
+                const other = chat.members.find((m) => m.id !== meId);
+                if (!other) return;
+                useCall.getState().initiate({
+                  id: other.id,
+                  username: other.username,
+                  displayName: other.displayName,
+                  avatarKey: other.avatarKey ?? null,
+                }, 'audio');
+              }}
+              style={{ paddingHorizontal: 4 }}
+            >
+              <Phone size={22} color="#ff7a99" />
+            </Pressable>
+          )}
           <Pressable onPress={() => setSearchOpen((v) => !v)} style={{ paddingHorizontal: 4 }}>
             <Search size={22} color="#ff7a99" />
           </Pressable>
@@ -191,7 +209,7 @@ export function ChatScreen({ route, navigation }: Props) {
         </View>
       ),
     });
-  }, [chat, chatId, navigation]);
+  }, [chat, chatId, navigation, meId]);
 
   // WS: новые сообщения
   useEffect(() => {

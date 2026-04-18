@@ -13,6 +13,19 @@ type TypingListener = (chatId: string, userId: string) => void;
 type PinnedListener = (chatId: string, messageId: string | null) => void;
 type PresenceListener = (userId: string, online: boolean, lastSeenAt: string) => void;
 
+export interface CallPeer {
+  id: string;
+  username: string;
+  displayName: string;
+  avatarKey: string | null;
+}
+export type CallSignalKind = 'offer' | 'answer' | 'ice';
+type CallIncomingListener = (p: { callId: string; kind: 'audio' | 'video'; from: CallPeer; startedAt: string }) => void;
+type CallAcceptedListener = (p: { callId: string }) => void;
+type CallRejectedListener = (p: { callId: string }) => void;
+type CallEndedListener = (p: { callId: string; status: string; durationSec: number | null }) => void;
+type CallSignalListener = (p: { from: string; callId: string; kind: CallSignalKind; data: unknown }) => void;
+
 interface WsState {
   socket: WebSocket | null;
   connected: boolean;
@@ -25,8 +38,14 @@ interface WsState {
   typingListeners: Set<TypingListener>;
   pinnedListeners: Set<PinnedListener>;
   presenceListeners: Set<PresenceListener>;
+  callIncomingListeners: Set<CallIncomingListener>;
+  callAcceptedListeners: Set<CallAcceptedListener>;
+  callRejectedListeners: Set<CallRejectedListener>;
+  callEndedListeners: Set<CallEndedListener>;
+  callSignalListeners: Set<CallSignalListener>;
   connect: () => Promise<void>;
   disconnect: () => void;
+  send: (event: string, data: unknown) => void;
   onMessage: (l: MessageListener) => () => void;
   onEdited: (l: EditedListener) => () => void;
   onDeleted: (l: DeletedListener) => () => void;
@@ -36,6 +55,11 @@ interface WsState {
   onTyping: (l: TypingListener) => () => void;
   onPinned: (l: PinnedListener) => () => void;
   onPresence: (l: PresenceListener) => () => void;
+  onCallIncoming: (l: CallIncomingListener) => () => void;
+  onCallAccepted: (l: CallAcceptedListener) => () => void;
+  onCallRejected: (l: CallRejectedListener) => () => void;
+  onCallEnded: (l: CallEndedListener) => () => void;
+  onCallSignal: (l: CallSignalListener) => () => void;
 }
 
 function makeSubscriber<T>(getSet: () => Set<T>) {
@@ -59,6 +83,11 @@ export const useWs = create<WsState>((set, get) => ({
   typingListeners: new Set(),
   pinnedListeners: new Set(),
   presenceListeners: new Set(),
+  callIncomingListeners: new Set(),
+  callAcceptedListeners: new Set(),
+  callRejectedListeners: new Set(),
+  callEndedListeners: new Set(),
+  callSignalListeners: new Set(),
 
   connect: async () => {
     const token = await AsyncStorage.getItem('accessToken');
@@ -103,6 +132,21 @@ export const useWs = create<WsState>((set, get) => ({
           case 'presence':
             for (const l of get().presenceListeners) l(data.payload.userId, data.payload.online, data.payload.lastSeenAt);
             break;
+          case 'call:incoming':
+            for (const l of get().callIncomingListeners) l(data.payload);
+            break;
+          case 'call:accepted':
+            for (const l of get().callAcceptedListeners) l(data.payload);
+            break;
+          case 'call:rejected':
+            for (const l of get().callRejectedListeners) l(data.payload);
+            break;
+          case 'call:ended':
+            for (const l of get().callEndedListeners) l(data.payload);
+            break;
+          case 'call:signal':
+            for (const l of get().callSignalListeners) l(data.payload);
+            break;
         }
       } catch {}
     };
@@ -119,6 +163,12 @@ export const useWs = create<WsState>((set, get) => ({
     set({ socket: null, connected: false });
   },
 
+  send: (event, data) => {
+    const s = get().socket;
+    if (!s || s.readyState !== WebSocket.OPEN) return;
+    s.send(JSON.stringify({ event, data }));
+  },
+
   onMessage: makeSubscriber(() => useWs.getState().msgListeners),
   onEdited: makeSubscriber(() => useWs.getState().editedListeners),
   onDeleted: makeSubscriber(() => useWs.getState().deletedListeners),
@@ -128,4 +178,9 @@ export const useWs = create<WsState>((set, get) => ({
   onTyping: makeSubscriber(() => useWs.getState().typingListeners),
   onPinned: makeSubscriber(() => useWs.getState().pinnedListeners),
   onPresence: makeSubscriber(() => useWs.getState().presenceListeners),
+  onCallIncoming: makeSubscriber(() => useWs.getState().callIncomingListeners),
+  onCallAccepted: makeSubscriber(() => useWs.getState().callAcceptedListeners),
+  onCallRejected: makeSubscriber(() => useWs.getState().callRejectedListeners),
+  onCallEnded: makeSubscriber(() => useWs.getState().callEndedListeners),
+  onCallSignal: makeSubscriber(() => useWs.getState().callSignalListeners),
 }));

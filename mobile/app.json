@@ -14,7 +14,11 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "ru.infoseledka.seldegram"
+      "bundleIdentifier": "ru.infoseledka.seldegram",
+      "infoPlist": {
+        "NSMicrophoneUsageDescription": "CraboGram использует микрофон во время голосовых звонков и голосовых сообщений.",
+        "NSCameraUsageDescription": "CraboGram использует камеру для видеозвонков и загрузки фото."
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -22,7 +26,14 @@
         "backgroundColor": "#ffd4e1"
       },
       "edgeToEdgeEnabled": false,
-      "package": "ru.infoseledka.seldegram"
+      "package": "ru.infoseledka.seldegram",
+      "permissions": [
+        "android.permission.RECORD_AUDIO",
+        "android.permission.MODIFY_AUDIO_SETTINGS",
+        "android.permission.ACCESS_NETWORK_STATE",
+        "android.permission.BLUETOOTH",
+        "android.permission.BLUETOOTH_CONNECT"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -35,7 +46,8 @@
     "owner": "seldegram",
     "plugins": [
       "expo-video",
-      "expo-secure-store"
+      "expo-secure-store",
+      "@config-plugins/react-native-webrtc"
     ]
   }
 }

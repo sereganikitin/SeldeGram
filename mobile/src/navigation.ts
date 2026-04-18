@@ -20,4 +20,5 @@ export type RootStackParamList = {
   WallpaperPicker: { chatId?: string };
   BlockList: undefined;
   Thread: { chatId: string; messageId: string };
+  CallsHistory: undefined;
 };

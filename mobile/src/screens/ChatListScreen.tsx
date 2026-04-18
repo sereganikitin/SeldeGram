@@ -11,7 +11,7 @@ import { Avatar } from '../ui/Avatar';
 import { messagePreview, formatTime } from '../helpers';
 import { useColors } from '../theme';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Megaphone, Users, Smile, User, Plus } from 'lucide-react-native';
+import { Megaphone, Users, Smile, User, Plus, Phone } from 'lucide-react-native';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'ChatList'>;
 
@@ -178,6 +178,9 @@ export function ChatListScreen({ navigation }: Props) {
         </Pressable>
         <Pressable onPress={() => navigation.navigate('Stickers')} style={[styles.iconBtn, { backgroundColor: '#ffe8f0', borderColor: colors.border }]}>
           <Smile size={20} color="#e84e76" />
+        </Pressable>
+        <Pressable onPress={() => navigation.navigate('CallsHistory')} style={[styles.iconBtn, { backgroundColor: '#ffe8f0', borderColor: colors.border }]}>
+          <Phone size={20} color="#e84e76" />
         </Pressable>
         <Pressable onPress={() => navigation.navigate('Profile')} style={[styles.iconBtn, { backgroundColor: '#ffe8f0', borderColor: colors.border }]}>
           <User size={18} color="#e84e76" />
