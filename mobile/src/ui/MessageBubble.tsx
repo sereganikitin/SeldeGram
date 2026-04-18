@@ -6,6 +6,7 @@ import { StickerImage } from './StickerImage';
 import { AudioPlayer } from './AudioPlayer';
 import { PollBubble } from './PollBubble';
 import { formatTime, messagePreview, groupReactions } from '../helpers';
+import { Check, CheckCheck, Share2 } from 'lucide-react-native';
 
 interface Props {
   message: Message;
@@ -45,7 +46,7 @@ export function MessageBubble({
         <StickerImage mediaKey={message.mediaKey!} mediaType={message.mediaType ?? undefined} size={150} />
         <View style={styles.stickerMeta}>
           <Text style={styles.stickerTime}>{formatTime(message.createdAt)}</Text>
-          {mine && <Text style={styles.stickerChecks}>{isRead ? '✓✓' : '✓'}</Text>}
+          {mine && (isRead ? <CheckCheck size={12} color="#ff7a99" /> : <Check size={12} color="#ff7a99" />)}
         </View>
       </Pressable>
     );
@@ -62,7 +63,10 @@ export function MessageBubble({
       )}
 
       {message.forwardedFromId && !isDeleted && (
-        <Text style={mine ? styles.forwardedMine : styles.forwardedOther}>↪ Переслано</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 4 }}>
+          <Share2 size={12} color={mine ? '#ffd4e1' : '#8c6471'} />
+          <Text style={mine ? styles.forwardedMine : styles.forwardedOther}>Переслано</Text>
+        </View>
       )}
 
       {message.replyTo && !isDeleted && (
@@ -116,9 +120,7 @@ export function MessageBubble({
           <Text style={mine ? styles.editedMine : styles.editedOther}>изм. </Text>
         )}
         <Text style={mine ? styles.timeMine : styles.timeOther}>{formatTime(message.createdAt)}</Text>
-        {mine && !isDeleted && (
-          <Text style={styles.checks}>{isRead ? '✓✓' : '✓'}</Text>
-        )}
+        {mine && !isDeleted && (isRead ? <CheckCheck size={12} color="#ffd4e1" /> : <Check size={12} color="#ffd4e1" />)}
       </View>
     </Pressable>
   );

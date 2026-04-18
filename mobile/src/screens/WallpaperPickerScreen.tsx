@@ -82,7 +82,7 @@ export function WallpaperPickerScreen({ route, navigation }: Props) {
       </View>
 
       <View style={{ padding: 16 }}>
-        <Button title="📷 Загрузить своё фото" onPress={pickPhoto} loading={uploading} />
+        <Button title="Загрузить своё фото" onPress={pickPhoto} loading={uploading} />
       </View>
 
       {chatId && (

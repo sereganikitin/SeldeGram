@@ -6,6 +6,7 @@ import { Input } from '../ui/Input';
 import { Avatar } from '../ui/Avatar';
 import { api } from '../api';
 import { UserSearchResult, Chat } from '../types';
+import { Users, Megaphone, Search } from 'lucide-react-native';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'NewChat'>;
 
@@ -42,19 +43,22 @@ export function NewChatScreen({ navigation }: Props) {
         onPress={() => navigation.navigate('NewGroup')}
         style={({ pressed }) => [styles.groupBtn, pressed && { opacity: 0.7 }]}
       >
-        <Text style={styles.groupBtnText}>👥 Создать группу</Text>
+        <Users size={18} color="#ff7a99" />
+        <Text style={styles.groupBtnText}>Создать группу</Text>
       </Pressable>
       <Pressable
         onPress={() => navigation.navigate('NewChannel')}
         style={({ pressed }) => [styles.groupBtn, pressed && { opacity: 0.7 }]}
       >
-        <Text style={styles.groupBtnText}>📢 Создать канал</Text>
+        <Megaphone size={18} color="#ff7a99" />
+        <Text style={styles.groupBtnText}>Создать канал</Text>
       </Pressable>
       <Pressable
         onPress={() => navigation.navigate('FindChannel')}
         style={({ pressed }) => [styles.groupBtn, pressed && { opacity: 0.7 }]}
       >
-        <Text style={styles.groupBtnText}>🔎 Найти канал</Text>
+        <Search size={18} color="#ff7a99" />
+        <Text style={styles.groupBtnText}>Найти канал</Text>
       </Pressable>
       <Input label="Поиск по username или имени" value={query} onChangeText={setQuery} autoFocus />
       <FlatList
@@ -80,12 +84,15 @@ const styles = StyleSheet.create({
   name: { fontSize: 16, fontWeight: '600' },
   username: { fontSize: 13, color: '#8c6471', marginTop: 2 },
   groupBtn: {
-    backgroundColor: '#eef',
+    backgroundColor: '#ffe8f0',
     borderWidth: 1,
     borderColor: '#ff7a99',
     borderRadius: 12,
     paddingVertical: 14,
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
     marginBottom: 16,
   },
   groupBtnText: { color: '#ff7a99', fontSize: 16, fontWeight: '600' },

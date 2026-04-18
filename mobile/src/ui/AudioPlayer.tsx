@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { Audio } from 'expo-av';
 import { getMediaUrl } from '../media';
+import { Play, Pause } from 'lucide-react-native';
 
 interface Props {
   mediaKey: string;
@@ -78,9 +79,9 @@ export function AudioPlayer({ mediaKey, duration, mine }: Props) {
   return (
     <View style={styles.container}>
       <Pressable onPress={toggle} style={[styles.playBtn, { backgroundColor: mine ? '#fff3' : '#ff7a9922' }]}>
-        <Text style={[styles.playIcon, { color: mine ? '#fff' : '#ff7a99' }]}>
-          {playing ? '⏸' : '▶'}
-        </Text>
+        {playing
+          ? <Pause size={18} color={mine ? '#fff' : '#ff7a99'} fill={mine ? '#fff' : '#ff7a99'} />
+          : <Play size={18} color={mine ? '#fff' : '#ff7a99'} fill={mine ? '#fff' : '#ff7a99'} />}
       </Pressable>
       <View style={styles.waveArea}>
         <View style={styles.waveTrack}>

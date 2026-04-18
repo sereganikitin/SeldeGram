@@ -116,7 +116,7 @@ export function ProfileScreen({ navigation }: Props) {
 
       <View style={{ height: 20 }} />
       <Button
-        title="🚫 Заблокированные"
+        title="Заблокированные"
         variant="secondary"
         onPress={() => navigation.navigate('BlockList')}
       />

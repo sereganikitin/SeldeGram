@@ -31,6 +31,8 @@ import { ChatBackground } from '../ui/ChatBackground';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColors } from '../theme';
 import { formatDateLabel, messagePreview, lastSeenText } from '../helpers';
+import { Search, Info, Pin, X, Paperclip, Smile, Keyboard as KeyboardIcon, Mic, Send, Check, Circle } from 'lucide-react-native';
+import { IconButton } from '../ui/IconButton';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Chat'>;
 
@@ -153,11 +155,18 @@ export function ChatScreen({ route, navigation }: Props) {
   // Подмена заголовка с онлайн-статусом
   useEffect(() => {
     if (!chat?.title) return;
-    if (chat.type === 'direct' && peerOnline !== undefined) {
-      const status = peerOnline ? ' 🟢' : '';
-      navigation.setOptions({ title: chat.title + status });
+    if (chat.type === 'direct' && peerOnline) {
+      navigation.setOptions({
+        title: chat.title,
+        headerTitle: () => (
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+            <Text style={{ fontSize: 17, fontWeight: '600', color: '#000' }}>{chat.title}</Text>
+            <Circle size={10} color="#22c55e" fill="#22c55e" />
+          </View>
+        ),
+      });
     } else {
-      navigation.setOptions({ title: chat.title });
+      navigation.setOptions({ title: chat.title, headerTitle: undefined });
     }
   }, [chat?.title, chat?.type, peerOnline, navigation]);
 
@@ -166,17 +175,18 @@ export function ChatScreen({ route, navigation }: Props) {
     if (!chat) return;
     navigation.setOptions({
       headerRight: () => (
-        <View style={{ flexDirection: 'row' }}>
-          <Pressable onPress={() => setSearchOpen((v) => !v)}>
-            <Text style={{ fontSize: 18, color: '#ff7a99', paddingHorizontal: 8 }}>🔎</Text>
+        <View style={{ flexDirection: 'row', gap: 8, paddingHorizontal: 4 }}>
+          <Pressable onPress={() => setSearchOpen((v) => !v)} style={{ paddingHorizontal: 4 }}>
+            <Search size={22} color="#ff7a99" />
           </Pressable>
           <Pressable
             onPress={() => {
               if (chat.type === 'direct') navigation.navigate('UserInfo', { chatId });
               else navigation.navigate('GroupInfo', { chatId });
             }}
+            style={{ paddingHorizontal: 4 }}
           >
-            <Text style={{ fontSize: 20, color: '#ff7a99', paddingHorizontal: 8 }}>ⓘ</Text>
+            <Info size={22} color="#ff7a99" />
           </Pressable>
         </View>
       ),
@@ -414,7 +424,7 @@ export function ChatScreen({ route, navigation }: Props) {
     Alert.alert('Прикрепить', undefined, [
       { text: 'Фото', onPress: pickImage },
       { text: 'Файл', onPress: pickFile },
-      { text: '📊 Опрос', onPress: createPoll },
+      { text: 'Опрос', onPress: createPoll },
       { text: 'Отмена', style: 'cancel' },
     ]);
   };
@@ -434,7 +444,7 @@ export function ChatScreen({ route, navigation }: Props) {
     ];
     if (isChannelPost) {
       options.push({
-        text: '💬 Комментарии',
+        text: 'Комментарии',
         onPress: () => navigation.navigate('Thread', { chatId, messageId: msg.id }),
       });
     }
@@ -529,9 +539,12 @@ export function ChatScreen({ route, navigation }: Props) {
             }
           }}
         >
-          <Text style={[styles.pinnedLabel, { color: colors.primary }]}>📌 Закреплённое</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+            <Pin size={14} color={colors.primary} />
+            <Text style={[styles.pinnedLabel, { color: colors.primary }]}>Закреплённое</Text>
+          </View>
           <Text style={[styles.pinnedText, { color: colors.text }]} numberOfLines={1}>
-            {pinnedMsg.content || '📷 Медиа'}
+            {pinnedMsg.content || 'Медиа'}
           </Text>
         </Pressable>
       )}
@@ -599,8 +612,9 @@ export function ChatScreen({ route, navigation }: Props) {
               setEditingId(null);
               if (editingId) setInput('');
             }}
+            style={{ padding: 6 }}
           >
-            <Text style={styles.replyClose}>✕</Text>
+            <X size={20} color="#8c6471" />
           </Pressable>
         </View>
       )}
@@ -625,14 +639,14 @@ export function ChatScreen({ route, navigation }: Props) {
               style={[styles.attachBtn, { backgroundColor: colors.surfaceAlt }]}
               disabled={uploading || !!editingId}
             >
-              {uploading ? <ActivityIndicator color={colors.primary} /> : <Text style={styles.attachText}>📎</Text>}
+              {uploading ? <ActivityIndicator color={colors.primary} /> : <Paperclip size={20} color={colors.primary} />}
             </Pressable>
             <Pressable
               onPress={() => setStickersOpen((v) => !v)}
               style={[styles.attachBtn, { backgroundColor: colors.surfaceAlt }]}
               disabled={!!editingId}
             >
-              <Text style={styles.attachText}>{stickersOpen ? '⌨' : '😀'}</Text>
+              {stickersOpen ? <KeyboardIcon size={20} color={colors.primary} /> : <Smile size={20} color={colors.primary} />}
             </Pressable>
             <TextInput
               style={[styles.input, { backgroundColor: colors.surfaceAlt, color: colors.text, borderColor: colors.border }]}
@@ -645,11 +659,11 @@ export function ChatScreen({ route, navigation }: Props) {
             />
             {input.trim() || editingId ? (
               <Pressable onPress={send} disabled={sending || !input.trim()} style={styles.sendBtn}>
-                <Text style={styles.sendText}>{editingId ? '✓' : '↑'}</Text>
+                {editingId ? <Check size={20} color="#fff" /> : <Send size={20} color="#fff" />}
               </Pressable>
             ) : (
               <Pressable onPress={() => setRecording(true)} disabled={uploading} style={styles.sendBtn}>
-                <Text style={styles.sendText}>🎤</Text>
+                <Mic size={20} color="#fff" />
               </Pressable>
             )}
           </View>

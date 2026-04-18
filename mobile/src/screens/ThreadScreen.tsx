@@ -13,6 +13,7 @@ import {
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation';
 import { api } from '../api';
+import { Send } from 'lucide-react-native';
 import { Message } from '../types';
 import { useAuth } from '../store/auth';
 import { useWs } from '../store/ws';
@@ -116,7 +117,7 @@ export function ThreadScreen({ route }: Props) {
           multiline
         />
         <Pressable onPress={send} disabled={!input.trim() || sending} style={[styles.sendBtn, { backgroundColor: colors.primary }]}>
-          <Text style={styles.sendText}>↑</Text>
+          <Send size={20} color="#fff" />
         </Pressable>
       </View>
     </KeyboardAvoidingView>

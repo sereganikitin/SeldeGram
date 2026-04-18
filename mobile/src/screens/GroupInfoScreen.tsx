@@ -8,6 +8,7 @@ import { Avatar } from '../ui/Avatar';
 import { api } from '../api';
 import { Chat, UserSearchResult } from '../types';
 import { useAuth } from '../store/auth';
+import { Check, X } from 'lucide-react-native';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'GroupInfo'>;
 
@@ -112,7 +113,7 @@ export function GroupInfoScreen({ route, navigation }: Props) {
               onSubmitEditing={saveTitle}
             />
             <Pressable onPress={saveTitle}>
-              <Text style={styles.saveBtn}>✓</Text>
+              <Check size={22} color="#e84e76" />
             </Pressable>
           </View>
         ) : (
@@ -137,7 +138,7 @@ export function GroupInfoScreen({ route, navigation }: Props) {
 
       <View style={{ height: 10 }} />
       <Button
-        title="🖼 Обои чата"
+        title="Обои чата"
         variant="secondary"
         onPress={() => navigation.navigate('WallpaperPicker', { chatId })}
       />
@@ -186,7 +187,7 @@ export function GroupInfoScreen({ route, navigation }: Props) {
               </View>
               {canRemove && (
                 <Pressable onPress={() => removeUser(item.id, isMe)}>
-                  <Text style={styles.removeBtn}>{isMe ? 'Выйти' : '✕'}</Text>
+                  {isMe ? <Text style={styles.removeBtn}>Выйти</Text> : <X size={20} color="#dc2626" />}
                 </Pressable>
               )}
             </View>

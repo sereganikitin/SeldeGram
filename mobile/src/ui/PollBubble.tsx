@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { api } from '../api';
 import { useAuth } from '../store/auth';
+import { Check } from 'lucide-react-native';
 
 interface PollData {
   id: string;
@@ -46,8 +47,9 @@ export function PollBubble({ messageId, mine }: Props) {
         return (
           <Pressable key={i} onPress={() => vote(i)} style={styles.option}>
             <View style={[styles.bar, { width: `${pct}%`, backgroundColor: mine ? '#fff3' : '#ff7a9933' }]} />
+            {isMyVote && <Check size={14} color={mine ? '#fff' : '#3d1a28'} style={{ marginRight: 4, zIndex: 1 }} />}
             <Text style={[styles.optText, { color: mine ? '#fff' : '#3d1a28' }, isMyVote && styles.bold]}>
-              {isMyVote ? '✓ ' : ''}{opt}
+              {opt}
             </Text>
             <Text style={[styles.pct, { color: mine ? '#ffd4e1' : '#8c6471' }]}>{pct}%</Text>
           </Pressable>

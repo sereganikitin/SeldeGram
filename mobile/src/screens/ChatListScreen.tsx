@@ -11,6 +11,7 @@ import { Avatar } from '../ui/Avatar';
 import { messagePreview, formatTime } from '../helpers';
 import { useColors } from '../theme';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Megaphone, Users, Smile, User, Plus } from 'lucide-react-native';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'ChatList'>;
 
@@ -139,11 +140,13 @@ export function ChatListScreen({ navigation }: Props) {
               <Avatar id={avatarId} name={item.title ?? '?'} avatarKey={avatarKey} size={48} />
               <View style={styles.rowMain}>
                 <View style={styles.rowTop}>
-                  <Text style={[styles.title, { color: colors.text }]} numberOfLines={1}>
-                    {item.type === 'channel' ? '📢 ' : ''}
-                    {item.type === 'group' ? '👥 ' : ''}
-                    {item.title}
-                  </Text>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1, gap: 4 }}>
+                    {item.type === 'channel' && <Megaphone size={14} color={colors.primary} />}
+                    {item.type === 'group' && <Users size={14} color={colors.primary} />}
+                    <Text style={[styles.title, { color: colors.text }]} numberOfLines={1}>
+                      {item.title}
+                    </Text>
+                  </View>
                   {item.lastMessage && (
                     <Text style={[styles.time, { color: colors.textMuted }]}>{formatTime(item.lastMessage.createdAt)}</Text>
                   )}
@@ -169,14 +172,15 @@ export function ChatListScreen({ navigation }: Props) {
           { borderTopColor: colors.border, paddingBottom: Math.max(insets.bottom, 12) },
         ]}
       >
-        <Pressable onPress={() => navigation.navigate('NewChat')} style={[styles.newBtn, { backgroundColor: colors.primary }]}>
-          <Text style={styles.newBtnText}>+ Новый чат</Text>
+        <Pressable onPress={() => navigation.navigate('NewChat')} style={[styles.newBtn, { backgroundColor: colors.primary, flexDirection: 'row', gap: 6 }]}>
+          <Plus size={18} color="#fff" />
+          <Text style={styles.newBtnText}>Новый чат</Text>
         </Pressable>
-        <Pressable onPress={() => navigation.navigate('Stickers')} style={[styles.iconBtn, { borderColor: colors.border }]}>
-          <Text style={{ fontSize: 20 }}>😀</Text>
+        <Pressable onPress={() => navigation.navigate('Stickers')} style={[styles.iconBtn, { backgroundColor: '#ffe8f0', borderColor: colors.border }]}>
+          <Smile size={20} color="#e84e76" />
         </Pressable>
-        <Pressable onPress={() => navigation.navigate('Profile')} style={[styles.iconBtn, { borderColor: colors.border }]}>
-          <Text style={{ fontSize: 18, color: colors.text }}>👤</Text>
+        <Pressable onPress={() => navigation.navigate('Profile')} style={[styles.iconBtn, { backgroundColor: '#ffe8f0', borderColor: colors.border }]}>
+          <User size={18} color="#e84e76" />
         </Pressable>
       </View>
     </View>

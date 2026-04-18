@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, Image, StyleSheet, ActivityIndicator, Pressable, Linking } from 'react-native';
 import { getMediaUrl } from '../media';
 import { formatFileSize } from '../helpers';
+import { FileText } from 'lucide-react-native';
 
 interface Props {
   mediaKey: string;
@@ -57,7 +58,7 @@ export function MediaBubble({ mediaKey, mediaType, mediaName, mediaSize, mine }:
 
   return (
     <Pressable onPress={() => url && Linking.openURL(url)} style={styles.fileRow}>
-      <Text style={styles.fileIcon}>📄</Text>
+      <FileText size={24} color={mine ? '#fff' : '#3d1a28'} />
       <View style={{ flex: 1 }}>
         <Text style={mine ? styles.fileNameMine : styles.fileNameOther} numberOfLines={1}>
           {mediaName ?? 'Файл'}

@@ -4,6 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { api } from '../api';
 import { Sticker, StickerPack } from '../types';
 import { StickerImage } from './StickerImage';
+import { Clock } from 'lucide-react-native';
 
 interface Props {
   onPick: (stickerId: string) => void;
@@ -31,7 +32,7 @@ export function StickerPicker({ onPick, onClose }: Props) {
         ]);
         const t: Tab[] = [];
         if (recentResp.data.length > 0) {
-          t.push({ id: 'recent', label: '🕒', stickers: recentResp.data });
+          t.push({ id: 'recent', label: '', stickers: recentResp.data });
         }
         for (const p of packsResp.data) {
           t.push({ id: p.id, label: p.name.substring(0, 2).toUpperCase(), stickers: p.stickers });
@@ -88,7 +89,11 @@ export function StickerPicker({ onPick, onClose }: Props) {
             onPress={() => setActiveIdx(i)}
             style={[styles.tab, i === activeIdx && styles.tabActive]}
           >
-            <Text style={styles.tabLabel}>{t.label}</Text>
+            {t.id === 'recent' ? (
+              <Clock size={18} color="#e84e76" />
+            ) : (
+              <Text style={styles.tabLabel}>{t.label}</Text>
+            )}
           </Pressable>
         ))}
       </ScrollView>

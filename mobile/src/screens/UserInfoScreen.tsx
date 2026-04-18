@@ -92,12 +92,12 @@ export function UserInfoScreen({ route, navigation }: Props) {
         <Text style={styles.username}>@{other.username}</Text>
       </View>
       <Button
-        title="🖼 Обои чата"
+        title="Обои чата"
         variant="secondary"
         onPress={() => navigation.navigate('WallpaperPicker', { chatId })}
       />
       <View style={{ height: 10 }} />
-      <Button title={blocked ? '✓ Разблокировать' : '🚫 Заблокировать'} variant="secondary" onPress={toggleBlock} />
+      <Button title={blocked ? 'Разблокировать' : 'Заблокировать'} variant="secondary" onPress={toggleBlock} />
       <View style={{ height: 10 }} />
       <Button title="Удалить чат" variant="secondary" onPress={deleteChat} />
     </View>

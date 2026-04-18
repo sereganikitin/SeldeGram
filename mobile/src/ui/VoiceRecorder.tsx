@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, Pressable, StyleSheet, Alert } from 'react-native';
 import { Audio } from 'expo-av';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Square } from 'lucide-react-native';
 
 interface Props {
   onRecorded: (uri: string, durationMs: number) => void;
@@ -99,7 +100,7 @@ export function VoiceRecorder({ onRecorded, onCancel }: Props) {
         <Text style={styles.cancelText}>Отмена</Text>
       </Pressable>
       <Pressable onPress={stop} style={styles.stopBtn}>
-        <Text style={styles.stopText}>⏹</Text>
+        <Square size={18} color="#fff" fill="#fff" />
       </Pressable>
     </View>
   );
