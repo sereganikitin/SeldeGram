@@ -38,6 +38,7 @@ model User {
   recentStickers     RecentSticker[]
   callsMade          Call[]            @relation("CallCaller")
   callsReceived      Call[]            @relation("CallCallee")
+  stories            Story[]
 
   @@map("users")
 }
@@ -53,6 +54,21 @@ enum CallStatus {
 enum CallKind {
   audio
   video
+}
+
+model Story {
+  id         String   @id @default(uuid())
+  authorId   String
+  mediaKey   String
+  mediaType  String
+  createdAt  DateTime @default(now())
+  expiresAt  DateTime
+
+  author User @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@index([authorId, createdAt])
+  @@index([expiresAt])
+  @@map("stories")
 }
 
 model Call {

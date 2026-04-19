@@ -13,6 +13,7 @@ import { StickersModule } from './stickers/stickers.module';
 import { PollsModule } from './polls/polls.module';
 import { BlocksModule } from './blocks/blocks.module';
 import { CallsModule } from './calls/calls.module';
+import { StoriesModule } from './stories/stories.module';
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { CallsModule } from './calls/calls.module';
     PollsModule,
     BlocksModule,
     CallsModule,
+    StoriesModule,
   ],
   controllers: [HealthController],
 })

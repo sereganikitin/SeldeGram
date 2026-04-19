@@ -12,6 +12,7 @@ import { messagePreview, formatTime } from '../helpers';
 import { useColors } from '../theme';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Megaphone, Users, Smile, User, Plus, Phone } from 'lucide-react-native';
+import { StoriesBar } from '../ui/StoriesBar';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'ChatList'>;
 
@@ -117,6 +118,7 @@ export function ChatListScreen({ navigation }: Props) {
         data={chats}
         keyExtractor={(c) => c.id}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.text} />}
+        ListHeaderComponent={<StoriesBar />}
         ListEmptyComponent={
           <View style={styles.empty}>
             <Text style={[styles.emptyText, { color: colors.textMuted }]}>Нет чатов</Text>

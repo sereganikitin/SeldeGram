@@ -21,4 +21,5 @@ export type RootStackParamList = {
   BlockList: undefined;
   Thread: { chatId: string; messageId: string };
   CallsHistory: undefined;
+  StoryViewer: { startIdx: number };
 };

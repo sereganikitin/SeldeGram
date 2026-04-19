@@ -9,6 +9,7 @@ import { Avatar } from "./Avatar";
 import { IconButton } from "./IconButton";
 import { Plus, Smile, Phone, User, Megaphone, Users } from "lucide-react";
 import { formatTime, messagePreview } from "@/lib/helpers";
+import { StoriesBar } from "./StoriesBar";
 
 interface Props {
   selectedId: string | null;
@@ -108,6 +109,8 @@ export function ChatList({ selectedId, onSelect, onLogout, onNewChat, onOpenStic
         <IconButton icon={Phone} onClick={onOpenCalls} title="История звонков" size="md" variant="ghost" />
         <IconButton icon={User} onClick={onLogout} title="Профиль" size="md" variant="ghost" />
       </header>
+
+      <StoriesBar />
 
       <div className="p-3 border-b border-cream-border dark:border-slate-800">
         <input
