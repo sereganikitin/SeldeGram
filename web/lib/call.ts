@@ -48,7 +48,25 @@ let localStream: MediaStream | null = null;
 let remoteStream: MediaStream | null = null;
 let pendingIce: RTCIceCandidateInit[] = [];
 let pendingOffer: RTCSessionDescriptionInit | null = null;
+let connectTimer: ReturnType<typeof setTimeout> | null = null;
 const remoteAudioId = "__seldegram_call_audio__";
+
+function armConnectTimeout(ms: number) {
+  if (connectTimer) clearTimeout(connectTimer);
+  connectTimer = setTimeout(() => {
+    const s = useCall.getState().state;
+    if (s !== "active" && s !== "idle") {
+      useCall.getState().hangup().catch(() => undefined);
+    }
+  }, ms);
+}
+
+function clearConnectTimeout() {
+  if (connectTimer) {
+    clearTimeout(connectTimer);
+    connectTimer = null;
+  }
+}
 
 function getRemoteAudio(): HTMLAudioElement {
   let el = document.getElementById(remoteAudioId) as HTMLAudioElement | null;
@@ -63,6 +81,7 @@ function getRemoteAudio(): HTMLAudioElement {
 }
 
 function cleanupPeer() {
+  clearConnectTimeout();
   if (pc) {
     pc.onicecandidate = null;
     pc.ontrack = null;
@@ -133,6 +152,7 @@ async function setupPeer(callId: string, peerId: string, kind: CallKind): Promis
     if (!pc) return;
     const s = pc.connectionState;
     if (s === "connected") {
+      clearConnectTimeout();
       useCall.setState({ state: "active", acceptedAt: Date.now() });
     } else if (s === "failed") {
       const cur = useCall.getState();
@@ -141,6 +161,10 @@ async function setupPeer(callId: string, peerId: string, kind: CallKind): Promis
       }
     }
   };
+
+  // Страхуемся — если за 30 сек не соединились (ICE fail без явного
+  // failed-события), кладём трубку и не висим вечно
+  armConnectTimeout(30_000);
 
   return pc;
 }
@@ -169,6 +193,8 @@ export const useCall = create<CallStore>()((set, get) => ({
     try {
       const { data } = await api.post("/calls", { calleeId: peer.id, kind });
       set({ callId: data.id });
+      // Если 45 секунд нет ответа — автоматически отменяем
+      armConnectTimeout(45_000);
     } catch (e) {
       const err = e as { response?: { data?: { message?: string } }; message?: string };
       set({
@@ -289,7 +315,9 @@ export const useCall = create<CallStore>()((set, get) => ({
     }
   },
 
-  _onRejected: () => {
+  _onRejected: ({ callId }) => {
+    const cur = get();
+    if (cur.callId && cur.callId !== callId) return;
     cleanupPeer();
     set({
       state: "idle",
@@ -300,7 +328,9 @@ export const useCall = create<CallStore>()((set, get) => ({
     });
   },
 
-  _onEnded: () => {
+  _onEnded: ({ callId }) => {
+    const cur = get();
+    if (cur.callId && cur.callId !== callId) return;
     cleanupPeer();
     set({
       state: "idle",

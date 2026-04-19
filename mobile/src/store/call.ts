@@ -56,6 +56,25 @@ let pc: RTCPeerConnection | null = null;
 let localStream: MediaStream | null = null;
 let pendingIce: RTCIceCandidateInit[] = [];
 let pendingOffer: RTCSessionDescriptionInit | null = null;
+let connectTimer: ReturnType<typeof setTimeout> | null = null;
+
+function armConnectTimeout(ms: number) {
+  if (connectTimer) clearTimeout(connectTimer);
+  connectTimer = setTimeout(() => {
+    const s = useCall.getState().state;
+    if (s !== 'active' && s !== 'idle') {
+      console.log('[call] connect timeout, hanging up');
+      useCall.getState().hangup().catch(() => undefined);
+    }
+  }, ms);
+}
+
+function clearConnectTimeout() {
+  if (connectTimer) {
+    clearTimeout(connectTimer);
+    connectTimer = null;
+  }
+}
 
 async function requestMicPermission(): Promise<boolean> {
   if (Platform.OS !== 'android') return true;
@@ -76,6 +95,7 @@ async function requestMicPermission(): Promise<boolean> {
 }
 
 function cleanupPeer() {
+  clearConnectTimeout();
   if (pc) {
     try { pc.close(); } catch {}
     pc = null;
@@ -154,6 +174,7 @@ async function setupPeer(callId: string, peerId: string, kind: CallKind): Promis
     const s = (pc as any).connectionState;
     console.log('[call] connectionState:', s);
     if (s === 'connected') {
+      clearConnectTimeout();
       useCall.setState({ state: 'active', acceptedAt: Date.now() });
     } else if (s === 'failed') {
       if (useCall.getState().state !== 'idle') {
@@ -161,6 +182,9 @@ async function setupPeer(callId: string, peerId: string, kind: CallKind): Promis
       }
     }
   };
+
+  // ICE-connect тоже может не состояться — страхуемся 30-секундным таймером
+  armConnectTimeout(30_000);
 
   return pc;
 }
@@ -190,6 +214,8 @@ export const useCall = create<CallStore>((set, get) => ({
     try {
       const { data } = await api.post('/calls', { calleeId: peer.id, kind });
       set({ callId: data.id });
+      // Callee не принял за 45 сек — автоматически отменяем
+      armConnectTimeout(45_000);
     } catch (e: any) {
       set({
         state: 'idle',
@@ -322,7 +348,10 @@ export const useCall = create<CallStore>((set, get) => ({
     }
   },
 
-  _onRejected: () => {
+  _onRejected: ({ callId }) => {
+    const cur = get();
+    if (cur.callId && cur.callId !== callId) return;
+    console.log('[call] _onRejected', callId);
     cleanupPeer();
     set({
       state: 'idle',
@@ -333,7 +362,10 @@ export const useCall = create<CallStore>((set, get) => ({
     });
   },
 
-  _onEnded: () => {
+  _onEnded: ({ callId }) => {
+    const cur = get();
+    if (cur.callId && cur.callId !== callId) return;
+    console.log('[call] _onEnded', callId);
     cleanupPeer();
     set({
       state: 'idle',

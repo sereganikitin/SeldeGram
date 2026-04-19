@@ -1,8 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { Modal, View, Text, StyleSheet, Pressable } from 'react-native';
+import { Audio } from 'expo-av';
 import { Phone, PhoneOff, Mic, MicOff, Volume2, VolumeX } from 'lucide-react-native';
 import { useCall } from '../store/call';
 import { Avatar } from './Avatar';
+// Рингтоны лежат в public/sounds/ веб-приложения.
+const RINGTONE_URL = 'https://app.pinkcrab.ru/sounds/ringtone.mp3';
+const DIALING_URL = 'https://app.pinkcrab.ru/sounds/dialing.mp3';
 
 function formatDuration(ms: number): string {
   const s = Math.floor(ms / 1000);
@@ -32,6 +36,37 @@ export function CallOverlay() {
     if (state !== 'active') return;
     const id = setInterval(() => setNow(Date.now()), 500);
     return () => clearInterval(id);
+  }, [state]);
+
+  // Рингтон
+  useEffect(() => {
+    if (state !== 'incoming-ringing' && state !== 'outgoing-ringing') return;
+    const url = state === 'incoming-ringing' ? RINGTONE_URL : DIALING_URL;
+    let sound: Audio.Sound | null = null;
+    let cancelled = false;
+    (async () => {
+      try {
+        await Audio.setAudioModeAsync({
+          playsInSilentModeIOS: true,
+          shouldDuckAndroid: true,
+        });
+        const { sound: s } = await Audio.Sound.createAsync(
+          { uri: url },
+          { isLooping: true, volume: 0.7, shouldPlay: true },
+        );
+        if (cancelled) { s.unloadAsync().catch(() => undefined); return; }
+        sound = s;
+      } catch (e) {
+        console.log('[call] ringtone error', e);
+      }
+    })();
+    return () => {
+      cancelled = true;
+      if (sound) {
+        sound.stopAsync().catch(() => undefined);
+        sound.unloadAsync().catch(() => undefined);
+      }
+    };
   }, [state]);
 
   const visible = state !== 'idle' && state !== 'ended' && !!peer;
