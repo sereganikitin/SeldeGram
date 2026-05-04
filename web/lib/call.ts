@@ -38,10 +38,29 @@ interface CallStore {
   _onSignal: (p: { from: string; callId: string; kind: CallSignalKind; data: unknown }) => Promise<void>;
 }
 
-const ICE_SERVERS: RTCIceServer[] = [
+const FALLBACK_ICE_SERVERS: RTCIceServer[] = [
   { urls: "stun:stun.l.google.com:19302" },
   { urls: "stun:stun1.l.google.com:19302" },
 ];
+
+let cachedIceServers: RTCIceServer[] | null = null;
+let iceServersFetchedAt = 0;
+const ICE_CACHE_MS = 10 * 60 * 1000; // 10 минут
+
+async function getIceServers(): Promise<RTCIceServer[]> {
+  if (cachedIceServers && Date.now() - iceServersFetchedAt < ICE_CACHE_MS) {
+    return cachedIceServers;
+  }
+  try {
+    const { data } = await api.get<{ iceServers: RTCIceServer[] }>("/calls/ice-config");
+    if (data?.iceServers?.length) {
+      cachedIceServers = data.iceServers;
+      iceServersFetchedAt = Date.now();
+      return data.iceServers;
+    }
+  } catch {}
+  return FALLBACK_ICE_SERVERS;
+}
 
 let pc: RTCPeerConnection | null = null;
 let localStream: MediaStream | null = null;
@@ -123,7 +142,8 @@ async function setupPeer(callId: string, peerId: string, kind: CallKind): Promis
     throw e;
   }
 
-  pc = new RTCPeerConnection({ iceServers: ICE_SERVERS });
+  const iceServers = await getIceServers();
+  pc = new RTCPeerConnection({ iceServers });
 
   for (const track of localStream.getTracks()) {
     pc.addTrack(track, localStream);

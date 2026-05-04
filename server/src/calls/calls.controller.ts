@@ -9,6 +9,7 @@ import {
   Req,
   UseGuards,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { CallsService } from './calls.service';
 import { InitiateCallDto } from './dto/initiate-call.dto';
@@ -16,7 +17,29 @@ import { InitiateCallDto } from './dto/initiate-call.dto';
 @UseGuards(JwtAuthGuard)
 @Controller('calls')
 export class CallsController {
-  constructor(private readonly calls: CallsService) {}
+  constructor(
+    private readonly calls: CallsService,
+    private readonly config: ConfigService,
+  ) {}
+
+  @Get('ice-config')
+  iceConfig() {
+    const stunUrl = this.config.get<string>('STUN_URL') || 'stun:stun.l.google.com:19302';
+    const stun2Url = 'stun:stun1.l.google.com:19302';
+    const turnUrl = this.config.get<string>('TURN_URL');
+    const turnUsername = this.config.get<string>('TURN_USERNAME');
+    const turnCredential = this.config.get<string>('TURN_PASSWORD');
+
+    const servers: Array<{ urls: string | string[]; username?: string; credential?: string }> = [
+      { urls: stunUrl },
+      { urls: stun2Url },
+    ];
+    if (turnUrl && turnUsername && turnCredential) {
+      // turn:host:port?transport=udp / turn:host:port?transport=tcp / turns:host:port
+      servers.push({ urls: turnUrl, username: turnUsername, credential: turnCredential });
+    }
+    return { iceServers: servers };
+  }
 
   @Post()
   initiate(@Req() req: { user: { userId: string } }, @Body() dto: InitiateCallDto) {
