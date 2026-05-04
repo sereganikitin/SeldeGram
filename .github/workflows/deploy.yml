@@ -1,0 +1,55 @@
+name: Deploy to prod
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Detect what changed
+        id: changes
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            server:
+              - 'server/**'
+            web:
+              - 'web/**'
+
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.DEPLOY_SSH_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H ${{ secrets.DEPLOY_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Pull repo on server
+        run: |
+          ssh -i ~/.ssh/id_ed25519 ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} \
+            "cd ~/SeldeGram && git pull --ff-only"
+
+      - name: Deploy server (Nest)
+        if: steps.changes.outputs.server == 'true'
+        run: |
+          ssh -i ~/.ssh/id_ed25519 ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} bash -s <<'EOF'
+          set -e
+          cd ~/SeldeGram/server
+          npm ci --no-audit --no-fund
+          npx prisma db push --accept-data-loss=false
+          npx prisma generate
+          npm run build
+          sudo /bin/systemctl restart seldegram.service
+          EOF
+
+      - name: Deploy web (Next.js)
+        if: steps.changes.outputs.web == 'true'
+        run: |
+          ssh -i ~/.ssh/id_ed25519 ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} bash -s <<'EOF'
+          set -e
+          cd ~/SeldeGram/web
+          npm ci --no-audit --no-fund
+          npm run build
+          sudo /bin/systemctl restart seldegram-web.service
+          EOF
