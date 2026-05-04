@@ -12,12 +12,16 @@ export function setActiveChat(chatId: string | null) {
 
 Notifications.setNotificationHandler({
   handleNotification: async (notification) => {
-    const data = notification.request.content.data as { chatId?: string } | undefined;
+    const data = notification.request.content.data as
+      | { chatId?: string; type?: string }
+      | undefined;
     const isCurrent = data?.chatId && data.chatId === activeChatId;
+    // call-пуши всегда показываем — это полноценный сигнал звонка
+    const isCall = data?.type === 'call';
     return {
-      shouldShowBanner: !isCurrent,
-      shouldShowList: !isCurrent,
-      shouldPlaySound: !isCurrent,
+      shouldShowBanner: isCall || !isCurrent,
+      shouldShowList: isCall || !isCurrent,
+      shouldPlaySound: isCall || !isCurrent,
       shouldSetBadge: false,
     };
   },
@@ -44,6 +48,15 @@ export async function registerPushToken() {
       name: 'default',
       importance: Notifications.AndroidImportance.MAX,
       sound: 'default',
+    });
+    // Отдельный канал для звонков — высокий приоритет, рингтон, vibration
+    await Notifications.setNotificationChannelAsync('calls', {
+      name: 'Звонки',
+      importance: Notifications.AndroidImportance.MAX,
+      sound: 'default',
+      vibrationPattern: [0, 500, 500, 500, 500, 500],
+      lightColor: '#ff7a99',
+      bypassDnd: true,
     });
   }
 

@@ -7,6 +7,7 @@ import {
 import { CallKind, CallStatus } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { WsHub } from '../ws/ws.hub';
+import { PushService } from '../push/push.service';
 
 const PEER_SELECT = {
   id: true,
@@ -20,6 +21,7 @@ export class CallsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly hub: WsHub,
+    private readonly push: PushService,
   ) {}
 
   async initiate(callerId: string, calleeId: string, kind: CallKind = 'audio') {
@@ -54,6 +56,25 @@ export class CallsService {
         startedAt: call.startedAt,
       },
     });
+
+    // Если у callee нет активного WS-соединения — пушим уведомление, чтобы
+    // звонок прорвался при закрытом / спящем приложении.
+    if (!this.hub.isConnected(calleeId)) {
+      const callerName = call.caller.displayName || call.caller.username;
+      this.push.sendToUsers([calleeId], {
+        title: callerName,
+        body: kind === 'video' ? 'Видеозвонок' : 'Входящий звонок',
+        data: {
+          type: 'call',
+          callId: call.id,
+          kind: call.kind,
+          from: call.caller,
+        },
+        channelId: 'calls',
+        priority: 'high',
+        ttl: 30, // если устройство офлайн больше 30 сек — звонок неактуален
+      }).catch(() => undefined);
+    }
 
     return call;
   }

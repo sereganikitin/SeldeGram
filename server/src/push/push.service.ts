@@ -7,6 +7,9 @@ interface PushPayload {
   title: string;
   body: string;
   data?: Record<string, unknown>;
+  channelId?: string;
+  priority?: 'default' | 'normal' | 'high';
+  ttl?: number; // секунды
 }
 
 @Injectable()
@@ -51,6 +54,9 @@ export class PushService {
       title: payload.title,
       body: payload.body,
       data: payload.data ?? {},
+      ...(payload.channelId ? { channelId: payload.channelId } : {}),
+      ...(payload.priority ? { priority: payload.priority } : {}),
+      ...(payload.ttl != null ? { ttl: payload.ttl } : {}),
     }));
 
     try {

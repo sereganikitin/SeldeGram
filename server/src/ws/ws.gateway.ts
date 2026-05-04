@@ -50,6 +50,11 @@ export class WsGateway implements OnGatewayConnection, OnGatewayDisconnect {
       // Уведомляем контакты
       this.broadcastPresence(payload.sub, true);
 
+      // Если есть активные входящие ringing-звонки — переотправляем event,
+      // чтобы пользователь, открывший приложение из push-уведомления,
+      // увидел звонок.
+      this.resendPendingIncomingCalls(payload.sub).catch(() => undefined);
+
       client.send(JSON.stringify({ type: 'hello', userId: client.userId }));
     } catch (e) {
       this.logger.warn(`WS auth failed: ${(e as Error).message}`);
@@ -91,6 +96,36 @@ export class WsGateway implements OnGatewayConnection, OnGatewayDisconnect {
       type: 'presence',
       payload: { userId, online, lastSeenAt: new Date().toISOString() },
     });
+  }
+
+  private async resendPendingIncomingCalls(userId: string) {
+    // Только звонки, которые ещё в статусе ringing и стартовали недавно (< 60 сек назад)
+    const cutoff = new Date(Date.now() - 60_000);
+    const calls = await this.prisma.call.findMany({
+      where: {
+        calleeId: userId,
+        status: 'ringing',
+        startedAt: { gt: cutoff },
+      },
+      include: {
+        caller: {
+          select: { id: true, username: true, displayName: true, avatarKey: true },
+        },
+      },
+      orderBy: { startedAt: 'desc' },
+      take: 1,
+    });
+    for (const c of calls) {
+      this.hub.sendToUser(userId, {
+        type: 'call:incoming',
+        payload: {
+          callId: c.id,
+          kind: c.kind,
+          from: c.caller,
+          startedAt: c.startedAt,
+        },
+      });
+    }
   }
 
   @SubscribeMessage('ping')
