@@ -5,7 +5,7 @@ import { Message } from "@/lib/types";
 import { formatTime, messagePreview, getMediaUrl, groupReactions } from "@/lib/helpers";
 import { AudioPlayer } from "./AudioPlayer";
 import { PollBubble } from "./PollBubble";
-import { Reply, Pin, MessageSquare, Copy, Pencil, Trash2, FileText, MoreHorizontal, Share2, Check, CheckCheck } from "lucide-react";
+import { Reply, Pin, MessageSquare, Copy, Pencil, Trash2, FileText, MoreHorizontal, Share2, Check, CheckCheck, Languages } from "lucide-react";
 
 interface Props {
   message: Message;
@@ -13,7 +13,7 @@ interface Props {
   showSenderName: boolean;
   senderName?: string;
   isRead: boolean;
-  onAction: (action: "reply" | "edit" | "delete" | "copy" | "pin" | "thread") => void;
+  onAction: (action: "reply" | "edit" | "delete" | "copy" | "pin" | "thread" | "translate") => void;
   onReact?: (emoji: string) => void;
   canComment?: boolean;
 }
@@ -266,7 +266,7 @@ function ActionMenu({
   mine: boolean;
   hasContent: boolean;
   canComment?: boolean;
-  onAction: (a: "reply" | "edit" | "delete" | "copy" | "pin" | "thread") => void;
+  onAction: (a: "reply" | "edit" | "delete" | "copy" | "pin" | "thread" | "translate") => void;
   onClose: () => void;
 }) {
   const menuRef = useRef<HTMLDivElement>(null);
@@ -312,6 +312,11 @@ function ActionMenu({
         {hasContent && (
           <button onClick={() => onAction("copy")} className="w-full text-left px-3 py-2 text-sm hover:bg-cream dark:hover:bg-slate-700 flex items-center gap-2">
             <Copy size={16} className="text-brand-dark" /> Копировать
+          </button>
+        )}
+        {hasContent && (
+          <button onClick={() => onAction("translate")} className="w-full text-left px-3 py-2 text-sm hover:bg-cream dark:hover:bg-slate-700 flex items-center gap-2">
+            <Languages size={16} className="text-brand-dark" /> Перевести
           </button>
         )}
         {mine && hasContent && (

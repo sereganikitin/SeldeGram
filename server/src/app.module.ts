@@ -14,6 +14,7 @@ import { PollsModule } from './polls/polls.module';
 import { BlocksModule } from './blocks/blocks.module';
 import { CallsModule } from './calls/calls.module';
 import { StoriesModule } from './stories/stories.module';
+import { AiModule } from './ai/ai.module';
 
 @Module({
   imports: [
@@ -31,6 +32,7 @@ import { StoriesModule } from './stories/stories.module';
     BlocksModule,
     CallsModule,
     StoriesModule,
+    AiModule,
   ],
   controllers: [HealthController],
 })

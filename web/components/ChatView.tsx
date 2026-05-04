@@ -17,7 +17,7 @@ import { formatDateLabel, messagePreview, lastSeenText } from "@/lib/helpers";
 import { uploadFile } from "@/lib/media";
 import { useCall } from "@/lib/call";
 import { IconButton } from "./IconButton";
-import { Phone, Search, Info, Megaphone, Users, ArrowLeft, Pin, X, Paperclip, Smile, Mic, Send, Check, BarChart3, Keyboard } from "lucide-react";
+import { Phone, Search, Info, Megaphone, Users, ArrowLeft, Pin, X, Paperclip, Smile, Mic, Send, Check, BarChart3, Keyboard, Sparkles } from "lucide-react";
 
 interface Props {
   chat: Chat;
@@ -319,7 +319,9 @@ export function ChatView({ chat, onBack, onChatGone, onOpenStickers }: Props) {
     [chat.id],
   );
 
-  const handleAction = (msg: Message) => (action: "reply" | "edit" | "delete" | "copy" | "pin" | "thread") => {
+  const [aiOverlay, setAiOverlay] = useState<{ title: string; text: string; loading: boolean } | null>(null);
+
+  const handleAction = (msg: Message) => (action: "reply" | "edit" | "delete" | "copy" | "pin" | "thread" | "translate") => {
     if (action === "reply") setReplyTo(msg);
     else if (action === "copy") navigator.clipboard?.writeText(msg.content).catch(() => {});
     else if (action === "edit") {
@@ -337,7 +339,25 @@ export function ChatView({ chat, onBack, onChatGone, onOpenStickers }: Props) {
       }
     } else if (action === "thread") {
       setThreadParent(msg);
+    } else if (action === "translate") {
+      setAiOverlay({ title: "Перевод", text: "", loading: true });
+      api.post<{ translated: string }>("/ai/translate", { messageId: msg.id, lang: "русский" })
+        .then(({ data }) => setAiOverlay({ title: "Перевод", text: data.translated, loading: false }))
+        .catch((e) => {
+          const errMsg = e.response?.data?.message ?? e.message ?? "Ошибка";
+          setAiOverlay({ title: "Перевод", text: errMsg, loading: false });
+        });
     }
+  };
+
+  const summarizeChat = () => {
+    setAiOverlay({ title: "Краткое содержание", text: "", loading: true });
+    api.post<{ summary: string }>("/ai/summarize", { chatId: chat.id })
+      .then(({ data }) => setAiOverlay({ title: "Краткое содержание", text: data.summary, loading: false }))
+      .catch((e) => {
+        const errMsg = e.response?.data?.message ?? e.message ?? "Ошибка";
+        setAiOverlay({ title: "Краткое содержание", text: errMsg, loading: false });
+      });
   };
 
   const canPost = !(chat.type === "channel" && chat.viewerRole !== "admin");
@@ -404,6 +424,7 @@ export function ChatView({ chat, onBack, onChatGone, onOpenStickers }: Props) {
             title="Позвонить"
           />
         )}
+        <IconButton icon={Sparkles} size="md" variant="ghost" onClick={summarizeChat} title="Краткое содержание (AI)" />
         <IconButton icon={Search} size="md" variant="ghost" onClick={() => setSearchOpen((v) => !v)} title="Поиск" />
         <IconButton icon={Info} size="md" variant="ghost" onClick={() => setInfoOpen(true)} title="Информация" />
       </header>
@@ -622,6 +643,38 @@ export function ChatView({ chat, onBack, onChatGone, onOpenStickers }: Props) {
         chatId={chat.id}
         parent={threadParent}
       />
+      {aiOverlay && (
+        <div
+          className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end md:items-center justify-center p-4"
+          onClick={() => setAiOverlay(null)}
+        >
+          <div
+            className="bg-white dark:bg-slate-900 rounded-2xl shadow-xl w-full max-w-md p-5"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center gap-2 mb-3">
+              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-brand to-brand-dark flex items-center justify-center">
+                <Sparkles size={16} color="#fff" />
+              </div>
+              <div className="font-semibold dark:text-white">{aiOverlay.title}</div>
+              <button
+                onClick={() => setAiOverlay(null)}
+                className="ml-auto text-ink-muted hover:text-ink dark:hover:text-white"
+                title="Закрыть"
+              >
+                <X size={20} />
+              </button>
+            </div>
+            <div className="text-sm text-ink dark:text-slate-200 whitespace-pre-wrap min-h-[60px]">
+              {aiOverlay.loading ? (
+                <span className="text-ink-muted">Думаем...</span>
+              ) : (
+                aiOverlay.text
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </section>
     </ChatBackground>
   );
