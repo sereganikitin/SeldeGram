@@ -42,6 +42,7 @@ export interface Message {
   threadOfId?: string | null;
   editedAt?: string | null;
   deletedAt?: string | null;
+  expiresAt?: string | null;
   reactions?: Array<{ emoji: string; userId: string }>;
   createdAt: string;
 }

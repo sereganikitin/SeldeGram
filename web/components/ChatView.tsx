@@ -17,7 +17,7 @@ import { formatDateLabel, messagePreview, lastSeenText } from "@/lib/helpers";
 import { uploadFile } from "@/lib/media";
 import { useCall } from "@/lib/call";
 import { IconButton } from "./IconButton";
-import { Phone, Search, Info, Megaphone, Users, ArrowLeft, Pin, X, Paperclip, Smile, Mic, Send, Check, BarChart3, Keyboard, Sparkles } from "lucide-react";
+import { Phone, Search, Info, Megaphone, Users, ArrowLeft, Pin, X, Paperclip, Smile, Mic, Send, Check, BarChart3, Keyboard, Sparkles, Timer } from "lucide-react";
 
 interface Props {
   chat: Chat;
@@ -240,7 +240,11 @@ export function ChatView({ chat, onBack, onChatGone, onOpenStickers }: Props) {
         await api.patch(`/chats/${chat.id}/messages/${editingId}`, { content: text });
         setEditingId(null);
       } else {
-        await api.post(`/chats/${chat.id}/messages`, { content: text, replyToId: replyId });
+        await api.post(`/chats/${chat.id}/messages`, {
+          content: text,
+          replyToId: replyId,
+          ...(ttlSec ? { ttlSec } : {}),
+        });
       }
     } catch {
       setInput(text);
@@ -320,6 +324,8 @@ export function ChatView({ chat, onBack, onChatGone, onOpenStickers }: Props) {
   );
 
   const [aiOverlay, setAiOverlay] = useState<{ title: string; text: string; loading: boolean } | null>(null);
+  const [ttlSec, setTtlSec] = useState<number | null>(null);
+  const [ttlMenuOpen, setTtlMenuOpen] = useState(false);
 
   const handleAction = (msg: Message) => (action: "reply" | "edit" | "delete" | "copy" | "pin" | "thread" | "translate") => {
     if (action === "reply") setReplyTo(msg);
@@ -578,6 +584,43 @@ export function ChatView({ chat, onBack, onChatGone, onOpenStickers }: Props) {
               title="Стикеры"
               className="flex-shrink-0 disabled:opacity-40"
             />
+            <div className="relative flex-shrink-0">
+              <IconButton
+                icon={Timer}
+                size="md"
+                variant={ttlSec ? "filled" : "ghost"}
+                onClick={() => setTtlMenuOpen((v) => !v)}
+                disabled={!!editingId}
+                title={ttlSec ? `Самоудаление через ${ttlSec >= 86400 ? `${ttlSec / 86400} дн` : ttlSec >= 3600 ? `${ttlSec / 3600} ч` : `${ttlSec} с`}` : "Самоудаление"}
+                className="disabled:opacity-40"
+              />
+              {ttlMenuOpen && (
+                <>
+                  <div className="fixed inset-0 z-40" onClick={() => setTtlMenuOpen(false)} />
+                  <div className="absolute z-50 bottom-full mb-2 left-0 bg-white dark:bg-slate-800 dark:text-white shadow-xl rounded-lg border border-cream-border dark:border-slate-700 py-1 min-w-[180px]">
+                    {[
+                      { label: "Без таймера", v: null },
+                      { label: "1 час", v: 3600 },
+                      { label: "1 день", v: 86_400 },
+                      { label: "1 неделя", v: 7 * 86_400 },
+                    ].map((opt) => (
+                      <button
+                        key={String(opt.v)}
+                        onClick={() => {
+                          setTtlSec(opt.v);
+                          setTtlMenuOpen(false);
+                        }}
+                        className={`w-full text-left px-3 py-2 text-sm hover:bg-cream dark:hover:bg-slate-700 flex items-center gap-2 ${
+                          ttlSec === opt.v ? "text-brand-dark font-semibold" : ""
+                        }`}
+                      >
+                        <Timer size={14} className="text-brand-dark" /> {opt.label}
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
             <textarea
               value={input}
               onChange={(e) => onInputChange(e.target.value)}

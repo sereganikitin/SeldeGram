@@ -5,7 +5,7 @@ import { Message } from "@/lib/types";
 import { formatTime, messagePreview, getMediaUrl, groupReactions } from "@/lib/helpers";
 import { AudioPlayer } from "./AudioPlayer";
 import { PollBubble } from "./PollBubble";
-import { Reply, Pin, MessageSquare, Copy, Pencil, Trash2, FileText, MoreHorizontal, Share2, Check, CheckCheck, Languages } from "lucide-react";
+import { Reply, Pin, MessageSquare, Copy, Pencil, Trash2, FileText, MoreHorizontal, Share2, Check, CheckCheck, Languages, Timer } from "lucide-react";
 
 interface Props {
   message: Message;
@@ -233,6 +233,11 @@ export function MessageBubble({ message, mine, showSenderName, senderName, isRea
           </div>
         )}
         <div className={`flex items-center gap-1 justify-end text-[11px] mt-1 ${mine ? "text-white/70" : "text-ink-muted"}`}>
+          {message.expiresAt && !isDeleted && (
+            <span title={`Удалится ${new Date(message.expiresAt).toLocaleString()}`} className="flex items-center">
+              <Timer size={11} />
+            </span>
+          )}
           {message.editedAt && !isDeleted && <span className="italic">изм.</span>}
           <span>{formatTime(message.createdAt)}</span>
           {mine && !isDeleted && (isRead ? <CheckCheck size={12} /> : <Check size={12} />)}

@@ -31,7 +31,7 @@ import { ChatBackground } from '../ui/ChatBackground';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColors } from '../theme';
 import { formatDateLabel, messagePreview, lastSeenText } from '../helpers';
-import { Search, Info, Pin, X, Paperclip, Smile, Keyboard as KeyboardIcon, Mic, Send, Check, Circle, Phone, Sparkles } from 'lucide-react-native';
+import { Search, Info, Pin, X, Paperclip, Smile, Keyboard as KeyboardIcon, Mic, Send, Check, Circle, Phone, Sparkles, Timer } from 'lucide-react-native';
 import { IconButton } from '../ui/IconButton';
 import { useCall } from '../store/call';
 import { AiOverlay } from '../ui/AiOverlay';
@@ -80,6 +80,7 @@ export function ChatScreen({ route, navigation }: Props) {
     text: '',
     loading: false,
   });
+  const [ttlSec, setTtlSec] = useState<number | null>(null);
   const [peerOnline, setPeerOnline] = useState<boolean | undefined>(undefined);
   const [peerLastSeen, setPeerLastSeen] = useState<string | null>(null);
   const colors = useColors();
@@ -338,7 +339,11 @@ export function ChatScreen({ route, navigation }: Props) {
         await api.patch(`/chats/${chatId}/messages/${editingId}`, { content: text });
         setEditingId(null);
       } else {
-        await api.post(`/chats/${chatId}/messages`, { content: text, replyToId: replyId });
+        await api.post(`/chats/${chatId}/messages`, {
+          content: text,
+          replyToId: replyId,
+          ...(ttlSec ? { ttlSec } : {}),
+        });
       }
     } catch (e) {
       setInput(text);
@@ -703,6 +708,25 @@ export function ChatScreen({ route, navigation }: Props) {
               disabled={!!editingId}
             >
               {stickersOpen ? <KeyboardIcon size={20} color={colors.primary} /> : <Smile size={20} color={colors.primary} />}
+            </Pressable>
+            <Pressable
+              onPress={() => {
+                Alert.alert(
+                  'Самоудаление сообщения',
+                  ttlSec ? `Сейчас: через ${ttlSec >= 86400 ? `${ttlSec / 86400} дн` : `${ttlSec / 3600} ч`}` : 'Сейчас выключено',
+                  [
+                    { text: 'Без таймера', onPress: () => setTtlSec(null) },
+                    { text: '1 час', onPress: () => setTtlSec(3600) },
+                    { text: '1 день', onPress: () => setTtlSec(86_400) },
+                    { text: '1 неделя', onPress: () => setTtlSec(7 * 86_400) },
+                    { text: 'Отмена', style: 'cancel' },
+                  ],
+                );
+              }}
+              style={[styles.attachBtn, { backgroundColor: ttlSec ? colors.primary : colors.surfaceAlt }]}
+              disabled={!!editingId}
+            >
+              <Timer size={20} color={ttlSec ? '#fff' : colors.primary} />
             </Pressable>
             <TextInput
               style={[styles.input, { backgroundColor: colors.surfaceAlt, color: colors.text, borderColor: colors.border }]}

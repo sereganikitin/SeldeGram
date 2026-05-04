@@ -43,4 +43,11 @@ export class SendMessageDto {
   @IsOptional()
   @IsString()
   pushPreview?: string;
+
+  // Если задано — сообщение само удалится через ttlSec секунд после отправки
+  @IsOptional()
+  @IsInt()
+  @Min(5)
+  @Max(7 * 24 * 60 * 60) // максимум неделя
+  ttlSec?: number;
 }

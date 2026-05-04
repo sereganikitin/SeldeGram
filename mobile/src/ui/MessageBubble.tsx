@@ -6,7 +6,7 @@ import { StickerImage } from './StickerImage';
 import { AudioPlayer } from './AudioPlayer';
 import { PollBubble } from './PollBubble';
 import { formatTime, messagePreview, groupReactions } from '../helpers';
-import { Check, CheckCheck, Share2 } from 'lucide-react-native';
+import { Check, CheckCheck, Share2, Timer } from 'lucide-react-native';
 
 interface Props {
   message: Message;
@@ -116,6 +116,9 @@ export function MessageBubble({
         </View>
       )}
       <View style={styles.meta}>
+        {message.expiresAt && !isDeleted && (
+          <Timer size={11} color={mine ? '#ffd4e1' : '#8c6471'} />
+        )}
         {message.editedAt && !isDeleted && (
           <Text style={mine ? styles.editedMine : styles.editedOther}>изм. </Text>
         )}

@@ -330,6 +330,7 @@ export class ChatsService {
       stickerId?: string;
       threadOfId?: string;
       pushPreview?: string;
+      ttlSec?: number;
     },
   ) {
     const member = await this.assertMember(chatId, userId);
@@ -403,6 +404,10 @@ export class ChatsService {
       }
     }
 
+    const expiresAt = payload.ttlSec && payload.ttlSec > 0
+      ? new Date(Date.now() + payload.ttlSec * 1000)
+      : null;
+
     const message = await this.prisma.message.create({
       data: {
         chatId,
@@ -416,6 +421,7 @@ export class ChatsService {
         replyToId: payload.replyToId,
         forwardedFromId: payload.forwardedFromId,
         threadOfId: payload.threadOfId,
+        expiresAt,
       },
       include: messageInclude,
     });
@@ -480,6 +486,58 @@ export class ChatsService {
     const members = await this.prisma.chatMember.findMany({ where: { chatId }, select: { userId: true } });
     this.hub.sendToUsers(members.map((m) => m.userId), { type: 'message:deleted', payload: { chatId, messageId } });
     return updated;
+  }
+
+  /**
+   * Удаляет (помечает deletedAt) сообщения с истёкшим expiresAt и
+   * рассылает message:deleted всем участникам соответствующих чатов.
+   * Вызывается из ChatsModule по таймеру.
+   */
+  async cleanupExpiredMessages() {
+    const now = new Date();
+    const expired = await this.prisma.message.findMany({
+      where: {
+        expiresAt: { lt: now },
+        deletedAt: null,
+      },
+      select: { id: true, chatId: true },
+      take: 200,
+    });
+    if (expired.length === 0) return 0;
+
+    await this.prisma.message.updateMany({
+      where: { id: { in: expired.map((m) => m.id) } },
+      data: {
+        content: '',
+        mediaKey: null,
+        mediaType: null,
+        mediaName: null,
+        mediaSize: null,
+        deletedAt: now,
+      },
+    });
+
+    // Сгруппировать по чату — чтобы один запрос на список участников
+    const byChat = new Map<string, string[]>();
+    for (const m of expired) {
+      const arr = byChat.get(m.chatId) ?? [];
+      arr.push(m.id);
+      byChat.set(m.chatId, arr);
+    }
+    for (const [chatId, ids] of byChat) {
+      const members = await this.prisma.chatMember.findMany({
+        where: { chatId },
+        select: { userId: true },
+      });
+      const userIds = members.map((mm) => mm.userId);
+      for (const messageId of ids) {
+        this.hub.sendToUsers(userIds, {
+          type: 'message:deleted',
+          payload: { chatId, messageId },
+        });
+      }
+    }
+    return expired.length;
   }
 
   async markRead(chatId: string, userId: string, messageId: string) {

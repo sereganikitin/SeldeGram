@@ -216,6 +216,7 @@ model Message {
   threadOfId      String?
   editedAt        DateTime?
   deletedAt       DateTime?
+  expiresAt       DateTime?
   createdAt       DateTime  @default(now())
 
   chat          Chat      @relation(fields: [chatId], references: [id], onDelete: Cascade)
@@ -230,6 +231,7 @@ model Message {
   reactions     MessageReaction[]
 
   @@index([chatId, createdAt])
+  @@index([expiresAt])
   @@map("messages")
 }
 
