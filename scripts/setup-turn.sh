@@ -28,16 +28,21 @@ else
   echo "TURNSERVER_ENABLED=1" >> /etc/default/coturn
 fi
 
-# 3. Определяем внешний IP (если не задан явно через переменную)
+# 3. Определяем внешний IPv4 (если не задан явно через переменную)
 EXTERNAL_IP="${TURN_EXTERNAL_IP:-}"
 if [ -z "$EXTERNAL_IP" ]; then
-  EXTERNAL_IP=$(curl -fsS --max-time 5 https://ifconfig.me || true)
+  # Принудительно через IPv4 — TURN URL в WebRTC проще резолвить через v4
+  EXTERNAL_IP=$(curl -4 -fsS --max-time 5 https://ifconfig.me || true)
 fi
 if [ -z "$EXTERNAL_IP" ]; then
-  echo "ERROR: could not detect external IP. Re-run as: TURN_EXTERNAL_IP=<your.public.ip> sudo bash $0"
+  EXTERNAL_IP=$(curl -4 -fsS --max-time 5 https://api.ipify.org || true)
+fi
+# Простая проверка что это IPv4
+if ! echo "$EXTERNAL_IP" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$'; then
+  echo "ERROR: detected '$EXTERNAL_IP' is not IPv4. Re-run as: TURN_EXTERNAL_IP=<your.public.ipv4> sudo bash $0"
   exit 1
 fi
-echo "[3/7] External IP: $EXTERNAL_IP"
+echo "[3/7] External IPv4: $EXTERNAL_IP"
 
 # 4. Сгенерировать или подхватить существующий TURN_PASSWORD
 ENV_FILE="/home/seldegram/SeldeGram/server/.env"
