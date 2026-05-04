@@ -38,4 +38,15 @@ export class StoriesController {
   remove(@Req() req: { user: { userId: string } }, @Param('id') id: string) {
     return this.stories.remove(req.user.userId, id);
   }
+
+  @Post(':id/view')
+  @HttpCode(200)
+  markViewed(@Req() req: { user: { userId: string } }, @Param('id') id: string) {
+    return this.stories.markViewed(req.user.userId, id);
+  }
+
+  @Get(':id/viewers')
+  listViewers(@Req() req: { user: { userId: string } }, @Param('id') id: string) {
+    return this.stories.listViewers(req.user.userId, id);
+  }
 }

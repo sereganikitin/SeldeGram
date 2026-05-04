@@ -24,11 +24,14 @@ export interface Story {
   mediaType: string;
   createdAt: string;
   expiresAt: string;
+  viewedByMe?: boolean;
+  viewsCount?: number;
 }
 
 export interface StoryGroup {
   author: StoryAuthor;
   stories: Story[];
+  hasUnseen?: boolean;
 }
 
 export function StoriesBar() {
@@ -58,15 +61,27 @@ export function StoriesBar() {
 
   const pickAndUpload = async () => {
     const res = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      quality: 1,
+      mediaTypes: ImagePicker.MediaTypeOptions.All,
+      quality: 0.9,
+      videoMaxDuration: 60,
     });
     if (res.canceled || !res.assets?.[0]) return;
+    const asset = res.assets[0];
     setUploading(true);
     try {
-      const compressed = await compressImage(res.assets[0].uri);
-      const key = await uploadMedia(compressed.uri, compressed.contentType, compressed.size);
-      await api.post('/stories', { mediaKey: key, mediaType: compressed.contentType });
+      let key: string;
+      let mediaType: string;
+      if (asset.type === 'video') {
+        // Видео — без сжатия, отправляем как есть
+        mediaType = asset.mimeType ?? 'video/mp4';
+        const size = asset.fileSize ?? 0;
+        key = await uploadMedia(asset.uri, mediaType, size);
+      } else {
+        const compressed = await compressImage(asset.uri);
+        mediaType = compressed.contentType;
+        key = await uploadMedia(compressed.uri, mediaType, compressed.size);
+      }
+      await api.post('/stories', { mediaKey: key, mediaType });
       await load();
     } catch (e: any) {
       Alert.alert('Не получилось', e.message ?? 'Ошибка');
@@ -99,7 +114,7 @@ export function StoriesBar() {
         style={styles.cell}
         disabled={uploading}
       >
-        <View style={[styles.ringWrap, myGroup ? styles.ringActive : null]}>
+        <View style={[styles.ringWrap, myGroup ? (myGroup.hasUnseen ? styles.ringActive : styles.ringSeen) : null]}>
           <View style={[styles.innerPad, { backgroundColor: colors.surface }]}>
             <Avatar id={me?.id ?? ''} name={me?.displayName ?? '?'} avatarKey={me?.avatarKey} size={52} />
           </View>
@@ -116,7 +131,7 @@ export function StoriesBar() {
         const idx = groups.findIndex((x) => x.author.id === g.author.id);
         return (
           <Pressable key={g.author.id} onPress={() => openViewer(idx)} style={styles.cell}>
-            <View style={[styles.ringWrap, styles.ringActive]}>
+            <View style={[styles.ringWrap, g.hasUnseen ? styles.ringActive : styles.ringSeen]}>
               <View style={[styles.innerPad, { backgroundColor: colors.surface }]}>
                 <Avatar id={g.author.id} name={g.author.displayName} avatarKey={g.author.avatarKey} size={52} />
               </View>
@@ -137,6 +152,7 @@ const styles = StyleSheet.create({
   cell: { alignItems: 'center', width: 64 },
   ringWrap: { padding: 2, borderRadius: 999, position: 'relative' },
   ringActive: { backgroundColor: '#ff7a99' },
+  ringSeen: { backgroundColor: '#d8c1c8' },
   innerPad: { padding: 2, borderRadius: 999 },
   plusBadge: {
     position: 'absolute',

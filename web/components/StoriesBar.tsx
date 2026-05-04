@@ -21,11 +21,14 @@ export interface Story {
   mediaType: string;
   createdAt: string;
   expiresAt: string;
+  viewedByMe?: boolean;
+  viewsCount?: number;
 }
 
 export interface StoryGroup {
   author: StoryAuthor;
   stories: Story[];
+  hasUnseen?: boolean;
 }
 
 export function StoriesBar() {
@@ -68,10 +71,31 @@ export function StoriesBar() {
     }
   };
 
+  const renderRing = (g: StoryGroup, isMyOwn: boolean) => {
+    const viewed = !g.hasUnseen;
+    const ringClass = isMyOwn && !g.hasUnseen
+      ? "p-0.5"
+      : viewed
+        ? "p-0.5 bg-cream-border dark:bg-slate-700"
+        : "p-0.5 bg-gradient-to-tr from-brand to-brand-dark";
+    return (
+      <div className={`rounded-full ${ringClass}`}>
+        <div className="bg-white dark:bg-slate-950 p-0.5 rounded-full">
+          <Avatar
+            id={g.author.id}
+            name={g.author.displayName}
+            avatarKey={g.author.avatarKey}
+            size={52}
+          />
+        </div>
+      </div>
+    );
+  };
+
   return (
     <>
       <div className="flex items-center gap-3 overflow-x-auto px-3 py-2 border-b border-cream-border dark:border-slate-800 bg-white dark:bg-slate-950">
-        <input type="file" ref={fileRef} accept="image/*" hidden onChange={onPickFile} />
+        <input type="file" ref={fileRef} accept="image/*,video/*" hidden onChange={onPickFile} />
 
         {/* «Моя история» */}
         <button
@@ -87,11 +111,15 @@ export function StoriesBar() {
           disabled={uploading}
         >
           <div className="relative">
-            <div className={`rounded-full ${myGroup ? "p-0.5 bg-gradient-to-tr from-brand to-brand-dark" : ""}`}>
-              <div className="bg-white dark:bg-slate-950 p-0.5 rounded-full">
-                <Avatar id={me?.id ?? ""} name={me?.displayName ?? "?"} avatarKey={me?.avatarKey} size={52} />
+            {myGroup ? (
+              renderRing(myGroup, true)
+            ) : (
+              <div className="rounded-full p-0.5">
+                <div className="bg-white dark:bg-slate-950 p-0.5 rounded-full">
+                  <Avatar id={me?.id ?? ""} name={me?.displayName ?? "?"} avatarKey={me?.avatarKey} size={52} />
+                </div>
               </div>
-            </div>
+            )}
             <div className="absolute bottom-0 right-0 w-5 h-5 rounded-full bg-gradient-to-br from-brand to-brand-dark border-2 border-white dark:border-slate-950 flex items-center justify-center">
               <Plus size={12} color="#fff" strokeWidth={3} />
             </div>
@@ -109,16 +137,7 @@ export function StoriesBar() {
               onClick={() => setViewerIdx(idx)}
               className="flex-shrink-0 flex flex-col items-center gap-1 w-16"
             >
-              <div className="rounded-full p-0.5 bg-gradient-to-tr from-brand to-brand-dark">
-                <div className="bg-white dark:bg-slate-950 p-0.5 rounded-full">
-                  <Avatar
-                    id={g.author.id}
-                    name={g.author.displayName}
-                    avatarKey={g.author.avatarKey}
-                    size={52}
-                  />
-                </div>
-              </div>
+              {renderRing(g, false)}
               <span className="text-[11px] truncate w-full text-center dark:text-white">
                 {g.author.displayName.split(" ")[0]}
               </span>

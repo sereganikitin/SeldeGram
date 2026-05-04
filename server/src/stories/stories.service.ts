@@ -38,31 +38,69 @@ export class StoriesService {
     const now = new Date();
     const stories = await this.prisma.story.findMany({
       where: { expiresAt: { gt: now } },
-      include: { author: { select: AUTHOR_SELECT } },
+      include: {
+        author: { select: AUTHOR_SELECT },
+        views: { where: { userId: viewerId }, select: { id: true } },
+        _count: { select: { views: true } },
+      },
       orderBy: { createdAt: 'asc' },
     });
 
+    type StoryRow = typeof stories[number];
     const groups = new Map<
       string,
-      { author: typeof stories[number]['author']; stories: typeof stories }
+      { author: StoryRow['author']; stories: Array<StoryRow & { viewedByMe: boolean; viewsCount: number }> }
     >();
     for (const s of stories) {
+      const enriched = {
+        ...s,
+        viewedByMe: s.views.length > 0,
+        viewsCount: s._count.views,
+      };
       const g = groups.get(s.authorId);
-      if (g) g.stories.push(s);
-      else groups.set(s.authorId, { author: s.author, stories: [s] });
+      if (g) g.stories.push(enriched);
+      else groups.set(s.authorId, { author: s.author, stories: [enriched] });
     }
 
-    const arr = Array.from(groups.values());
-    // Мои истории первыми
+    const arr = Array.from(groups.values()).map((g) => ({
+      author: g.author,
+      stories: g.stories,
+      hasUnseen: g.stories.some((s) => !s.viewedByMe),
+    }));
     arr.sort((a, b) => {
       if (a.author.id === viewerId) return -1;
       if (b.author.id === viewerId) return 1;
-      // дальше — кто позже последний раз постил, тот выше
+      // непросмотренные сверху
+      if (a.hasUnseen !== b.hasUnseen) return a.hasUnseen ? -1 : 1;
       const al = a.stories[a.stories.length - 1].createdAt.getTime();
       const bl = b.stories[b.stories.length - 1].createdAt.getTime();
       return bl - al;
     });
     return arr;
+  }
+
+  async markViewed(viewerId: string, storyId: string) {
+    const story = await this.prisma.story.findUnique({ where: { id: storyId } });
+    if (!story) throw new NotFoundException('Story not found');
+    if (story.authorId === viewerId) return { ok: true }; // автор не считается просмотром
+    await this.prisma.storyView.upsert({
+      where: { storyId_userId: { storyId, userId: viewerId } },
+      update: {},
+      create: { storyId, userId: viewerId },
+    });
+    return { ok: true };
+  }
+
+  async listViewers(authorId: string, storyId: string) {
+    const story = await this.prisma.story.findUnique({ where: { id: storyId } });
+    if (!story) throw new NotFoundException('Story not found');
+    if (story.authorId !== authorId) throw new ForbiddenException();
+    const views = await this.prisma.storyView.findMany({
+      where: { storyId },
+      include: { user: { select: AUTHOR_SELECT } },
+      orderBy: { viewedAt: 'desc' },
+    });
+    return views.map((v) => ({ user: v.user, viewedAt: v.viewedAt }));
   }
 
   async my(userId: string) {

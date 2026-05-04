@@ -1,7 +1,8 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { View, Text, StyleSheet, Pressable, Image, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, Pressable, Image, Alert, ActivityIndicator, ScrollView } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { X, Trash2 } from 'lucide-react-native';
+import { X, Trash2, Eye } from 'lucide-react-native';
+import { Video, ResizeMode } from 'expo-av';
 import { RootStackParamList } from '../navigation';
 import { api } from '../api';
 import { getMediaUrl } from '../media';
@@ -25,10 +26,16 @@ interface Story {
 }
 interface StoryGroup {
   author: StoryAuthor;
-  stories: Story[];
+  stories: (Story & { viewedByMe?: boolean; viewsCount?: number })[];
+  hasUnseen?: boolean;
 }
 
-const STORY_DURATION_MS = 5000;
+interface Viewer {
+  user: StoryAuthor;
+  viewedAt: string;
+}
+
+const PHOTO_DURATION_MS = 5000;
 
 export function StoryViewerScreen({ route, navigation }: Props) {
   const { startIdx } = route.params;
@@ -40,8 +47,12 @@ export function StoryViewerScreen({ route, navigation }: Props) {
   const [mediaUrl, setMediaUrl] = useState<string | null>(null);
   const [progress, setProgress] = useState(0);
   const [paused, setPaused] = useState(false);
+  const [viewers, setViewers] = useState<Viewer[] | null>(null);
+  const [showViewers, setShowViewers] = useState(false);
+  const [videoDurationMs, setVideoDurationMs] = useState<number | null>(null);
   const startRef = useRef(0);
   const rafRef = useRef<number | null>(null);
+  const videoRef = useRef<Video | null>(null);
 
   useEffect(() => {
     navigation.setOptions({ headerShown: false });
@@ -53,6 +64,8 @@ export function StoryViewerScreen({ route, navigation }: Props) {
   const group = groups[gIdx];
   const story = group?.stories[sIdx];
   const isMine = group?.author.id === meId;
+  const isVideo = !!story?.mediaType.startsWith('video/');
+  const durationMs = isVideo && videoDurationMs ? videoDurationMs : PHOTO_DURATION_MS;
 
   useEffect(() => {
     setSIdx(0);
@@ -62,11 +75,17 @@ export function StoryViewerScreen({ route, navigation }: Props) {
     if (!story) return;
     let cancelled = false;
     setMediaUrl(null);
+    setVideoDurationMs(null);
+    setViewers(null);
+    setShowViewers(false);
     getMediaUrl(story.mediaKey).then((u) => {
       if (!cancelled) setMediaUrl(u);
     }).catch(() => undefined);
+    if (!isMine) {
+      api.post(`/stories/${story.id}/view`).catch(() => undefined);
+    }
     return () => { cancelled = true; };
-  }, [story?.id]);
+  }, [story?.id, isMine]);
 
   const next = useCallback(() => {
     if (!group) return;
@@ -91,10 +110,11 @@ export function StoryViewerScreen({ route, navigation }: Props) {
 
   useEffect(() => {
     if (!story || !mediaUrl || paused) return;
-    startRef.current = Date.now() - progress * STORY_DURATION_MS;
+    if (isVideo && !videoDurationMs) return;
+    startRef.current = Date.now() - progress * durationMs;
     const tick = () => {
       const elapsed = Date.now() - startRef.current;
-      const p = Math.min(1, elapsed / STORY_DURATION_MS);
+      const p = Math.min(1, elapsed / durationMs);
       setProgress(p);
       if (p >= 1) {
         setProgress(0);
@@ -107,7 +127,28 @@ export function StoryViewerScreen({ route, navigation }: Props) {
     return () => {
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
     };
-  }, [story?.id, mediaUrl, paused, next]);
+  }, [story?.id, mediaUrl, paused, next, isVideo, videoDurationMs, durationMs]);
+
+  useEffect(() => {
+    if (!videoRef.current) return;
+    if (paused) videoRef.current.pauseAsync().catch(() => undefined);
+    else videoRef.current.playAsync().catch(() => undefined);
+  }, [paused]);
+
+  const openViewers = async () => {
+    if (!story) return;
+    if (showViewers) {
+      setShowViewers(false);
+      setPaused(false);
+      return;
+    }
+    setShowViewers(true);
+    setPaused(true);
+    try {
+      const { data } = await api.get<Viewer[]>(`/stories/${story.id}/viewers`);
+      setViewers(data);
+    } catch {}
+  };
 
   useEffect(() => {
     setProgress(0);
@@ -175,9 +216,15 @@ export function StoryViewerScreen({ route, navigation }: Props) {
         />
         <Text style={styles.name} numberOfLines={1}>{group.author.displayName}</Text>
         {isMine && (
-          <Pressable onPress={deleteStory} style={styles.headerBtn}>
-            <Trash2 size={20} color="#fff" />
-          </Pressable>
+          <>
+            <Pressable onPress={openViewers} style={styles.viewersBtn}>
+              <Eye size={16} color="#fff" />
+              <Text style={styles.viewersBtnText}>{story.viewsCount ?? 0}</Text>
+            </Pressable>
+            <Pressable onPress={deleteStory} style={styles.headerBtn}>
+              <Trash2 size={20} color="#fff" />
+            </Pressable>
+          </>
         )}
         <Pressable onPress={() => navigation.goBack()} style={styles.headerBtn}>
           <X size={22} color="#fff" />
@@ -199,12 +246,59 @@ export function StoryViewerScreen({ route, navigation }: Props) {
       />
 
       <View style={styles.mediaWrap} pointerEvents="none">
-        {mediaUrl ? (
-          <Image source={{ uri: mediaUrl }} style={styles.media} resizeMode="contain" />
-        ) : (
+        {!mediaUrl ? (
           <ActivityIndicator color="#fff" />
+        ) : isVideo ? (
+          <Video
+            ref={videoRef}
+            source={{ uri: mediaUrl }}
+            style={styles.media}
+            resizeMode={ResizeMode.CONTAIN}
+            shouldPlay
+            isLooping={false}
+            onLoad={(status) => {
+              if (status.isLoaded && status.durationMillis) {
+                setVideoDurationMs(status.durationMillis);
+              }
+            }}
+          />
+        ) : (
+          <Image source={{ uri: mediaUrl }} style={styles.media} resizeMode="contain" />
         )}
       </View>
+
+      {/* Лист зрителей */}
+      {showViewers && (
+        <View style={styles.viewersSheet}>
+          <View style={styles.viewersHeader}>
+            <Eye size={18} color="#ff7a99" />
+            <Text style={styles.viewersTitle}>Просмотры {viewers ? `· ${viewers.length}` : ''}</Text>
+            <Pressable
+              onPress={() => { setShowViewers(false); setPaused(false); }}
+              style={{ marginLeft: 'auto' }}
+            >
+              <X size={20} color="#3d1a28" />
+            </Pressable>
+          </View>
+          <ScrollView style={{ maxHeight: 320 }}>
+            {viewers === null ? (
+              <Text style={styles.viewersEmpty}>Загрузка...</Text>
+            ) : viewers.length === 0 ? (
+              <Text style={styles.viewersEmpty}>Пока никто не посмотрел</Text>
+            ) : (
+              viewers.map((v) => (
+                <View key={v.user.id} style={styles.viewerRow}>
+                  <Avatar id={v.user.id} name={v.user.displayName} avatarKey={v.user.avatarKey} size={36} />
+                  <View style={{ flex: 1, marginLeft: 10 }}>
+                    <Text style={styles.viewerName} numberOfLines={1}>{v.user.displayName}</Text>
+                    <Text style={styles.viewerUsername}>@{v.user.username}</Text>
+                  </View>
+                </View>
+              ))
+            )}
+          </ScrollView>
+        </View>
+      )}
     </View>
   );
 }
@@ -245,4 +339,38 @@ const styles = StyleSheet.create({
   media: { width: '100%', height: '100%' },
   leftTap: { position: 'absolute', top: 100, bottom: 0, left: 0, width: '35%', zIndex: 5 },
   rightTap: { position: 'absolute', top: 100, bottom: 0, right: 0, width: '35%', zIndex: 5 },
+  viewersBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 10,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+  },
+  viewersBtnText: { color: '#fff', fontSize: 13, fontWeight: '600' },
+  viewersSheet: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: '#fff',
+    borderTopLeftRadius: 18,
+    borderTopRightRadius: 18,
+    paddingBottom: 16,
+    zIndex: 20,
+  },
+  viewersHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    padding: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: '#ffd4e1',
+  },
+  viewersTitle: { fontSize: 15, fontWeight: '700', color: '#3d1a28' },
+  viewersEmpty: { textAlign: 'center', color: '#8c6471', paddingVertical: 24 },
+  viewerRow: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14, paddingVertical: 8 },
+  viewerName: { fontSize: 14, fontWeight: '600', color: '#3d1a28' },
+  viewerUsername: { fontSize: 12, color: '#8c6471' },
 });

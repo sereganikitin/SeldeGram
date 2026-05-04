@@ -39,6 +39,7 @@ model User {
   callsMade          Call[]            @relation("CallCaller")
   callsReceived      Call[]            @relation("CallCallee")
   stories            Story[]
+  storyViews         StoryView[]
 
   @@map("users")
 }
@@ -64,11 +65,26 @@ model Story {
   createdAt  DateTime @default(now())
   expiresAt  DateTime
 
-  author User @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  author User        @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  views  StoryView[]
 
   @@index([authorId, createdAt])
   @@index([expiresAt])
   @@map("stories")
+}
+
+model StoryView {
+  id        String   @id @default(uuid())
+  storyId   String
+  userId    String
+  viewedAt  DateTime @default(now())
+
+  story Story @relation(fields: [storyId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([storyId, userId])
+  @@index([storyId])
+  @@map("story_views")
 }
 
 model Call {
