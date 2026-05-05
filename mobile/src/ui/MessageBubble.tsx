@@ -99,7 +99,22 @@ export function MessageBubble({
             <PollBubble messageId={message.id} mine={mine} />
           ) : message.content ? (
             <Text style={[mine ? styles.textMine : styles.textOther, hasMedia && { marginTop: 6 }]}>
-              {message.content}
+              {message.content.split(/(@[a-zA-Z0-9_]{3,32})/g).map((part, i) =>
+                part.startsWith('@') ? (
+                  <Text
+                    key={i}
+                    style={{
+                      fontWeight: '700',
+                      color: mine ? '#fff' : '#e84e76',
+                      textDecorationLine: mine ? 'underline' : 'none',
+                    }}
+                  >
+                    {part}
+                  </Text>
+                ) : (
+                  part
+                ),
+              )}
             </Text>
           ) : null}
         </>

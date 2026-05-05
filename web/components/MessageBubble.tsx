@@ -214,7 +214,17 @@ export function MessageBubble({ message, mine, showSenderName, senderName, isRea
             {message.content?.startsWith("📊 ") ? (
               <PollBubble messageId={message.id} mine={mine} />
             ) : message.content ? (
-              <div className="text-base whitespace-pre-wrap break-all mt-1">{message.content}</div>
+              <div className="text-base whitespace-pre-wrap break-all mt-1">
+                {message.content.split(/(@[a-zA-Z0-9_]{3,32})/g).map((part, i) =>
+                  part.startsWith("@") ? (
+                    <span key={i} className={`font-semibold ${mine ? "text-white underline" : "text-brand-dark"}`}>
+                      {part}
+                    </span>
+                  ) : (
+                    <span key={i}>{part}</span>
+                  ),
+                )}
+              </div>
             ) : null}
           </>
         )}

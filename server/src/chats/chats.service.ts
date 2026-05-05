@@ -447,14 +447,31 @@ export class ChatsService {
 
     const members = await this.prisma.chatMember.findMany({
       where: { chatId },
-      select: { userId: true, muted: true },
+      include: { user: { select: { id: true, username: true } } },
     });
     const memberIds = members.map((m) => m.userId);
-    this.hub.sendToUsers(memberIds, { type: 'message:new', payload: message });
 
-    // Push шлём только тем, кто не выключил уведомления для этого чата
+    // Парсим @username из текста сообщения
+    const mentionedUsernames = new Set<string>();
+    if (copiedContent) {
+      const re = /(^|\s)@([a-zA-Z0-9_]{3,32})/g;
+      let m: RegExpExecArray | null;
+      while ((m = re.exec(copiedContent)) !== null) {
+        mentionedUsernames.add(m[2].toLowerCase());
+      }
+    }
+    const mentionedUserIds = members
+      .filter((m) => mentionedUsernames.has(m.user.username.toLowerCase()))
+      .map((m) => m.userId);
+
+    this.hub.sendToUsers(memberIds, {
+      type: 'message:new',
+      payload: { ...message, mentions: mentionedUserIds },
+    });
+
+    // Push: всем не-muted ИЛИ muted, но упомянутым (mention перекрывает mute)
     const recipientIds = members
-      .filter((m) => m.userId !== userId && !m.muted)
+      .filter((m) => m.userId !== userId && (!m.muted || mentionedUserIds.includes(m.userId)))
       .map((m) => m.userId);
     if (recipientIds.length > 0) {
       const sender = await this.prisma.user.findUnique({
