@@ -7,7 +7,8 @@ import { useAuth } from "@/lib/store";
 import { useTheme, type ThemeMode } from "@/lib/theme";
 import { api } from "@/lib/api";
 import { uploadFile } from "@/lib/media";
-import { Image as ImageIcon, Ban, LogOut } from "lucide-react";
+import { Image as ImageIcon, Ban, LogOut, ShieldCheck } from "lucide-react";
+import { TwoFactorModal } from "./TwoFactorModal";
 
 interface Props {
   open: boolean;
@@ -20,6 +21,7 @@ interface Props {
 export function ProfileModal({ open, onClose, onLogout, onOpenWallpaper, onOpenBlockList }: Props) {
   const user = useAuth((s) => s.user);
   const patchMe = useAuth((s) => s.patchMe);
+  const [twoFaOpen, setTwoFaOpen] = useState(false);
   const themeMode = useTheme((s) => s.mode);
   const setThemeMode = useTheme((s) => s.setMode);
   const [name, setName] = useState(user?.displayName ?? "");
@@ -115,6 +117,16 @@ export function ProfileModal({ open, onClose, onLogout, onOpenWallpaper, onOpenB
         >
           <Ban size={18} className="text-brand-dark" /> Заблокированные
         </button>
+
+        <button
+          onClick={() => setTwoFaOpen(true)}
+          className="w-full bg-cream-alt dark:bg-slate-800 dark:text-white hover:bg-cream-border dark:hover:bg-slate-700 py-3 rounded-lg font-semibold flex items-center justify-center gap-2"
+        >
+          <ShieldCheck size={18} className="text-brand-dark" />
+          {user?.totpEnabled ? "2FA: включена" : "Включить 2FA"}
+        </button>
+
+        <TwoFactorModal open={twoFaOpen} onClose={() => setTwoFaOpen(false)} />
 
         <button
           onClick={onLogout}

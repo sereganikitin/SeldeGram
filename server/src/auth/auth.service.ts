@@ -91,7 +91,58 @@ export class AuthService {
       throw new UnauthorizedException('Email not verified');
     }
 
+    if (user.totpEnabled) {
+      if (!dto.totpCode) {
+        return { requires2fa: true } as { requires2fa: true };
+      }
+      const ok2 = await this.verifyTotpCode(user.totpSecret ?? '', dto.totpCode);
+      if (!ok2) throw new UnauthorizedException('Invalid 2FA code');
+    }
+
     return this.issueTokens(user.id);
+  }
+
+  async verifyTotpCode(secret: string, code: string): Promise<boolean> {
+    if (!secret || !code) return false;
+    const { authenticator } = await import('otplib');
+    return authenticator.check(code.replace(/\s+/g, ''), secret);
+  }
+
+  async startTotp(userId: string) {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) throw new UnauthorizedException();
+    const { authenticator } = await import('otplib');
+    const secret = authenticator.generateSecret();
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { totpSecret: secret, totpEnabled: false },
+    });
+    const otpauth = authenticator.keyuri(user.email, 'CraboGram', secret);
+    return { secret, otpauth };
+  }
+
+  async confirmTotp(userId: string, code: string) {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user?.totpSecret) throw new UnauthorizedException('No pending 2FA setup');
+    const ok = await this.verifyTotpCode(user.totpSecret, code);
+    if (!ok) throw new UnauthorizedException('Invalid code');
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { totpEnabled: true },
+    });
+    return { ok: true };
+  }
+
+  async disableTotp(userId: string, code: string) {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user?.totpEnabled) return { ok: true };
+    const ok = await this.verifyTotpCode(user.totpSecret ?? '', code);
+    if (!ok) throw new UnauthorizedException('Invalid code');
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { totpSecret: null, totpEnabled: false },
+    });
+    return { ok: true };
   }
 
   async forgotPassword(dto: ForgotPasswordDto) {

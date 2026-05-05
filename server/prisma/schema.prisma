@@ -17,6 +17,8 @@ model User {
   avatarKey        String?
   defaultWallpaper String?
   publicKey        String?
+  totpSecret       String?
+  totpEnabled      Boolean  @default(false)
   lastSeenAt       DateTime?
   isOnline         Boolean  @default(false)
   createdAt        DateTime @default(now())

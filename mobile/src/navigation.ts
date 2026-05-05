@@ -22,4 +22,5 @@ export type RootStackParamList = {
   Thread: { chatId: string; messageId: string };
   CallsHistory: undefined;
   StoryViewer: { startIdx: number };
+  TwoFactor: undefined;
 };

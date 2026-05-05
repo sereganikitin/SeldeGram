@@ -13,6 +13,7 @@ const ME_SELECT = {
   avatarKey: true,
   defaultWallpaper: true,
   publicKey: true,
+  totpEnabled: true,
   isOnline: true,
   lastSeenAt: true,
   createdAt: true,

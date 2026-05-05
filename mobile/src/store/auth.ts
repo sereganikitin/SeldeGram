@@ -10,6 +10,7 @@ export interface User {
   isVerified: boolean;
   avatarKey?: string | null;
   defaultWallpaper?: string | null;
+  totpEnabled?: boolean;
   createdAt: string;
 }
 

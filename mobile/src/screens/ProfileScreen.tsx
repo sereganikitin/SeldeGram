@@ -121,6 +121,13 @@ export function ProfileScreen({ navigation }: Props) {
         onPress={() => navigation.navigate('BlockList')}
       />
 
+      <View style={{ height: 10 }} />
+      <Button
+        title={user?.totpEnabled ? '2FA: включена' : 'Включить 2FA'}
+        variant="secondary"
+        onPress={() => navigation.navigate('TwoFactor')}
+      />
+
       <View style={{ height: 20 }} />
       <Button title="Выйти" variant="secondary" onPress={logout} />
       {saving && <Text style={{ color: colors.textMuted, marginTop: 12 }}>Сохранение...</Text>}

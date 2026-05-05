@@ -12,6 +12,8 @@ export default function LoginPage() {
   const fetchMe = useAuth((s) => s.fetchMe);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [totpCode, setTotpCode] = useState("");
+  const [needs2fa, setNeeds2fa] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -20,7 +22,14 @@ export default function LoginPage() {
     setError(null);
     setLoading(true);
     try {
-      const { data } = await api.post("/auth/login", { email, password });
+      const payload: { email: string; password: string; totpCode?: string } = { email, password };
+      if (needs2fa && totpCode) payload.totpCode = totpCode;
+      const { data } = await api.post("/auth/login", payload);
+      if ((data as { requires2fa?: boolean }).requires2fa) {
+        setNeeds2fa(true);
+        setLoading(false);
+        return;
+      }
       setTokens(data.accessToken, data.refreshToken);
       await fetchMe();
       router.replace("/chats");
@@ -69,13 +78,28 @@ export default function LoginPage() {
               className="w-full px-4 py-3 border border-cream-border rounded-lg focus:outline-none focus:border-brand"
             />
           </div>
+          {needs2fa && (
+            <div>
+              <label className="block text-sm font-medium text-ink mb-1">Код из приложения-аутентификатора</label>
+              <input
+                type="text"
+                inputMode="numeric"
+                value={totpCode}
+                onChange={(e) => setTotpCode(e.target.value.replace(/\s+/g, ""))}
+                required
+                maxLength={8}
+                autoFocus
+                className="w-full px-4 py-3 border border-cream-border rounded-lg focus:outline-none focus:border-brand text-center tracking-widest font-mono text-lg"
+              />
+            </div>
+          )}
           {error && <div className="text-red-600 text-sm">{error}</div>}
           <button
             type="submit"
             disabled={loading}
             className="w-full bg-brand hover:bg-brand-dark disabled:opacity-50 text-white font-semibold py-3 rounded-lg transition"
           >
-            {loading ? "Входим..." : "Войти"}
+            {loading ? "Входим..." : needs2fa ? "Подтвердить" : "Войти"}
           </button>
         </form>
 

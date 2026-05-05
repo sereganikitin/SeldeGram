@@ -31,6 +31,7 @@ import { BlockListScreen } from './src/screens/BlockListScreen';
 import { ThreadScreen } from './src/screens/ThreadScreen';
 import { CallsHistoryScreen } from './src/screens/CallsHistoryScreen';
 import { StoryViewerScreen } from './src/screens/StoryViewerScreen';
+import { TwoFactorScreen } from './src/screens/TwoFactorScreen';
 import { CallOverlay } from './src/ui/CallOverlay';
 import { initCallBridge } from './src/store/call';
 import { useAuth } from './src/store/auth';
@@ -154,6 +155,7 @@ export default function App() {
             <Stack.Screen name="Thread" component={ThreadScreen} options={{ title: 'Комментарии' }} />
             <Stack.Screen name="CallsHistory" component={CallsHistoryScreen} options={{ title: 'Звонки' }} />
             <Stack.Screen name="StoryViewer" component={StoryViewerScreen} options={{ headerShown: false }} />
+            <Stack.Screen name="TwoFactor" component={TwoFactorScreen} options={{ title: '2FA' }} />
           </>
         ) : (
           <>

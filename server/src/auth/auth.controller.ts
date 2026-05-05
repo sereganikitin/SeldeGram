@@ -1,4 +1,5 @@
-import { Body, Controller, HttpCode, Post } from '@nestjs/common';
+import { Body, Controller, HttpCode, Post, Req, UseGuards } from '@nestjs/common';
+import { JwtAuthGuard } from './jwt-auth.guard';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { VerifyDto } from './dto/verify.dto';
@@ -44,5 +45,26 @@ export class AuthController {
   @HttpCode(200)
   resetPassword(@Body() dto: ResetPasswordDto) {
     return this.auth.resetPassword(dto);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('2fa/start')
+  @HttpCode(200)
+  startTotp(@Req() req: { user: { userId: string } }) {
+    return this.auth.startTotp(req.user.userId);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('2fa/confirm')
+  @HttpCode(200)
+  confirmTotp(@Req() req: { user: { userId: string } }, @Body() body: { code: string }) {
+    return this.auth.confirmTotp(req.user.userId, body.code);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('2fa/disable')
+  @HttpCode(200)
+  disableTotp(@Req() req: { user: { userId: string } }, @Body() body: { code: string }) {
+    return this.auth.disableTotp(req.user.userId, body.code);
   }
 }
