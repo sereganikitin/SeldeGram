@@ -445,11 +445,17 @@ export class ChatsService {
       include: messageInclude,
     });
 
-    const members = await this.prisma.chatMember.findMany({ where: { chatId }, select: { userId: true } });
+    const members = await this.prisma.chatMember.findMany({
+      where: { chatId },
+      select: { userId: true, muted: true },
+    });
     const memberIds = members.map((m) => m.userId);
     this.hub.sendToUsers(memberIds, { type: 'message:new', payload: message });
 
-    const recipientIds = memberIds.filter((id) => id !== userId);
+    // Push шлём только тем, кто не выключил уведомления для этого чата
+    const recipientIds = members
+      .filter((m) => m.userId !== userId && !m.muted)
+      .map((m) => m.userId);
     if (recipientIds.length > 0) {
       const sender = await this.prisma.user.findUnique({
         where: { id: userId },
@@ -607,6 +613,9 @@ export class ChatsService {
       members: Array<{
         role?: string;
         wallpaper?: string | null;
+        pinned?: boolean;
+        muted?: boolean;
+        archived?: boolean;
         user: { id: string; username: string; displayName: string; avatarKey?: string | null };
       }>;
     },
@@ -632,9 +641,30 @@ export class ChatsService {
       createdAt: chat.createdAt,
       viewerRole,
       viewerWallpaper: viewerMember?.wallpaper ?? null,
+      pinned: viewerMember?.pinned ?? false,
+      muted: viewerMember?.muted ?? false,
+      archived: viewerMember?.archived ?? false,
       memberCount: chat.members.length,
       members: visibleMembers,
     };
+  }
+
+  async updateMembership(
+    chatId: string,
+    userId: string,
+    patch: { pinned?: boolean; muted?: boolean; archived?: boolean },
+  ) {
+    await this.assertMember(chatId, userId);
+    const data: { pinned?: boolean; muted?: boolean; archived?: boolean } = {};
+    if (typeof patch.pinned === 'boolean') data.pinned = patch.pinned;
+    if (typeof patch.muted === 'boolean') data.muted = patch.muted;
+    if (typeof patch.archived === 'boolean') data.archived = patch.archived;
+    await this.prisma.chatMember.update({
+      where: { chatId_userId: { chatId, userId } },
+      data,
+    });
+    this.hub.sendToUser(userId, { type: 'chat:updated', payload: { chatId } });
+    return { ok: true };
   }
 
   async searchMessages(chatId: string, userId: string, query: string, limit = 50) {

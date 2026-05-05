@@ -37,6 +37,16 @@ export class ChatsController {
     return this.chats.getOrCreateSaved(req.user.userId);
   }
 
+  @Patch(':id/membership')
+  @HttpCode(200)
+  updateMembership(
+    @Req() req: { user: { userId: string } },
+    @Param('id') chatId: string,
+    @Body() body: { pinned?: boolean; muted?: boolean; archived?: boolean },
+  ) {
+    return this.chats.updateMembership(chatId, req.user.userId, body);
+  }
+
   @Post('group')
   createGroup(@Req() req: { user: { userId: string } }, @Body() dto: CreateGroupDto) {
     return this.chats.createGroup(req.user.userId, dto.title, dto.memberUsernames);

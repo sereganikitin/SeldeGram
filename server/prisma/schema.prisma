@@ -192,6 +192,9 @@ model ChatMember {
   userId    String
   role      String   @default("member")
   wallpaper String?
+  pinned    Boolean  @default(false)
+  muted     Boolean  @default(false)
+  archived  Boolean  @default(false)
   joinedAt  DateTime @default(now())
 
   chat Chat @relation(fields: [chatId], references: [id], onDelete: Cascade)

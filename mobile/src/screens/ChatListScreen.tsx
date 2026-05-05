@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { View, Text, FlatList, StyleSheet, Pressable, RefreshControl } from 'react-native';
+import { View, Text, FlatList, StyleSheet, Pressable, RefreshControl, Alert } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation';
@@ -11,7 +11,7 @@ import { Avatar } from '../ui/Avatar';
 import { messagePreview, formatTime } from '../helpers';
 import { useColors } from '../theme';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Megaphone, Users, Smile, User, Plus, Phone, Bookmark } from 'lucide-react-native';
+import { Megaphone, Users, Smile, User, Plus, Phone, Bookmark, Pin, BellOff, Archive, ArchiveRestore } from 'lucide-react-native';
 import { StoriesBar } from '../ui/StoriesBar';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'ChatList'>;
@@ -21,6 +21,32 @@ export function ChatListScreen({ navigation }: Props) {
   const insets = useSafeAreaInsets();
   const [chats, setChats] = useState<Chat[]>([]);
   const [refreshing, setRefreshing] = useState(false);
+  const [showArchived, setShowArchived] = useState(false);
+
+  const patchMembership = async (chatId: string, patch: { pinned?: boolean; muted?: boolean; archived?: boolean }) => {
+    setChats((prev) => prev.map((c) => (c.id === chatId ? { ...c, ...patch } : c)));
+    try {
+      await api.patch(`/chats/${chatId}/membership`, patch);
+    } catch {}
+  };
+
+  const showChatMenu = (chat: Chat) => {
+    Alert.alert(chat.type === 'saved' ? 'Избранное' : chat.title ?? '', undefined, [
+      {
+        text: chat.pinned ? 'Открепить' : 'Закрепить',
+        onPress: () => patchMembership(chat.id, { pinned: !chat.pinned }),
+      },
+      {
+        text: chat.muted ? 'Включить уведомления' : 'Заглушить',
+        onPress: () => patchMembership(chat.id, { muted: !chat.muted }),
+      },
+      {
+        text: chat.archived ? 'Из архива' : 'В архив',
+        onPress: () => patchMembership(chat.id, { archived: !chat.archived }),
+      },
+      { text: 'Отмена', style: 'cancel' },
+    ]);
+  };
   const meId = useAuth((s) => s.user?.id);
   const logout = useAuth((s) => s.logout);
   const connect = useWs((s) => s.connect);
@@ -115,14 +141,34 @@ export function ChatListScreen({ navigation }: Props) {
   return (
     <View style={[styles.container, { backgroundColor: colors.bg }]}>
       <FlatList
-        data={[...chats].sort((a, b) => {
-          if (a.type === 'saved' && b.type !== 'saved') return -1;
-          if (a.type !== 'saved' && b.type === 'saved') return 1;
-          return 0;
-        })}
+        data={[...chats]
+          .filter((c) => (showArchived ? c.archived : !c.archived))
+          .sort((a, b) => {
+            if (a.type === 'saved' && b.type !== 'saved') return -1;
+            if (a.type !== 'saved' && b.type === 'saved') return 1;
+            const ap = a.pinned ? 1 : 0;
+            const bp = b.pinned ? 1 : 0;
+            if (ap !== bp) return bp - ap;
+            return 0;
+          })}
         keyExtractor={(c) => c.id}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.text} />}
-        ListHeaderComponent={<StoriesBar />}
+        ListHeaderComponent={
+          <>
+            <StoriesBar />
+            {chats.some((c) => c.archived) && (
+              <Pressable
+                onPress={() => setShowArchived((v) => !v)}
+                style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 16, paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: colors.border }}
+              >
+                {showArchived ? <ArchiveRestore size={16} color={colors.textMuted} /> : <Archive size={16} color={colors.textMuted} />}
+                <Text style={{ color: colors.textMuted, fontSize: 14 }}>
+                  {showArchived ? 'К чатам' : `Архив (${chats.filter((c) => c.archived).length})`}
+                </Text>
+              </Pressable>
+            )}
+          </>
+        }
         ListEmptyComponent={
           <View style={styles.empty}>
             <Text style={[styles.emptyText, { color: colors.textMuted }]}>Нет чатов</Text>
@@ -137,9 +183,11 @@ export function ChatListScreen({ navigation }: Props) {
           return (
             <Pressable
               onPress={() => navigation.navigate('Chat', { chatId: item.id, title: item.title ?? 'Chat' })}
+              onLongPress={() => showChatMenu(item)}
+              delayLongPress={350}
               style={({ pressed }) => [
                 styles.row,
-                { borderBottomColor: colors.border },
+                { borderBottomColor: colors.border, backgroundColor: item.pinned ? colors.surfaceAlt : 'transparent' },
                 pressed && { backgroundColor: colors.surfaceAlt },
               ]}
             >
@@ -168,11 +216,15 @@ export function ChatListScreen({ navigation }: Props) {
                   <Text style={[styles.preview, { color: colors.textMuted }]} numberOfLines={1}>
                     {previewLine(item.lastMessage, item.lastMessage?.senderId === meId)}
                   </Text>
-                  {!!item.unreadCount && item.unreadCount > 0 && (
-                    <View style={[styles.badge, { backgroundColor: colors.primary }]}>
-                      <Text style={styles.badgeText}>{item.unreadCount}</Text>
-                    </View>
-                  )}
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                    {item.muted && <BellOff size={14} color={colors.textMuted} />}
+                    {item.pinned && <Pin size={14} color={colors.primary} />}
+                    {!!item.unreadCount && item.unreadCount > 0 && (
+                      <View style={[styles.badge, { backgroundColor: item.muted ? colors.textMuted : colors.primary }]}>
+                        <Text style={styles.badgeText}>{item.unreadCount}</Text>
+                      </View>
+                    )}
+                  </View>
                 </View>
               </View>
             </Pressable>

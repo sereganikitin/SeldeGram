@@ -95,7 +95,7 @@ export interface ChannelSearchResult {
 
 export interface Chat {
   id: string;
-  type: "direct" | "group" | "channel";
+  type: "direct" | "group" | "channel" | "saved";
   title: string | null;
   slug?: string | null;
   pinnedMessageId?: string | null;
@@ -106,4 +106,7 @@ export interface Chat {
   members: ChatMember[];
   lastMessage?: Message | null;
   unreadCount?: number;
+  pinned?: boolean;
+  muted?: boolean;
+  archived?: boolean;
 }

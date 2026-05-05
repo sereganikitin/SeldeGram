@@ -7,7 +7,7 @@ import { useAuth } from "@/lib/store";
 import { useWs, type WsState } from "@/lib/ws";
 import { Avatar } from "./Avatar";
 import { IconButton } from "./IconButton";
-import { Plus, Smile, Phone, User, Megaphone, Users, Bookmark } from "lucide-react";
+import { Plus, Smile, Phone, User, Megaphone, Users, Bookmark, Pin, Bell, BellOff, Archive, ArchiveRestore } from "lucide-react";
 import { formatTime, messagePreview } from "@/lib/helpers";
 import { StoriesBar } from "./StoriesBar";
 
@@ -31,6 +31,17 @@ export function ChatList({ selectedId, onSelect, onLogout, onNewChat, onOpenStic
   const onEdited = useWs((s: WsState) => s.onEdited);
   const [chats, setChats] = useState<Chat[]>([]);
   const [search, setSearch] = useState("");
+  const [showArchived, setShowArchived] = useState(false);
+  const [menuChat, setMenuChat] = useState<{ chat: Chat; x: number; y: number } | null>(null);
+
+  const patchMembership = async (chatId: string, patch: { pinned?: boolean; muted?: boolean; archived?: boolean }) => {
+    setChats((prev) => prev.map((c) => (c.id === chatId ? { ...c, ...patch } : c)));
+    try {
+      await api.patch(`/chats/${chatId}/membership`, patch);
+    } catch {
+      load();
+    }
+  };
 
   const load = useCallback(async () => {
     const { data } = await api.get<Chat[]>("/chats");
@@ -94,14 +105,19 @@ export function ChatList({ selectedId, onSelect, onLogout, onNewChat, onOpenStic
     [onDeleted],
   );
 
-  // Saved-чаты всегда сверху
+  // Сначала фильтруем архив, потом — saved/pinned сверху
   const filtered = chats
+    .filter((c) => (showArchived ? c.archived : !c.archived))
     .filter((c) => (c.title ?? "").toLowerCase().includes(search.toLowerCase()))
     .sort((a, b) => {
       if (a.type === "saved" && b.type !== "saved") return -1;
       if (a.type !== "saved" && b.type === "saved") return 1;
+      const ap = a.pinned ? 1 : 0;
+      const bp = b.pinned ? 1 : 0;
+      if (ap !== bp) return bp - ap;
       return 0;
     });
+  const archivedCount = chats.filter((c) => c.archived).length;
 
   return (
     <aside className="w-full md:w-80 lg:w-96 border-r border-cream-border dark:border-slate-800 flex flex-col bg-white dark:bg-slate-950 overflow-x-hidden">
@@ -129,6 +145,15 @@ export function ChatList({ selectedId, onSelect, onLogout, onNewChat, onOpenStic
         />
       </div>
 
+      {archivedCount > 0 && (
+        <button
+          onClick={() => setShowArchived((v) => !v)}
+          className="px-4 py-2 text-sm text-ink-muted hover:bg-cream dark:hover:bg-slate-900 border-b border-cream-border dark:border-slate-800 flex items-center gap-2"
+        >
+          {showArchived ? <ArchiveRestore size={14} /> : <Archive size={14} />}
+          {showArchived ? "К чатам" : `Архив (${archivedCount})`}
+        </button>
+      )}
       <div className="flex-1 overflow-y-auto">
         {filtered.length === 0 && (
           <div className="text-center text-ink-muted py-10 px-4 text-sm">
@@ -141,9 +166,13 @@ export function ChatList({ selectedId, onSelect, onLogout, onNewChat, onOpenStic
             <button
               key={chat.id}
               onClick={() => onSelect(chat)}
+              onContextMenu={(e) => {
+                e.preventDefault();
+                setMenuChat({ chat, x: e.clientX, y: e.clientY });
+              }}
               className={`w-full flex items-center gap-3 px-4 py-3 border-b border-cream-border dark:border-slate-800 hover:bg-cream dark:hover:bg-slate-900 text-left ${
                 selectedId === chat.id ? "bg-brand/10 dark:bg-brand/20" : ""
-              }`}
+              } ${chat.pinned ? "bg-cream/40 dark:bg-slate-900/40" : ""}`}
             >
               {chat.type === "saved" ? (
                 <div className="w-12 h-12 rounded-full bg-gradient-to-br from-brand to-brand-dark flex items-center justify-center flex-shrink-0">
@@ -175,17 +204,61 @@ export function ChatList({ selectedId, onSelect, onLogout, onNewChat, onOpenStic
                       "Нет сообщений"
                     )}
                   </div>
-                  {!!chat.unreadCount && chat.unreadCount > 0 && (
-                    <span className="bg-brand text-white text-xs rounded-full min-w-[20px] h-5 px-1.5 flex items-center justify-center font-bold flex-shrink-0">
-                      {chat.unreadCount}
-                    </span>
-                  )}
+                  <div className="flex items-center gap-1 flex-shrink-0">
+                    {chat.muted && <BellOff size={14} className="text-ink-muted" />}
+                    {chat.pinned && <Pin size={14} className="text-brand-dark" />}
+                    {!!chat.unreadCount && chat.unreadCount > 0 && (
+                      <span className={`text-white text-xs rounded-full min-w-[20px] h-5 px-1.5 flex items-center justify-center font-bold ${chat.muted ? "bg-ink-muted" : "bg-brand"}`}>
+                        {chat.unreadCount}
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
             </button>
           );
         })}
       </div>
+
+      {menuChat && (
+        <>
+          <div className="fixed inset-0 z-40" onClick={() => setMenuChat(null)} onContextMenu={(e) => { e.preventDefault(); setMenuChat(null); }} />
+          <div
+            className="fixed z-50 bg-white dark:bg-slate-800 dark:text-white shadow-xl rounded-lg border border-cream-border dark:border-slate-700 py-1 min-w-[200px]"
+            style={{ left: Math.min(menuChat.x, window.innerWidth - 220), top: Math.min(menuChat.y, window.innerHeight - 200) }}
+          >
+            <button
+              onClick={() => {
+                patchMembership(menuChat.chat.id, { pinned: !menuChat.chat.pinned });
+                setMenuChat(null);
+              }}
+              className="w-full text-left px-3 py-2 text-sm hover:bg-cream dark:hover:bg-slate-700 flex items-center gap-2"
+            >
+              <Pin size={16} className="text-brand-dark" /> {menuChat.chat.pinned ? "Открепить" : "Закрепить"}
+            </button>
+            <button
+              onClick={() => {
+                patchMembership(menuChat.chat.id, { muted: !menuChat.chat.muted });
+                setMenuChat(null);
+              }}
+              className="w-full text-left px-3 py-2 text-sm hover:bg-cream dark:hover:bg-slate-700 flex items-center gap-2"
+            >
+              {menuChat.chat.muted ? <Bell size={16} className="text-brand-dark" /> : <BellOff size={16} className="text-brand-dark" />}
+              {menuChat.chat.muted ? "Включить уведомления" : "Заглушить"}
+            </button>
+            <button
+              onClick={() => {
+                patchMembership(menuChat.chat.id, { archived: !menuChat.chat.archived });
+                setMenuChat(null);
+              }}
+              className="w-full text-left px-3 py-2 text-sm hover:bg-cream dark:hover:bg-slate-700 flex items-center gap-2"
+            >
+              {menuChat.chat.archived ? <ArchiveRestore size={16} className="text-brand-dark" /> : <Archive size={16} className="text-brand-dark" />}
+              {menuChat.chat.archived ? "Из архива" : "В архив"}
+            </button>
+          </div>
+        </>
+      )}
     </aside>
   );
 }
