@@ -40,8 +40,37 @@ model User {
   callsReceived      Call[]            @relation("CallCallee")
   stories            Story[]
   storyViews         StoryView[]
+  folders            ChatFolder[]
 
   @@map("users")
+}
+
+model ChatFolder {
+  id        String   @id @default(uuid())
+  userId    String
+  name      String
+  emoji     String?
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+
+  user    User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  entries ChatFolderEntry[]
+
+  @@index([userId, order])
+  @@map("chat_folders")
+}
+
+model ChatFolderEntry {
+  id       String @id @default(uuid())
+  folderId String
+  chatId   String
+
+  folder ChatFolder @relation(fields: [folderId], references: [id], onDelete: Cascade)
+  chat   Chat       @relation(fields: [chatId], references: [id], onDelete: Cascade)
+
+  @@unique([folderId, chatId])
+  @@index([chatId])
+  @@map("chat_folder_entries")
 }
 
 enum CallStatus {
@@ -178,10 +207,11 @@ model Chat {
   pinnedMessageId String?
   createdAt       DateTime @default(now())
 
-  members  ChatMember[]
-  messages Message[]
-  reads    ChatRead[]
-  polls    Poll[]
+  members        ChatMember[]
+  messages       Message[]
+  reads          ChatRead[]
+  polls          Poll[]
+  folderEntries  ChatFolderEntry[]
 
   @@map("chats")
 }

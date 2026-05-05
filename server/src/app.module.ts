@@ -15,6 +15,7 @@ import { BlocksModule } from './blocks/blocks.module';
 import { CallsModule } from './calls/calls.module';
 import { StoriesModule } from './stories/stories.module';
 import { AiModule } from './ai/ai.module';
+import { FoldersModule } from './folders/folders.module';
 
 @Module({
   imports: [
@@ -33,6 +34,7 @@ import { AiModule } from './ai/ai.module';
     CallsModule,
     StoriesModule,
     AiModule,
+    FoldersModule,
   ],
   controllers: [HealthController],
 })

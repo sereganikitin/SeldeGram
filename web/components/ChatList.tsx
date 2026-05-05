@@ -7,7 +7,7 @@ import { useAuth } from "@/lib/store";
 import { useWs, type WsState } from "@/lib/ws";
 import { Avatar } from "./Avatar";
 import { IconButton } from "./IconButton";
-import { Plus, Smile, Phone, User, Megaphone, Users, Bookmark, Pin, Bell, BellOff, Archive, ArchiveRestore } from "lucide-react";
+import { Plus, Smile, Phone, User, Megaphone, Users, Bookmark, Pin, Bell, BellOff, Archive, ArchiveRestore, FolderPlus, Folder, X as XIcon } from "lucide-react";
 import { formatTime, messagePreview } from "@/lib/helpers";
 import { StoriesBar } from "./StoriesBar";
 
@@ -33,6 +33,39 @@ export function ChatList({ selectedId, onSelect, onLogout, onNewChat, onOpenStic
   const [search, setSearch] = useState("");
   const [showArchived, setShowArchived] = useState(false);
   const [menuChat, setMenuChat] = useState<{ chat: Chat; x: number; y: number } | null>(null);
+  const [folders, setFolders] = useState<Array<{ id: string; name: string; emoji: string | null; chatIds: string[] }>>([]);
+  const [activeFolder, setActiveFolder] = useState<string | null>(null); // null = «Все»
+
+  const loadFolders = useCallback(async () => {
+    try {
+      const { data } = await api.get<typeof folders>("/folders");
+      setFolders(data);
+    } catch {}
+  }, []);
+  useEffect(() => { loadFolders(); }, [loadFolders]);
+
+  const createFolder = async () => {
+    const name = prompt("Название папки:");
+    if (!name?.trim()) return;
+    const { data } = await api.post<{ id: string; name: string; emoji: string | null; chatIds: string[] }>("/folders", { name: name.trim() });
+    setFolders((p) => [...p, { ...data, chatIds: [] }]);
+  };
+
+  const toggleChatInFolder = async (folderId: string, chatId: string, isInFolder: boolean) => {
+    if (isInFolder) {
+      await api.delete(`/folders/${folderId}/chats/${chatId}`);
+    } else {
+      await api.post(`/folders/${folderId}/chats/${chatId}`);
+    }
+    loadFolders();
+  };
+
+  const deleteFolder = async (folderId: string) => {
+    if (!confirm("Удалить папку?")) return;
+    await api.delete(`/folders/${folderId}`);
+    setFolders((p) => p.filter((f) => f.id !== folderId));
+    if (activeFolder === folderId) setActiveFolder(null);
+  };
 
   const patchMembership = async (chatId: string, patch: { pinned?: boolean; muted?: boolean; archived?: boolean }) => {
     setChats((prev) => prev.map((c) => (c.id === chatId ? { ...c, ...patch } : c)));
@@ -105,9 +138,11 @@ export function ChatList({ selectedId, onSelect, onLogout, onNewChat, onOpenStic
     [onDeleted],
   );
 
-  // Сначала фильтруем архив, потом — saved/pinned сверху
+  // Сначала фильтруем архив, потом папка, потом поиск, потом — saved/pinned сверху
+  const activeFolderObj = activeFolder ? folders.find((f) => f.id === activeFolder) : null;
   const filtered = chats
     .filter((c) => (showArchived ? c.archived : !c.archived))
+    .filter((c) => (activeFolderObj ? activeFolderObj.chatIds.includes(c.id) : true))
     .filter((c) => (c.title ?? "").toLowerCase().includes(search.toLowerCase()))
     .sort((a, b) => {
       if (a.type === "saved" && b.type !== "saved") return -1;
@@ -134,6 +169,38 @@ export function ChatList({ selectedId, onSelect, onLogout, onNewChat, onOpenStic
       </header>
 
       <StoriesBar />
+
+      <div className="flex gap-1 overflow-x-auto px-2 py-2 border-b border-cream-border dark:border-slate-800 bg-white dark:bg-slate-950">
+        <button
+          onClick={() => setActiveFolder(null)}
+          className={`flex-shrink-0 px-3 py-1 rounded-full text-sm font-medium transition ${
+            activeFolder === null ? "bg-gradient-to-br from-brand to-brand-dark text-white" : "bg-cream-alt text-ink-muted hover:bg-cream-border dark:bg-slate-800 dark:text-ink-muted"
+          }`}
+        >
+          Все
+        </button>
+        {folders.map((f) => (
+          <button
+            key={f.id}
+            onClick={() => setActiveFolder(f.id)}
+            onContextMenu={(e) => { e.preventDefault(); deleteFolder(f.id); }}
+            className={`flex-shrink-0 px-3 py-1 rounded-full text-sm font-medium transition flex items-center gap-1 ${
+              activeFolder === f.id ? "bg-gradient-to-br from-brand to-brand-dark text-white" : "bg-cream-alt text-ink-muted hover:bg-cream-border dark:bg-slate-800 dark:text-ink-muted"
+            }`}
+            title="Правый клик — удалить"
+          >
+            {f.emoji && <span>{f.emoji}</span>}
+            {f.name}
+          </button>
+        ))}
+        <button
+          onClick={createFolder}
+          className="flex-shrink-0 w-7 h-7 rounded-full bg-cream-alt hover:bg-cream-border dark:bg-slate-800 text-brand-dark flex items-center justify-center"
+          title="Новая папка"
+        >
+          <FolderPlus size={14} />
+        </button>
+      </div>
 
       <div className="p-3 border-b border-cream-border dark:border-slate-800">
         <input
@@ -256,6 +323,29 @@ export function ChatList({ selectedId, onSelect, onLogout, onNewChat, onOpenStic
               {menuChat.chat.archived ? <ArchiveRestore size={16} className="text-brand-dark" /> : <Archive size={16} className="text-brand-dark" />}
               {menuChat.chat.archived ? "Из архива" : "В архив"}
             </button>
+            {folders.length > 0 && (
+              <>
+                <div className="border-t border-cream-border dark:border-slate-700 my-1" />
+                <div className="px-3 py-1 text-[11px] text-ink-muted uppercase tracking-wider">Папки</div>
+                {folders.map((f) => {
+                  const inFolder = f.chatIds.includes(menuChat.chat.id);
+                  return (
+                    <button
+                      key={f.id}
+                      onClick={() => {
+                        toggleChatInFolder(f.id, menuChat.chat.id, inFolder);
+                        setMenuChat(null);
+                      }}
+                      className="w-full text-left px-3 py-2 text-sm hover:bg-cream dark:hover:bg-slate-700 flex items-center gap-2"
+                    >
+                      <Folder size={16} className="text-brand-dark" />
+                      {f.emoji ?? ""} {f.name}
+                      {inFolder && <XIcon size={14} className="ml-auto text-ink-muted" />}
+                    </button>
+                  );
+                })}
+              </>
+            )}
           </div>
         </>
       )}

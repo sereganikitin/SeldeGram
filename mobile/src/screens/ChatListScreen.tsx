@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { View, Text, FlatList, StyleSheet, Pressable, RefreshControl, Alert } from 'react-native';
+import { View, Text, FlatList, StyleSheet, Pressable, RefreshControl, Alert, ScrollView } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation';
@@ -11,7 +11,7 @@ import { Avatar } from '../ui/Avatar';
 import { messagePreview, formatTime } from '../helpers';
 import { useColors } from '../theme';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Megaphone, Users, Smile, User, Plus, Phone, Bookmark, Pin, BellOff, Archive, ArchiveRestore } from 'lucide-react-native';
+import { Megaphone, Users, Smile, User, Plus, Phone, Bookmark, Pin, BellOff, Archive, ArchiveRestore, FolderPlus, Folder } from 'lucide-react-native';
 import { StoriesBar } from '../ui/StoriesBar';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'ChatList'>;
@@ -22,6 +22,54 @@ export function ChatListScreen({ navigation }: Props) {
   const [chats, setChats] = useState<Chat[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [showArchived, setShowArchived] = useState(false);
+  const [folders, setFolders] = useState<Array<{ id: string; name: string; emoji: string | null; chatIds: string[] }>>([]);
+  const [activeFolder, setActiveFolder] = useState<string | null>(null);
+
+  const loadFolders = useCallback(async () => {
+    try {
+      const { data } = await api.get<typeof folders>('/folders');
+      setFolders(data);
+    } catch {}
+  }, []);
+
+  useFocusEffect(useCallback(() => { loadFolders(); }, [loadFolders]));
+
+  const createFolder = () => {
+    Alert.prompt('Новая папка', 'Название', async (name) => {
+      if (!name?.trim()) return;
+      try {
+        const { data } = await api.post('/folders', { name: name.trim() });
+        setFolders((p) => [...p, { ...data, chatIds: [] }]);
+      } catch (e: any) {
+        Alert.alert('Ошибка', e.response?.data?.message ?? e.message);
+      }
+    });
+  };
+
+  const toggleChatInFolder = async (folderId: string, chatId: string, isInFolder: boolean) => {
+    try {
+      if (isInFolder) await api.delete(`/folders/${folderId}/chats/${chatId}`);
+      else await api.post(`/folders/${folderId}/chats/${chatId}`);
+      loadFolders();
+    } catch {}
+  };
+
+  const askDeleteFolder = (folderId: string) => {
+    Alert.alert('Удалить папку?', '', [
+      { text: 'Отмена', style: 'cancel' },
+      {
+        text: 'Удалить',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            await api.delete(`/folders/${folderId}`);
+            setFolders((p) => p.filter((f) => f.id !== folderId));
+            if (activeFolder === folderId) setActiveFolder(null);
+          } catch {}
+        },
+      },
+    ]);
+  };
 
   const patchMembership = async (chatId: string, patch: { pinned?: boolean; muted?: boolean; archived?: boolean }) => {
     setChats((prev) => prev.map((c) => (c.id === chatId ? { ...c, ...patch } : c)));
@@ -31,7 +79,7 @@ export function ChatListScreen({ navigation }: Props) {
   };
 
   const showChatMenu = (chat: Chat) => {
-    Alert.alert(chat.type === 'saved' ? 'Избранное' : chat.title ?? '', undefined, [
+    const opts: Array<{ text: string; onPress?: () => void; style?: 'cancel' | 'destructive' }> = [
       {
         text: chat.pinned ? 'Открепить' : 'Закрепить',
         onPress: () => patchMembership(chat.id, { pinned: !chat.pinned }),
@@ -44,8 +92,26 @@ export function ChatListScreen({ navigation }: Props) {
         text: chat.archived ? 'Из архива' : 'В архив',
         onPress: () => patchMembership(chat.id, { archived: !chat.archived }),
       },
-      { text: 'Отмена', style: 'cancel' },
-    ]);
+    ];
+    if (folders.length > 0) {
+      opts.push({
+        text: 'В папку...',
+        onPress: () => {
+          Alert.alert('Папки', '', [
+            ...folders.map((f) => {
+              const inFolder = f.chatIds.includes(chat.id);
+              return {
+                text: `${inFolder ? '✓ ' : ''}${f.emoji ?? ''} ${f.name}`.trim(),
+                onPress: () => toggleChatInFolder(f.id, chat.id, inFolder),
+              };
+            }),
+            { text: 'Отмена', style: 'cancel' as const },
+          ]);
+        },
+      });
+    }
+    opts.push({ text: 'Отмена', style: 'cancel' });
+    Alert.alert(chat.type === 'saved' ? 'Избранное' : chat.title ?? '', undefined, opts);
   };
   const meId = useAuth((s) => s.user?.id);
   const logout = useAuth((s) => s.logout);
@@ -143,6 +209,11 @@ export function ChatListScreen({ navigation }: Props) {
       <FlatList
         data={[...chats]
           .filter((c) => (showArchived ? c.archived : !c.archived))
+          .filter((c) => {
+            if (!activeFolder) return true;
+            const f = folders.find((x) => x.id === activeFolder);
+            return f ? f.chatIds.includes(c.id) : true;
+          })
           .sort((a, b) => {
             if (a.type === 'saved' && b.type !== 'saved') return -1;
             if (a.type !== 'saved' && b.type === 'saved') return 1;
@@ -156,6 +227,48 @@ export function ChatListScreen({ navigation }: Props) {
         ListHeaderComponent={
           <>
             <StoriesBar />
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={{ paddingHorizontal: 8, paddingVertical: 8, gap: 6 }}
+              style={{ borderBottomWidth: 1, borderBottomColor: colors.border, backgroundColor: colors.surface }}
+            >
+              <Pressable
+                onPress={() => setActiveFolder(null)}
+                style={{
+                  paddingHorizontal: 12,
+                  paddingVertical: 6,
+                  borderRadius: 16,
+                  backgroundColor: activeFolder === null ? colors.primary : colors.surfaceAlt,
+                }}
+              >
+                <Text style={{ color: activeFolder === null ? '#fff' : colors.textMuted, fontWeight: '600', fontSize: 13 }}>Все</Text>
+              </Pressable>
+              {folders.map((f) => (
+                <Pressable
+                  key={f.id}
+                  onPress={() => setActiveFolder(f.id)}
+                  onLongPress={() => askDeleteFolder(f.id)}
+                  delayLongPress={350}
+                  style={{
+                    paddingHorizontal: 12,
+                    paddingVertical: 6,
+                    borderRadius: 16,
+                    backgroundColor: activeFolder === f.id ? colors.primary : colors.surfaceAlt,
+                  }}
+                >
+                  <Text style={{ color: activeFolder === f.id ? '#fff' : colors.textMuted, fontWeight: '600', fontSize: 13 }}>
+                    {f.emoji ? `${f.emoji} ` : ''}{f.name}
+                  </Text>
+                </Pressable>
+              ))}
+              <Pressable
+                onPress={createFolder}
+                style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: colors.surfaceAlt, alignItems: 'center', justifyContent: 'center' }}
+              >
+                <FolderPlus size={14} color={colors.primary} />
+              </Pressable>
+            </ScrollView>
             {chats.some((c) => c.archived) && (
               <Pressable
                 onPress={() => setShowArchived((v) => !v)}
