@@ -666,6 +666,53 @@ export class ChatsService {
     };
   }
 
+  async shareLocation(chatId: string, userId: string, lat: number, lng: number, liveSec?: number) {
+    await this.assertMember(chatId, userId);
+    if (typeof lat !== 'number' || typeof lng !== 'number') {
+      throw new ForbiddenException('Bad coordinates');
+    }
+    const liveUntil = liveSec && liveSec > 0
+      ? new Date(Date.now() + Math.min(liveSec, 60 * 60) * 1000)
+      : null;
+    const message = await this.prisma.message.create({
+      data: {
+        chatId,
+        senderId: userId,
+        content: '',
+        locationLat: lat,
+        locationLng: lng,
+        locationLiveUntil: liveUntil,
+      },
+      include: messageInclude,
+    });
+    const members = await this.prisma.chatMember.findMany({
+      where: { chatId },
+      select: { userId: true },
+    });
+    this.hub.sendToUsers(members.map((m) => m.userId), { type: 'message:new', payload: message });
+    return message;
+  }
+
+  async updateLocation(chatId: string, messageId: string, userId: string, lat: number, lng: number) {
+    const msg = await this.prisma.message.findUnique({ where: { id: messageId } });
+    if (!msg || msg.chatId !== chatId) throw new NotFoundException();
+    if (msg.senderId !== userId) throw new ForbiddenException();
+    if (!msg.locationLiveUntil || msg.locationLiveUntil < new Date()) {
+      throw new ForbiddenException('Live window expired');
+    }
+    const updated = await this.prisma.message.update({
+      where: { id: messageId },
+      data: { locationLat: lat, locationLng: lng },
+      include: messageInclude,
+    });
+    const members = await this.prisma.chatMember.findMany({
+      where: { chatId },
+      select: { userId: true },
+    });
+    this.hub.sendToUsers(members.map((m) => m.userId), { type: 'message:edited', payload: updated });
+    return updated;
+  }
+
   async updateMembership(
     chatId: string,
     userId: string,

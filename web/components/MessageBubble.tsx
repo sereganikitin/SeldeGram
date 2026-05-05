@@ -5,7 +5,7 @@ import { Message } from "@/lib/types";
 import { formatTime, messagePreview, getMediaUrl, groupReactions } from "@/lib/helpers";
 import { AudioPlayer } from "./AudioPlayer";
 import { PollBubble } from "./PollBubble";
-import { Reply, Pin, MessageSquare, Copy, Pencil, Trash2, FileText, MoreHorizontal, Share2, Check, CheckCheck, Languages, Timer, Bookmark } from "lucide-react";
+import { Reply, Pin, MessageSquare, Copy, Pencil, Trash2, FileText, MoreHorizontal, Share2, Check, CheckCheck, Languages, Timer, Bookmark, MapPin } from "lucide-react";
 
 interface Props {
   message: Message;
@@ -211,6 +211,14 @@ export function MessageBubble({ message, mine, showSenderName, senderName, isRea
         ) : (
           <>
             <MediaContent message={message} mine={mine} />
+            {message.locationLat != null && message.locationLng != null ? (
+              <LocationBubble
+                lat={message.locationLat}
+                lng={message.locationLng}
+                liveUntil={message.locationLiveUntil ?? null}
+                mine={mine}
+              />
+            ) : null}
             {message.content?.startsWith("📊 ") ? (
               <PollBubble messageId={message.id} mine={mine} />
             ) : message.content ? (
@@ -267,6 +275,31 @@ export function MessageBubble({ message, mine, showSenderName, senderName, isRea
       {menuOpen && (
         <ActionMenu mine={mine} hasContent={!!message.content && !isDeleted} canComment={canComment} onAction={(a) => { setMenuOpen(false); onAction(a); }} onClose={() => setMenuOpen(false)} />
       )}
+    </div>
+  );
+}
+
+function LocationBubble({ lat, lng, liveUntil, mine }: { lat: number; lng: number; liveUntil: string | null; mine: boolean }) {
+  const isLive = liveUntil && new Date(liveUntil) > new Date();
+  const bbox = `${lng - 0.005},${lat - 0.003},${lng + 0.005},${lat + 0.003}`;
+  const src = `https://www.openstreetmap.org/export/embed.html?bbox=${bbox}&layer=mapnik&marker=${lat},${lng}`;
+  const link = `https://www.openstreetmap.org/?mlat=${lat}&mlon=${lng}#map=16/${lat}/${lng}`;
+  return (
+    <div className="my-1 w-64">
+      <iframe
+        src={src}
+        title="map"
+        className="w-full h-40 rounded-lg border-0"
+      />
+      <a
+        href={link}
+        target="_blank"
+        rel="noreferrer"
+        className={`mt-1 flex items-center gap-1 text-xs ${mine ? "text-white/90" : "text-brand-dark"} hover:underline`}
+      >
+        <MapPin size={12} />
+        {isLive ? "В реальном времени · открыть" : "Открыть на карте"}
+      </a>
     </div>
   );
 }

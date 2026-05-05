@@ -17,7 +17,7 @@ import { formatDateLabel, messagePreview, lastSeenText } from "@/lib/helpers";
 import { uploadFile } from "@/lib/media";
 import { useCall } from "@/lib/call";
 import { IconButton } from "./IconButton";
-import { Phone, Video, Search, Info, Megaphone, Users, ArrowLeft, Pin, X, Paperclip, Smile, Mic, Send, Check, BarChart3, Keyboard, Sparkles, Timer } from "lucide-react";
+import { Phone, Video, Search, Info, Megaphone, Users, ArrowLeft, Pin, X, Paperclip, Smile, Mic, Send, Check, BarChart3, Keyboard, Sparkles, Timer, MapPin } from "lucide-react";
 
 interface Props {
   chat: Chat;
@@ -577,6 +577,34 @@ export function ChatView({ chat, onBack, onChatGone, onOpenStickers }: Props) {
               onClick={() => fileInputRef.current?.click()}
               disabled={uploading || !!editingId}
               title="Прикрепить"
+              className="flex-shrink-0 disabled:opacity-40"
+            />
+            <IconButton
+              icon={MapPin}
+              size="md"
+              variant="ghost"
+              onClick={() => {
+                if (!navigator.geolocation) {
+                  alert("Геолокация не поддерживается в этом браузере");
+                  return;
+                }
+                const liveStr = prompt("Поделиться местом — на сколько минут? (0 = просто пин, 15 / 60 = live)");
+                if (liveStr === null) return;
+                const live = parseInt(liveStr, 10);
+                navigator.geolocation.getCurrentPosition(
+                  (pos) => {
+                    api.post(`/chats/${chat.id}/location`, {
+                      lat: pos.coords.latitude,
+                      lng: pos.coords.longitude,
+                      ...(Number.isFinite(live) && live > 0 ? { liveSec: live * 60 } : {}),
+                    }).catch(() => alert("Не получилось"));
+                  },
+                  (err) => alert(`Геолокация: ${err.message}`),
+                  { enableHighAccuracy: true, timeout: 10_000 },
+                );
+              }}
+              disabled={!!editingId}
+              title="Поделиться местом"
               className="flex-shrink-0 disabled:opacity-40"
             />
             <IconButton

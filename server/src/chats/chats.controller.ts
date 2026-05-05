@@ -37,6 +37,27 @@ export class ChatsController {
     return this.chats.getOrCreateSaved(req.user.userId);
   }
 
+  @Post(':id/location')
+  @HttpCode(200)
+  shareLocation(
+    @Req() req: { user: { userId: string } },
+    @Param('id') chatId: string,
+    @Body() body: { lat: number; lng: number; liveSec?: number },
+  ) {
+    return this.chats.shareLocation(chatId, req.user.userId, body.lat, body.lng, body.liveSec);
+  }
+
+  @Patch(':id/messages/:messageId/location')
+  @HttpCode(200)
+  updateLocation(
+    @Req() req: { user: { userId: string } },
+    @Param('id') chatId: string,
+    @Param('messageId') messageId: string,
+    @Body() body: { lat: number; lng: number },
+  ) {
+    return this.chats.updateLocation(chatId, messageId, req.user.userId, body.lat, body.lng);
+  }
+
   @Patch(':id/membership')
   @HttpCode(200)
   updateMembership(

@@ -253,6 +253,9 @@ model Message {
   editedAt        DateTime?
   deletedAt       DateTime?
   expiresAt       DateTime?
+  locationLat     Float?
+  locationLng     Float?
+  locationLiveUntil DateTime?
   createdAt       DateTime  @default(now())
 
   chat          Chat      @relation(fields: [chatId], references: [id], onDelete: Cascade)

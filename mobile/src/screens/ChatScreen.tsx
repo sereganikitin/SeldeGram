@@ -15,6 +15,7 @@ import {
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import * as DocumentPicker from 'expo-document-picker';
+import * as Location from 'expo-location';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation';
 import { api } from '../api';
@@ -480,11 +481,40 @@ export function ChatScreen({ route, navigation }: Props) {
     });
   };
 
+  const shareLocation = async (liveSec: number | null) => {
+    try {
+      const perm = await Location.requestForegroundPermissionsAsync();
+      if (perm.status !== 'granted') {
+        Alert.alert('Доступ не разрешён', 'Включите геолокацию в настройках.');
+        return;
+      }
+      const pos = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High });
+      await api.post(`/chats/${chatId}/location`, {
+        lat: pos.coords.latitude,
+        lng: pos.coords.longitude,
+        ...(liveSec ? { liveSec } : {}),
+      });
+    } catch (e: any) {
+      Alert.alert('Ошибка', e.response?.data?.message ?? e.message ?? 'Ошибка');
+    }
+  };
+
   const showAttach = () => {
     Alert.alert('Прикрепить', undefined, [
       { text: 'Фото', onPress: pickImage },
       { text: 'Файл', onPress: pickFile },
       { text: 'Опрос', onPress: createPoll },
+      {
+        text: 'Местоположение',
+        onPress: () => {
+          Alert.alert('Поделиться местом', undefined, [
+            { text: 'Просто пин', onPress: () => shareLocation(null) },
+            { text: 'Live 15 минут', onPress: () => shareLocation(15 * 60) },
+            { text: 'Live 60 минут', onPress: () => shareLocation(60 * 60) },
+            { text: 'Отмена', style: 'cancel' },
+          ]);
+        },
+      },
       { text: 'Отмена', style: 'cancel' },
     ]);
   };

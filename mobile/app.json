@@ -17,7 +17,8 @@
       "bundleIdentifier": "ru.infoseledka.seldegram",
       "infoPlist": {
         "NSMicrophoneUsageDescription": "CraboGram использует микрофон во время голосовых звонков и голосовых сообщений.",
-        "NSCameraUsageDescription": "CraboGram использует камеру для видеозвонков и загрузки фото."
+        "NSCameraUsageDescription": "CraboGram использует камеру для видеозвонков и загрузки фото.",
+        "NSLocationWhenInUseUsageDescription": "CraboGram использует геолокацию для функции «поделиться местом» в чате."
       }
     },
     "android": {
@@ -34,7 +35,9 @@
         "android.permission.INTERNET",
         "android.permission.WAKE_LOCK",
         "android.permission.BLUETOOTH",
-        "android.permission.BLUETOOTH_CONNECT"
+        "android.permission.BLUETOOTH_CONNECT",
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.ACCESS_COARSE_LOCATION"
       ]
     },
     "web": {

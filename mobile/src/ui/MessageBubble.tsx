@@ -1,12 +1,12 @@
 import React from 'react';
-import { View, Text, StyleSheet, Pressable } from 'react-native';
+import { View, Text, StyleSheet, Pressable, Linking } from 'react-native';
 import { Message, ChatMember } from '../types';
 import { MediaBubble } from './MediaBubble';
 import { StickerImage } from './StickerImage';
 import { AudioPlayer } from './AudioPlayer';
 import { PollBubble } from './PollBubble';
 import { formatTime, messagePreview, groupReactions } from '../helpers';
-import { Check, CheckCheck, Share2, Timer } from 'lucide-react-native';
+import { Check, CheckCheck, Share2, Timer, MapPin } from 'lucide-react-native';
 
 interface Props {
   message: Message;
@@ -95,6 +95,32 @@ export function MessageBubble({
               mine={mine}
             />
           ) : null}
+          {message.locationLat != null && message.locationLng != null && (
+            <Pressable
+              onPress={() => Linking.openURL(`https://www.openstreetmap.org/?mlat=${message.locationLat}&mlon=${message.locationLng}#map=16/${message.locationLat}/${message.locationLng}`)}
+              style={{
+                marginVertical: 4,
+                padding: 12,
+                borderRadius: 12,
+                backgroundColor: mine ? 'rgba(255,255,255,0.15)' : '#ffffff80',
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 8,
+              }}
+            >
+              <MapPin size={20} color={mine ? '#fff' : '#e84e76'} />
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontWeight: '700', color: mine ? '#fff' : '#3d1a28' }}>
+                  {message.locationLiveUntil && new Date(message.locationLiveUntil) > new Date()
+                    ? 'В реальном времени'
+                    : 'Местоположение'}
+                </Text>
+                <Text style={{ fontSize: 11, color: mine ? 'rgba(255,255,255,0.7)' : '#8c6471' }}>
+                  Нажмите, чтобы открыть в картах
+                </Text>
+              </View>
+            </Pressable>
+          )}
           {isPoll ? (
             <PollBubble messageId={message.id} mine={mine} />
           ) : message.content ? (

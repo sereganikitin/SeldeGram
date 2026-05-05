@@ -44,6 +44,9 @@ export interface Message {
   editedAt?: string | null;
   deletedAt?: string | null;
   expiresAt?: string | null;
+  locationLat?: number | null;
+  locationLng?: number | null;
+  locationLiveUntil?: string | null;
   reactions?: Array<{ emoji: string; userId: string }>;
   createdAt: string;
 }
