@@ -516,6 +516,17 @@ export function ChatScreen({ route, navigation }: Props) {
         },
       });
       options.push({
+        text: 'В избранное',
+        onPress: async () => {
+          try {
+            const { data: saved } = await api.post('/chats/saved');
+            await api.post(`/chats/${saved.id}/messages`, { forwardedFromId: msg.id });
+          } catch (e: any) {
+            Alert.alert('Не получилось', e.response?.data?.message ?? e.message ?? 'Ошибка');
+          }
+        },
+      });
+      options.push({
         text: 'Перевести',
         onPress: () => {
           setAi({ visible: true, title: 'Перевод', text: '', loading: true });

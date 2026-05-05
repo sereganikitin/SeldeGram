@@ -327,7 +327,7 @@ export function ChatView({ chat, onBack, onChatGone, onOpenStickers }: Props) {
   const [ttlSec, setTtlSec] = useState<number | null>(null);
   const [ttlMenuOpen, setTtlMenuOpen] = useState(false);
 
-  const handleAction = (msg: Message) => (action: "reply" | "edit" | "delete" | "copy" | "pin" | "thread" | "translate") => {
+  const handleAction = (msg: Message) => (action: "reply" | "edit" | "delete" | "copy" | "pin" | "thread" | "translate" | "save") => {
     if (action === "reply") setReplyTo(msg);
     else if (action === "copy") navigator.clipboard?.writeText(msg.content).catch(() => {});
     else if (action === "edit") {
@@ -345,6 +345,10 @@ export function ChatView({ chat, onBack, onChatGone, onOpenStickers }: Props) {
       }
     } else if (action === "thread") {
       setThreadParent(msg);
+    } else if (action === "save") {
+      api.post<Chat>("/chats/saved").then(({ data: saved }) => {
+        return api.post(`/chats/${saved.id}/messages`, { forwardedFromId: msg.id });
+      }).catch(() => {});
     } else if (action === "translate") {
       setAiOverlay({ title: "Перевод", text: "", loading: true });
       api.post<{ translated: string }>("/ai/translate", { messageId: msg.id, lang: "русский" })

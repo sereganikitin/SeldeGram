@@ -7,7 +7,7 @@ import { useAuth } from "@/lib/store";
 import { useWs, type WsState } from "@/lib/ws";
 import { Avatar } from "./Avatar";
 import { IconButton } from "./IconButton";
-import { Plus, Smile, Phone, User, Megaphone, Users } from "lucide-react";
+import { Plus, Smile, Phone, User, Megaphone, Users, Bookmark } from "lucide-react";
 import { formatTime, messagePreview } from "@/lib/helpers";
 import { StoriesBar } from "./StoriesBar";
 
@@ -94,7 +94,14 @@ export function ChatList({ selectedId, onSelect, onLogout, onNewChat, onOpenStic
     [onDeleted],
   );
 
-  const filtered = chats.filter((c) => (c.title ?? "").toLowerCase().includes(search.toLowerCase()));
+  // Saved-чаты всегда сверху
+  const filtered = chats
+    .filter((c) => (c.title ?? "").toLowerCase().includes(search.toLowerCase()))
+    .sort((a, b) => {
+      if (a.type === "saved" && b.type !== "saved") return -1;
+      if (a.type !== "saved" && b.type === "saved") return 1;
+      return 0;
+    });
 
   return (
     <aside className="w-full md:w-80 lg:w-96 border-r border-cream-border dark:border-slate-800 flex flex-col bg-white dark:bg-slate-950 overflow-x-hidden">
@@ -138,13 +145,20 @@ export function ChatList({ selectedId, onSelect, onLogout, onNewChat, onOpenStic
                 selectedId === chat.id ? "bg-brand/10 dark:bg-brand/20" : ""
               }`}
             >
-              <Avatar id={other?.id ?? chat.id} name={chat.title ?? "?"} avatarKey={other?.avatarKey} size={48} />
+              {chat.type === "saved" ? (
+                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-brand to-brand-dark flex items-center justify-center flex-shrink-0">
+                  <Bookmark size={22} color="#fff" fill="#fff" />
+                </div>
+              ) : (
+                <Avatar id={other?.id ?? chat.id} name={chat.title ?? "?"} avatarKey={other?.avatarKey} size={48} />
+              )}
               <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between gap-2">
                   <div className="font-semibold truncate dark:text-white flex items-center gap-1">
                     {chat.type === "channel" && <Megaphone size={14} className="text-brand-dark flex-shrink-0" />}
                     {chat.type === "group" && <Users size={14} className="text-brand-dark flex-shrink-0" />}
-                    <span className="truncate">{chat.title}</span>
+                    {chat.type === "saved" && <Bookmark size={14} className="text-brand-dark flex-shrink-0" />}
+                    <span className="truncate">{chat.type === "saved" ? "Избранное" : chat.title}</span>
                   </div>
                   {chat.lastMessage && (
                     <div className="text-xs text-ink-muted dark:text-ink-muted flex-shrink-0">{formatTime(chat.lastMessage.createdAt)}</div>

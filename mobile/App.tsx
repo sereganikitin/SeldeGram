@@ -36,6 +36,8 @@ import { initCallBridge } from './src/store/call';
 import { useAuth } from './src/store/auth';
 import { useWs } from './src/store/ws';
 import { registerPushToken } from './src/push';
+import { api } from './src/api';
+import { useCall } from './src/store/call';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -58,7 +60,36 @@ export default function App() {
 
   useEffect(() => {
     const sub = Notifications.addNotificationResponseReceivedListener((response) => {
-      const data = response.notification.request.content.data as { chatId?: string } | undefined;
+      const data = response.notification.request.content.data as
+        | { chatId?: string; type?: string; callId?: string; kind?: 'audio' | 'video'; from?: { id: string; username: string; displayName: string; avatarKey: string | null } }
+        | undefined;
+
+      // Кнопки на push о звонке
+      if (data?.type === 'call' && data.callId) {
+        if (response.actionIdentifier === 'reject') {
+          // Просто отклоняем напрямую через API, без открытия приложения
+          api.post(`/calls/${data.callId}/reject`).catch(() => undefined);
+          return;
+        }
+        if (response.actionIdentifier === 'accept' && data.from && data.kind) {
+          // Кладём звонок в incoming-state так, чтобы CallOverlay подхватил
+          // и пользователь сразу попал в acceptIncoming. WS-reconnect
+          // подгрузит свежий offer при необходимости.
+          useCall.getState()._onIncoming({
+            callId: data.callId,
+            kind: data.kind,
+            from: data.from,
+            startedAt: new Date().toISOString(),
+          });
+          // Дождёмся открытия приложения и автоматически примем
+          setTimeout(() => useCall.getState().acceptIncoming().catch(() => undefined), 800);
+          return;
+        }
+        // Default tap (без кнопки) — просто открываем приложение, WS
+        // reconnect подкинет call:incoming через resendPendingIncomingCalls
+        return;
+      }
+
       if (data?.chatId && navRef.current?.isReady()) {
         navRef.current.navigate('Chat', { chatId: data.chatId, title: 'Чат' });
       }

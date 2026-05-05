@@ -5,7 +5,7 @@ import { Message } from "@/lib/types";
 import { formatTime, messagePreview, getMediaUrl, groupReactions } from "@/lib/helpers";
 import { AudioPlayer } from "./AudioPlayer";
 import { PollBubble } from "./PollBubble";
-import { Reply, Pin, MessageSquare, Copy, Pencil, Trash2, FileText, MoreHorizontal, Share2, Check, CheckCheck, Languages, Timer } from "lucide-react";
+import { Reply, Pin, MessageSquare, Copy, Pencil, Trash2, FileText, MoreHorizontal, Share2, Check, CheckCheck, Languages, Timer, Bookmark } from "lucide-react";
 
 interface Props {
   message: Message;
@@ -13,7 +13,7 @@ interface Props {
   showSenderName: boolean;
   senderName?: string;
   isRead: boolean;
-  onAction: (action: "reply" | "edit" | "delete" | "copy" | "pin" | "thread" | "translate") => void;
+  onAction: (action: "reply" | "edit" | "delete" | "copy" | "pin" | "thread" | "translate" | "save") => void;
   onReact?: (emoji: string) => void;
   canComment?: boolean;
 }
@@ -271,7 +271,7 @@ function ActionMenu({
   mine: boolean;
   hasContent: boolean;
   canComment?: boolean;
-  onAction: (a: "reply" | "edit" | "delete" | "copy" | "pin" | "thread" | "translate") => void;
+  onAction: (a: "reply" | "edit" | "delete" | "copy" | "pin" | "thread" | "translate" | "save") => void;
   onClose: () => void;
 }) {
   const menuRef = useRef<HTMLDivElement>(null);
@@ -324,6 +324,9 @@ function ActionMenu({
             <Languages size={16} className="text-brand-dark" /> Перевести
           </button>
         )}
+        <button onClick={() => onAction("save")} className="w-full text-left px-3 py-2 text-sm hover:bg-cream dark:hover:bg-slate-700 flex items-center gap-2">
+          <Bookmark size={16} className="text-brand-dark" /> В избранное
+        </button>
         {mine && hasContent && (
           <button onClick={() => onAction("edit")} className="w-full text-left px-3 py-2 text-sm hover:bg-cream dark:hover:bg-slate-700 flex items-center gap-2">
             <Pencil size={16} className="text-brand-dark" /> Изменить

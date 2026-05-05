@@ -11,7 +11,7 @@ import { Avatar } from '../ui/Avatar';
 import { messagePreview, formatTime } from '../helpers';
 import { useColors } from '../theme';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Megaphone, Users, Smile, User, Plus, Phone } from 'lucide-react-native';
+import { Megaphone, Users, Smile, User, Plus, Phone, Bookmark } from 'lucide-react-native';
 import { StoriesBar } from '../ui/StoriesBar';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'ChatList'>;
@@ -115,7 +115,11 @@ export function ChatListScreen({ navigation }: Props) {
   return (
     <View style={[styles.container, { backgroundColor: colors.bg }]}>
       <FlatList
-        data={chats}
+        data={[...chats].sort((a, b) => {
+          if (a.type === 'saved' && b.type !== 'saved') return -1;
+          if (a.type !== 'saved' && b.type === 'saved') return 1;
+          return 0;
+        })}
         keyExtractor={(c) => c.id}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.text} />}
         ListHeaderComponent={<StoriesBar />}
@@ -139,14 +143,21 @@ export function ChatListScreen({ navigation }: Props) {
                 pressed && { backgroundColor: colors.surfaceAlt },
               ]}
             >
-              <Avatar id={avatarId} name={item.title ?? '?'} avatarKey={avatarKey} size={48} />
+              {item.type === 'saved' ? (
+                <View style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center' }}>
+                  <Bookmark size={22} color="#fff" fill="#fff" />
+                </View>
+              ) : (
+                <Avatar id={avatarId} name={item.title ?? '?'} avatarKey={avatarKey} size={48} />
+              )}
               <View style={styles.rowMain}>
                 <View style={styles.rowTop}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1, gap: 4 }}>
                     {item.type === 'channel' && <Megaphone size={14} color={colors.primary} />}
                     {item.type === 'group' && <Users size={14} color={colors.primary} />}
+                    {item.type === 'saved' && <Bookmark size={14} color={colors.primary} />}
                     <Text style={[styles.title, { color: colors.text }]} numberOfLines={1}>
-                      {item.title}
+                      {item.type === 'saved' ? 'Избранное' : item.title}
                     </Text>
                   </View>
                   {item.lastMessage && (

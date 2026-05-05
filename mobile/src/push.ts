@@ -60,6 +60,20 @@ export async function registerPushToken() {
     });
   }
 
+  // Категория для входящего звонка с кнопками Принять/Отклонить
+  await Notifications.setNotificationCategoryAsync('CALL', [
+    {
+      identifier: 'accept',
+      buttonTitle: 'Принять',
+      options: { opensAppToForeground: true },
+    },
+    {
+      identifier: 'reject',
+      buttonTitle: 'Отклонить',
+      options: { opensAppToForeground: false, isDestructive: true },
+    },
+  ]);
+
   try {
     const projectId =
       Constants.expoConfig?.extra?.eas?.projectId ?? Constants.easConfig?.projectId;

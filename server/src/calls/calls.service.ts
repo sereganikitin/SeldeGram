@@ -72,7 +72,8 @@ export class CallsService {
         },
         channelId: 'calls',
         priority: 'high',
-        ttl: 30, // если устройство офлайн больше 30 сек — звонок неактуален
+        ttl: 30,
+        categoryId: 'CALL',
       }).catch(() => undefined);
     }
 

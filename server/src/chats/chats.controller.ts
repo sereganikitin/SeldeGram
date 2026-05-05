@@ -32,6 +32,11 @@ export class ChatsController {
     return this.chats.createDirect(req.user.userId, dto.username);
   }
 
+  @Post('saved')
+  getOrCreateSaved(@Req() req: { user: { userId: string } }) {
+    return this.chats.getOrCreateSaved(req.user.userId);
+  }
+
   @Post('group')
   createGroup(@Req() req: { user: { userId: string } }, @Body() dto: CreateGroupDto) {
     return this.chats.createGroup(req.user.userId, dto.title, dto.memberUsernames);

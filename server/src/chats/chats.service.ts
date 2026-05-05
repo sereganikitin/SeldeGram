@@ -62,6 +62,25 @@ export class ChatsService {
     return this.serializeChat(chat, userId);
   }
 
+  async getOrCreateSaved(userId: string) {
+    const existing = await this.prisma.chat.findFirst({
+      where: { type: 'saved', members: { some: { userId } } },
+      include: { members: { include: { user: { select: { id: true, username: true, displayName: true, avatarKey: true, isOnline: true, lastSeenAt: true } } } } },
+    });
+    if (existing) return this.serializeChat(existing, userId);
+
+    const chat = await this.prisma.chat.create({
+      data: {
+        type: 'saved',
+        title: 'Избранное',
+        members: { create: [{ userId, role: 'admin' }] },
+      },
+      include: { members: { include: { user: { select: { id: true, username: true, displayName: true, avatarKey: true, isOnline: true, lastSeenAt: true } } } } },
+    });
+    this.hub.sendToUser(userId, { type: 'chat:updated', payload: { chatId: chat.id } });
+    return this.serializeChat(chat, userId);
+  }
+
   async listForUser(userId: string) {
     const chats = await this.prisma.chat.findMany({
       where: { members: { some: { userId } } },

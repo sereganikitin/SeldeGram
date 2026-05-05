@@ -10,6 +10,7 @@ interface PushPayload {
   channelId?: string;
   priority?: 'default' | 'normal' | 'high';
   ttl?: number; // секунды
+  categoryId?: string; // iOS category, для action buttons
 }
 
 @Injectable()
@@ -57,6 +58,7 @@ export class PushService {
       ...(payload.channelId ? { channelId: payload.channelId } : {}),
       ...(payload.priority ? { priority: payload.priority } : {}),
       ...(payload.ttl != null ? { ttl: payload.ttl } : {}),
+      ...(payload.categoryId ? { categoryId: payload.categoryId } : {}),
     }));
 
     try {
