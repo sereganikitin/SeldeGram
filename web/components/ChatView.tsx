@@ -17,7 +17,7 @@ import { formatDateLabel, messagePreview, lastSeenText } from "@/lib/helpers";
 import { uploadFile } from "@/lib/media";
 import { useCall } from "@/lib/call";
 import { IconButton } from "./IconButton";
-import { Phone, Search, Info, Megaphone, Users, ArrowLeft, Pin, X, Paperclip, Smile, Mic, Send, Check, BarChart3, Keyboard, Sparkles, Timer } from "lucide-react";
+import { Phone, Video, Search, Info, Megaphone, Users, ArrowLeft, Pin, X, Paperclip, Smile, Mic, Send, Check, BarChart3, Keyboard, Sparkles, Timer } from "lucide-react";
 
 interface Props {
   chat: Chat;
@@ -420,19 +420,35 @@ export function ChatView({ chat, onBack, onChatGone, onOpenStickers }: Props) {
           </div>
         </button>
         {chat.type === "direct" && other && (
-          <IconButton
-            icon={Phone}
-            size="md"
-            onClick={() => {
-              useCall.getState().initiate({
-                id: other.id,
-                username: other.username,
-                displayName: other.displayName,
-                avatarKey: other.avatarKey ?? null,
-              }, "audio");
-            }}
-            title="Позвонить"
-          />
+          <>
+            <IconButton
+              icon={Phone}
+              size="md"
+              onClick={() => {
+                useCall.getState().initiate({
+                  id: other.id,
+                  username: other.username,
+                  displayName: other.displayName,
+                  avatarKey: other.avatarKey ?? null,
+                }, "audio");
+              }}
+              title="Аудиозвонок"
+            />
+            <IconButton
+              icon={Video}
+              size="md"
+              variant="ghost"
+              onClick={() => {
+                useCall.getState().initiate({
+                  id: other.id,
+                  username: other.username,
+                  displayName: other.displayName,
+                  avatarKey: other.avatarKey ?? null,
+                }, "video");
+              }}
+              title="Видеозвонок"
+            />
+          </>
         )}
         <IconButton icon={Sparkles} size="md" variant="ghost" onClick={summarizeChat} title="Краткое содержание (AI)" />
         <IconButton icon={Search} size="md" variant="ghost" onClick={() => setSearchOpen((v) => !v)} title="Поиск" />

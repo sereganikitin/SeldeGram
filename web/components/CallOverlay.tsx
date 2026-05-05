@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useCall } from "@/lib/call";
+import { useEffect, useRef, useState } from "react";
+import { useCall, getLocalCallStream, getRemoteCallStream } from "@/lib/call";
 import { Avatar } from "./Avatar";
 import { Phone, PhoneOff, Mic, MicOff, X, Check } from "lucide-react";
 
@@ -24,6 +24,17 @@ export function CallOverlay() {
   const reject = useCall((s) => s.rejectIncoming);
   const hangup = useCall((s) => s.hangup);
   const toggleMute = useCall((s) => s.toggleMute);
+  const remoteVer = useCall((s) => s.remoteStreamVersion);
+
+  const localVideoRef = useRef<HTMLVideoElement | null>(null);
+  const remoteVideoRef = useRef<HTMLVideoElement | null>(null);
+  const isVideo = kind === "video";
+
+  useEffect(() => {
+    if (!isVideo) return;
+    if (localVideoRef.current) localVideoRef.current.srcObject = getLocalCallStream();
+    if (remoteVideoRef.current) remoteVideoRef.current.srcObject = getRemoteCallStream();
+  }, [isVideo, state, remoteVer]);
 
   const [now, setNow] = useState(Date.now());
 
@@ -60,6 +71,51 @@ export function CallOverlay() {
           : acceptedAt
             ? formatDuration(now - acceptedAt)
             : "В разговоре";
+
+  // Видео-режим — фуллскрин с local превью в углу
+  if (isVideo && (state === "active" || state === "connecting")) {
+    return (
+      <div className="fixed inset-0 z-50 bg-black flex items-center justify-center">
+        {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
+        <video
+          ref={remoteVideoRef}
+          autoPlay
+          playsInline
+          className="w-full h-full object-contain"
+        />
+        {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
+        <video
+          ref={localVideoRef}
+          autoPlay
+          playsInline
+          muted
+          className="absolute top-4 right-4 w-32 h-44 object-cover rounded-xl border-2 border-white/40 shadow-lg"
+        />
+        <div className="absolute top-4 left-4 right-44 text-white">
+          <div className="font-bold text-lg drop-shadow">{peer.displayName || peer.username}</div>
+          <div className="text-sm opacity-90 drop-shadow">{statusLabel}</div>
+        </div>
+        <div className="absolute bottom-8 left-0 right-0 flex items-center justify-center gap-6">
+          <button
+            onClick={toggleMute}
+            className={`w-14 h-14 rounded-full flex items-center justify-center transition ${
+              muted ? "bg-white text-brand-dark" : "bg-white/20 hover:bg-white/30 text-white"
+            }`}
+            title={muted ? "Включить микрофон" : "Выключить микрофон"}
+          >
+            {muted ? <MicOff size={24} /> : <Mic size={24} />}
+          </button>
+          <button
+            onClick={hangup}
+            className="w-16 h-16 rounded-full bg-gradient-to-br from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 flex items-center justify-center text-white transition shadow-lg"
+            title="Завершить"
+          >
+            <PhoneOff size={28} />
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">

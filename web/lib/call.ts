@@ -24,6 +24,7 @@ interface CallStore {
   startedAt: number | null;
   acceptedAt: number | null;
   error: string | null;
+  remoteStreamVersion: number;
 
   initiate: (peer: CallPeer, kind?: CallKind) => Promise<void>;
   acceptIncoming: () => Promise<void>;
@@ -85,6 +86,14 @@ function clearConnectTimeout() {
     clearTimeout(connectTimer);
     connectTimer = null;
   }
+}
+
+export function getLocalCallStream(): MediaStream | null {
+  return localStream;
+}
+
+export function getRemoteCallStream(): MediaStream | null {
+  return remoteStream;
 }
 
 function getRemoteAudio(): HTMLAudioElement {
@@ -155,6 +164,7 @@ async function setupPeer(callId: string, peerId: string, kind: CallKind): Promis
       getRemoteAudio().srcObject = remoteStream;
     }
     remoteStream.addTrack(ev.track);
+    useCall.setState((s) => ({ remoteStreamVersion: s.remoteStreamVersion + 1 }));
   };
 
   pc.onicecandidate = (ev) => {
@@ -199,6 +209,7 @@ export const useCall = create<CallStore>()((set, get) => ({
   startedAt: null,
   acceptedAt: null,
   error: null,
+  remoteStreamVersion: 0,
 
   initiate: async (peer, kind = "audio") => {
     if (get().state !== "idle") return;

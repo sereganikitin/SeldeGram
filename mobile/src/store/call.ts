@@ -32,6 +32,7 @@ interface CallStore {
   startedAt: number | null;
   acceptedAt: number | null;
   error: string | null;
+  remoteStreamVersion: number;
 
   initiate: (peer: CallPeer, kind?: CallKind) => Promise<void>;
   acceptIncoming: () => Promise<void>;
@@ -79,9 +80,18 @@ async function getIceServers(): Promise<IceServer[]> {
 
 let pc: RTCPeerConnection | null = null;
 let localStream: MediaStream | null = null;
+let remoteStream: MediaStream | null = null;
 let pendingIce: RTCIceCandidateInit[] = [];
 let pendingOffer: RTCSessionDescriptionInit | null = null;
 let connectTimer: ReturnType<typeof setTimeout> | null = null;
+
+export function getLocalCallStream(): MediaStream | null {
+  return localStream;
+}
+
+export function getRemoteCallStream(): MediaStream | null {
+  return remoteStream;
+}
 
 function armConnectTimeout(ms: number) {
   if (connectTimer) clearTimeout(connectTimer);
@@ -130,6 +140,10 @@ function cleanupPeer() {
     localStream.release?.();
     localStream = null;
   }
+  if (remoteStream) {
+    remoteStream.release?.();
+    remoteStream = null;
+  }
   pendingIce = [];
   pendingOffer = null;
   try { InCallManager.stop(); } catch {}
@@ -176,8 +190,19 @@ async function setupPeer(callId: string, peerId: string, kind: CallKind): Promis
   // @ts-expect-error
   pc.ontrack = (ev: any) => {
     console.log('[call] ontrack', ev?.track?.kind);
-    // Для аудио в react-native-webrtc достаточно получить трек —
-    // InCallManager маршрутизирует звук через системный аудиовыход.
+    // Для аудио — InCallManager маршрутизирует звук через системный аудиовыход.
+    // Для видео — собираем remote stream для RTCView в CallOverlay.
+    if (ev?.streams && ev.streams[0]) {
+      remoteStream = ev.streams[0];
+    } else if (ev?.track) {
+      if (!remoteStream) {
+        // @ts-expect-error MediaStream from react-native-webrtc
+        remoteStream = new (require('react-native-webrtc').MediaStream)([ev.track]);
+      } else {
+        remoteStream.addTrack(ev.track);
+      }
+    }
+    useCall.setState((s) => ({ remoteStreamVersion: s.remoteStreamVersion + 1 }));
   };
 
   // @ts-expect-error
@@ -226,6 +251,7 @@ export const useCall = create<CallStore>((set, get) => ({
   startedAt: null,
   acceptedAt: null,
   error: null,
+  remoteStreamVersion: 0,
 
   initiate: async (peer, kind = 'audio') => {
     if (get().state !== 'idle') return;

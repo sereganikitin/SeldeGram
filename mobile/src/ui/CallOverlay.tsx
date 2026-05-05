@@ -2,7 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { Modal, View, Text, StyleSheet, Pressable } from 'react-native';
 import { Audio } from 'expo-av';
 import { Phone, PhoneOff, Mic, MicOff, Volume2, VolumeX } from 'lucide-react-native';
-import { useCall } from '../store/call';
+import { RTCView } from 'react-native-webrtc';
+import { useCall, getLocalCallStream, getRemoteCallStream } from '../store/call';
 import { Avatar } from './Avatar';
 // Рингтоны лежат в public/sounds/ веб-приложения.
 const RINGTONE_URL = 'https://app.pinkcrab.ru/sounds/ringtone.mp3';
@@ -29,6 +30,7 @@ export function CallOverlay() {
   const hangup = useCall((s) => s.hangup);
   const toggleMute = useCall((s) => s.toggleMute);
   const toggleSpeaker = useCall((s) => s.toggleSpeaker);
+  const remoteVer = useCall((s) => s.remoteStreamVersion);
 
   const [now, setNow] = useState(Date.now());
 
@@ -83,6 +85,41 @@ export function CallOverlay() {
           : acceptedAt
             ? formatDuration(now - acceptedAt)
             : 'В разговоре';
+
+  // Видео-режим — фуллскрин с RTCView (когда соединение установлено)
+  const isVideoActive = kind === 'video' && (state === 'active' || state === 'connecting');
+  if (isVideoActive) {
+    const localStream = getLocalCallStream();
+    const remoteStream = getRemoteCallStream();
+    return (
+      <Modal transparent visible animationType="fade" statusBarTranslucent>
+        <View style={styles.videoBackdrop}>
+          {remoteStream ? (
+            <RTCView streamURL={remoteStream.toURL()} style={styles.videoFull} objectFit="contain" />
+          ) : (
+            <View style={[styles.videoFull, { alignItems: 'center', justifyContent: 'center' }]}>
+              <Text style={{ color: '#fff' }}>Соединение...</Text>
+            </View>
+          )}
+          {localStream ? (
+            <RTCView streamURL={localStream.toURL()} style={styles.videoLocal} objectFit="cover" mirror />
+          ) : null}
+          <View style={styles.videoTopBar}>
+            <Text style={styles.videoName} numberOfLines={1}>{peer.displayName || peer.username}</Text>
+            <Text style={styles.videoStatus}>{statusLabel}</Text>
+          </View>
+          <View style={styles.videoControls}>
+            <Pressable onPress={toggleMute} style={[styles.midBtn, muted && styles.btnActive]}>
+              {muted ? <MicOff size={22} color="#e84e76" /> : <Mic size={22} color="#fff" />}
+            </Pressable>
+            <Pressable onPress={hangup} style={[styles.bigBtn, styles.btnDanger]}>
+              <PhoneOff size={28} color="#fff" />
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
+    );
+  }
 
   return (
     <Modal transparent visible animationType="fade" statusBarTranslucent>
@@ -161,4 +198,29 @@ const styles = StyleSheet.create({
   btnDanger: { backgroundColor: '#dc2626' },
   btnSuccess: { backgroundColor: '#16a34a' },
   btnActive: { backgroundColor: '#fff' },
+  videoBackdrop: { flex: 1, backgroundColor: '#000' },
+  videoFull: { flex: 1 },
+  videoLocal: {
+    position: 'absolute',
+    top: 60,
+    right: 16,
+    width: 110,
+    height: 150,
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: 'rgba(255,255,255,0.4)',
+  },
+  videoTopBar: { position: 'absolute', top: 50, left: 16, right: 140 },
+  videoName: { color: '#fff', fontSize: 18, fontWeight: '700' },
+  videoStatus: { color: 'rgba(255,255,255,0.85)', fontSize: 13, marginTop: 2 },
+  videoControls: {
+    position: 'absolute',
+    bottom: 40,
+    left: 0,
+    right: 0,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 20,
+  },
 });
