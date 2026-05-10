@@ -10,6 +10,7 @@ import * as argon2 from 'argon2';
 import * as crypto from 'crypto';
 import { PrismaService } from '../prisma/prisma.service';
 import { MailService } from '../mail/mail.service';
+import { authenticator } from 'otplib';
 import { RegisterDto } from './dto/register.dto';
 import { VerifyDto } from './dto/verify.dto';
 import { LoginDto } from './dto/login.dto';
@@ -104,14 +105,12 @@ export class AuthService {
 
   async verifyTotpCode(secret: string, code: string): Promise<boolean> {
     if (!secret || !code) return false;
-    const { authenticator } = await import('otplib');
     return authenticator.check(code.replace(/\s+/g, ''), secret);
   }
 
   async startTotp(userId: string) {
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
     if (!user) throw new UnauthorizedException();
-    const { authenticator } = await import('otplib');
     const secret = authenticator.generateSecret();
     await this.prisma.user.update({
       where: { id: userId },
