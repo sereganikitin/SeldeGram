@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "32666310795",
+    "project_id": "crabogram",
+    "storage_bucket": "crabogram.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:32666310795:android:370f11d9f34485c7135c8e",
+        "android_client_info": {
+          "package_name": "ru.infoseledka.seldegram"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDFGgoqPNkLPUFOqgJ1LTQHkWBVP17eiTo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -17,5 +17,10 @@ mobile/android/
 mobile/ios/
 mobile/web-build/
 
+# Firebase service account (FCM v1) — НЕ коммитить, это приватный ключ.
+# google-services.json (Android client config) коммитить можно, он public.
+*service-account*.json
+seldegram-fcm-*.json
+
 # Docker volumes
 docker/data/
