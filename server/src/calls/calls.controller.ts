@@ -35,8 +35,13 @@ export class CallsController {
       { urls: stun2Url },
     ];
     if (turnUrl && turnUsername && turnCredential) {
-      // turn:host:port?transport=udp / turn:host:port?transport=tcp / turns:host:port
-      servers.push({ urls: turnUrl, username: turnUsername, credential: turnCredential });
+      // Если URL приехал без явного ?transport=, отдаём и UDP, и TCP —
+      // у некоторых мобильных операторов UDP заблокирован, TCP пробивает.
+      const hasTransport = /[?&]transport=/i.test(turnUrl);
+      const urls = hasTransport
+        ? [turnUrl]
+        : [`${turnUrl}?transport=udp`, `${turnUrl}?transport=tcp`];
+      servers.push({ urls, username: turnUsername, credential: turnCredential });
     }
     return { iceServers: servers };
   }
