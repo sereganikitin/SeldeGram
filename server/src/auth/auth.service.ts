@@ -10,7 +10,7 @@ import * as argon2 from 'argon2';
 import * as crypto from 'crypto';
 import { PrismaService } from '../prisma/prisma.service';
 import { MailService } from '../mail/mail.service';
-import { authenticator } from 'otplib';
+import * as speakeasy from 'speakeasy';
 import { RegisterDto } from './dto/register.dto';
 import { VerifyDto } from './dto/verify.dto';
 import { LoginDto } from './dto/login.dto';
@@ -105,18 +105,27 @@ export class AuthService {
 
   async verifyTotpCode(secret: string, code: string): Promise<boolean> {
     if (!secret || !code) return false;
-    return authenticator.check(code.replace(/\s+/g, ''), secret);
+    return speakeasy.totp.verify({
+      secret,
+      encoding: 'base32',
+      token: code.replace(/\s+/g, ''),
+      window: 1,
+    });
   }
 
   async startTotp(userId: string) {
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
     if (!user) throw new UnauthorizedException();
-    const secret = authenticator.generateSecret();
+    const gen = speakeasy.generateSecret({
+      name: `CraboGram (${user.email})`,
+      issuer: 'CraboGram',
+    });
+    const secret = gen.base32;
     await this.prisma.user.update({
       where: { id: userId },
       data: { totpSecret: secret, totpEnabled: false },
     });
-    const otpauth = authenticator.keyuri(user.email, 'CraboGram', secret);
+    const otpauth = gen.otpauth_url ?? `otpauth://totp/CraboGram:${encodeURIComponent(user.email)}?secret=${secret}&issuer=CraboGram`;
     return { secret, otpauth };
   }
 
