@@ -90,13 +90,26 @@ export const useWs = create<WsState>((set, get) => ({
   callSignalListeners: new Set(),
 
   connect: async () => {
+    const existing = get().socket;
+    if (existing && existing.readyState !== WebSocket.CLOSED) return;
     const token = await AsyncStorage.getItem('accessToken');
     if (!token) return;
     const wsUrl = API_BASE_URL.replace(/^http/, 'ws') + '/ws?token=' + encodeURIComponent(token);
     const sock = new WebSocket(wsUrl);
+    set({ socket: sock });
 
-    sock.onopen = () => set({ connected: true });
+    let pingTimer: ReturnType<typeof setInterval> | null = null;
+    sock.onopen = () => {
+      set({ connected: true });
+      pingTimer = setInterval(() => {
+        if (sock.readyState === WebSocket.OPEN) {
+          try { sock.send(JSON.stringify({ event: 'ping', data: { t: Date.now() } })); } catch {}
+        }
+      }, 25_000);
+    };
     sock.onclose = () => {
+      if (pingTimer) clearInterval(pingTimer);
+      pingTimer = null;
       set({ connected: false, socket: null });
       setTimeout(() => get().connect(), 3000);
     };
@@ -150,8 +163,6 @@ export const useWs = create<WsState>((set, get) => ({
         }
       } catch {}
     };
-
-    set({ socket: sock });
   },
 
   disconnect: () => {

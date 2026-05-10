@@ -100,9 +100,23 @@ export const useWs = create<WsState>()((set, get) => ({
 
     const wsUrl = API_BASE_URL.replace(/^http/, "ws") + "/ws?token=" + encodeURIComponent(token);
     const sock = new WebSocket(wsUrl);
+    // Сохраняем socket в стор сразу — иначе быстрые повторные вызовы connect()
+    // (StrictMode, login flow) проходят guard и открывают второй сокет.
+    set({ socket: sock });
 
-    sock.onopen = () => set({ connected: true });
+    let pingTimer: ReturnType<typeof setInterval> | null = null;
+    sock.onopen = () => {
+      set({ connected: true });
+      // Keep-alive: nginx/CG-NAT часто режут idle WS на ~60с. Шлём ping каждые 25с.
+      pingTimer = setInterval(() => {
+        if (sock.readyState === WebSocket.OPEN) {
+          try { sock.send(JSON.stringify({ event: "ping", data: { t: Date.now() } })); } catch {}
+        }
+      }, 25_000);
+    };
     sock.onclose = () => {
+      if (pingTimer) clearInterval(pingTimer);
+      pingTimer = null;
       set({ connected: false, socket: null });
       setTimeout(() => get().connect(), 3000);
     };
@@ -156,8 +170,6 @@ export const useWs = create<WsState>()((set, get) => ({
         }
       } catch {}
     };
-
-    set({ socket: sock });
   },
 
   disconnect: () => {
