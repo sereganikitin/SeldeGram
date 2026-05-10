@@ -109,6 +109,7 @@ function getRemoteAudio(): HTMLAudioElement {
 }
 
 function cleanupPeer() {
+  console.log("[call] cleanupPeer", new Error().stack?.split("\n").slice(1, 4).join(" | "));
   clearConnectTimeout();
   if (pc) {
     pc.onicecandidate = null;
@@ -212,6 +213,7 @@ export const useCall = create<CallStore>()((set, get) => ({
   remoteStreamVersion: 0,
 
   initiate: async (peer, kind = "audio") => {
+    console.log("[call] initiate", { peerId: peer.id, kind });
     if (get().state !== "idle") return;
     set({
       state: "outgoing-ringing",
@@ -223,10 +225,12 @@ export const useCall = create<CallStore>()((set, get) => ({
     });
     try {
       const { data } = await api.post("/calls", { calleeId: peer.id, kind });
+      console.log("[call] POST /calls ok", { callId: data.id });
       set({ callId: data.id });
       // Если 45 секунд нет ответа — автоматически отменяем
       armConnectTimeout(45_000);
     } catch (e) {
+      console.error("[call] POST /calls error", e);
       const err = e as { response?: { data?: { message?: string } }; message?: string };
       set({
         state: "idle",
@@ -282,6 +286,7 @@ export const useCall = create<CallStore>()((set, get) => ({
 
   hangup: async () => {
     const { callId, state } = get();
+    console.log("[call] hangup", { callId, state });
     if (state === "idle") return;
     cleanupPeer();
     if (callId) {
@@ -308,9 +313,10 @@ export const useCall = create<CallStore>()((set, get) => ({
   },
 
   _onIncoming: ({ callId, kind, from }) => {
+    console.log("[call] _onIncoming", { callId, kind, from: from.id, curState: get().state });
     const cur = get();
     if (cur.state !== "idle") {
-      // Уже в звонке — отклонить
+      console.log("[call] busy → auto-reject");
       api.post(`/calls/${callId}/reject`).catch(() => undefined);
       return;
     }
@@ -327,12 +333,14 @@ export const useCall = create<CallStore>()((set, get) => ({
 
   _onAccepted: async ({ callId }) => {
     const cur = get();
+    console.log("[call] _onAccepted", { callId, curCallId: cur.callId, isCaller: cur.isCaller });
     if (cur.callId !== callId || !cur.isCaller || !cur.peer) return;
     set({ state: "connecting" });
     try {
       const conn = await setupPeer(cur.callId, cur.peer.id, cur.kind);
       const offer = await conn.createOffer();
       await conn.setLocalDescription(offer);
+      console.log("[call] sending offer");
       useWs.getState().send("call:signal", {
         to: cur.peer.id,
         callId,
@@ -341,6 +349,7 @@ export const useCall = create<CallStore>()((set, get) => ({
       });
     } catch (e) {
       const err = e as Error;
+      console.error("[call] _onAccepted error", err);
       set({ error: err.message });
       get().hangup();
     }
@@ -348,6 +357,7 @@ export const useCall = create<CallStore>()((set, get) => ({
 
   _onRejected: ({ callId }) => {
     const cur = get();
+    console.log("[call] _onRejected", { callId, curCallId: cur.callId });
     if (cur.callId && cur.callId !== callId) return;
     cleanupPeer();
     set({
@@ -361,6 +371,7 @@ export const useCall = create<CallStore>()((set, get) => ({
 
   _onEnded: ({ callId }) => {
     const cur = get();
+    console.log("[call] _onEnded", { callId, curCallId: cur.callId });
     if (cur.callId && cur.callId !== callId) return;
     cleanupPeer();
     set({
