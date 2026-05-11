@@ -52,7 +52,13 @@
     "owner": "seldegram",
     "plugins": [
       "expo-video",
-      "expo-secure-store"
+      "expo-secure-store",
+      [
+        "expo-notifications",
+        {
+          "sounds": ["./assets/sounds/ringtone.mp3"]
+        }
+      ]
     ]
   }
 }

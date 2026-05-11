@@ -59,14 +59,25 @@ export async function registerPushToken() {
       importance: Notifications.AndroidImportance.MAX,
       sound: 'default',
     });
-    // Отдельный канал для звонков — высокий приоритет, рингтон, vibration
+    // Отдельный канал для звонков — высокий приоритет, длинный рингтон,
+    // длительная вибрация, баннер на lockscreen.
+    // Внимание: имя файла должно совпадать с тем что зарегистрирован в
+    // app.json expo-notifications.sounds (без префикса пути).
     await Notifications.setNotificationChannelAsync('calls', {
       name: 'Звонки',
       importance: Notifications.AndroidImportance.MAX,
-      sound: 'default',
-      vibrationPattern: [0, 500, 500, 500, 500, 500],
+      sound: 'ringtone.mp3',
+      // ~30 секунд непрерывной вибрации: 1с вибро / 0.4с пауза × повторно
+      vibrationPattern: [
+        0, 1000, 400, 1000, 400, 1000, 400, 1000, 400, 1000, 400,
+        1000, 400, 1000, 400, 1000, 400, 1000, 400, 1000, 400, 1000,
+      ],
       lightColor: '#ff7a99',
+      enableLights: true,
+      enableVibrate: true,
       bypassDnd: true,
+      lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
+      showBadge: false,
     });
   }
 
