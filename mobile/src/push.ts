@@ -1,7 +1,7 @@
 import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
 import Constants from 'expo-constants';
-import { Platform } from 'react-native';
+import { AppState, Platform } from 'react-native';
 import { api } from './api';
 
 // Чат, который сейчас открыт у пользователя — для подавления уведомлений из этого же чата.
@@ -16,8 +16,18 @@ Notifications.setNotificationHandler({
       | { chatId?: string; type?: string }
       | undefined;
     const isCurrent = data?.chatId && data.chatId === activeChatId;
-    // call-пуши всегда показываем — это полноценный сигнал звонка
     const isCall = data?.type === 'call';
+    // Если приложение в foreground — call:incoming уже придёт через WS
+    // и CallOverlay сам отрисуется. Баннер дублировать не нужно.
+    const isForeground = AppState.currentState === 'active';
+    if (isCall && isForeground) {
+      return {
+        shouldShowBanner: false,
+        shouldShowList: false,
+        shouldPlaySound: false,
+        shouldSetBadge: false,
+      };
+    }
     return {
       shouldShowBanner: isCall || !isCurrent,
       shouldShowList: isCall || !isCurrent,

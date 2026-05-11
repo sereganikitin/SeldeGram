@@ -57,25 +57,27 @@ export class CallsService {
       },
     });
 
-    // Если у callee нет активного WS-соединения — пушим уведомление, чтобы
-    // звонок прорвался при закрытом / спящем приложении.
-    if (!this.hub.isConnected(calleeId)) {
-      const callerName = call.caller.displayName || call.caller.username;
-      this.push.sendToUsers([calleeId], {
-        title: callerName,
-        body: kind === 'video' ? 'Видеозвонок' : 'Входящий звонок',
-        data: {
-          type: 'call',
-          callId: call.id,
-          kind: call.kind,
-          from: call.caller,
-        },
-        channelId: 'calls',
-        priority: 'high',
-        ttl: 30,
-        categoryId: 'CALL',
-      }).catch(() => undefined);
-    }
+    // Шлём push ВСЕГДА — даже если у callee есть WS-сессия. Android
+    // обычно держит сокет открытым ещё какое-то время после ухода
+    // приложения в фон, JS-heap при этом приостановлен, и событие
+    // call:incoming до UI не доходит. Push доставляется через FCM
+    // независимо от состояния процесса и будит устройство.
+    // Дубль баннера в foreground гасит клиентский notification handler.
+    const callerName = call.caller.displayName || call.caller.username;
+    this.push.sendToUsers([calleeId], {
+      title: callerName,
+      body: kind === 'video' ? 'Видеозвонок' : 'Входящий звонок',
+      data: {
+        type: 'call',
+        callId: call.id,
+        kind: call.kind,
+        from: call.caller,
+      },
+      channelId: 'calls',
+      priority: 'high',
+      ttl: 30,
+      categoryId: 'CALL',
+    }).catch(() => undefined);
 
     return call;
   }
