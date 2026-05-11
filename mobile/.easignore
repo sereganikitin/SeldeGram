@@ -1,0 +1,23 @@
+# Папки от expo prebuild — EAS сгенерирует их заново на своих серверах
+android/
+ios/
+
+# Локальные expo-кэши
+.expo/
+web-build/
+
+# Node modules
+node_modules/
+
+# IDE
+.vscode/
+.idea/
+
+# Логи и временные файлы
+*.log
+.DS_Store
+Thumbs.db
+
+# Тестовые/локальные APK
+*.apk
+*.aab
