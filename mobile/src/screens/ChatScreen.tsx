@@ -70,6 +70,7 @@ export function ChatScreen({ route, navigation }: Props) {
   const [typingUserId, setTypingUserId] = useState<string | null>(null);
   const [stickersOpen, setStickersOpen] = useState(false);
   const [recording, setRecording] = useState(false);
+  const [recordMode, setRecordMode] = useState<'voice' | 'video'>('voice');
   const [pinnedMsg, setPinnedMsg] = useState<Message | null>(null);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQ, setSearchQ] = useState('');
@@ -519,7 +520,6 @@ export function ChatScreen({ route, navigation }: Props) {
   const showAttach = () => {
     Alert.alert('Прикрепить', undefined, [
       { text: 'Фото', onPress: pickImage },
-      { text: 'Видеосообщение (кружочек)', onPress: recordCircleVideo },
       { text: 'Файл', onPress: pickFile },
       { text: 'Опрос', onPress: createPoll },
       {
@@ -800,8 +800,31 @@ export function ChatScreen({ route, navigation }: Props) {
                 {editingId ? <Check size={20} color="#fff" /> : <Send size={20} color="#fff" />}
               </Pressable>
             ) : (
-              <Pressable onPress={() => setRecording(true)} disabled={uploading} style={styles.sendBtn}>
-                <Mic size={20} color="#fff" />
+              <Pressable
+                onPress={() => {
+                  if (recordMode === 'video') recordCircleVideo();
+                  else setRecording(true);
+                }}
+                onLongPress={() => {
+                  Alert.alert('Тип сообщения', undefined, [
+                    {
+                      text: recordMode === 'voice' ? 'Голосовое ●' : 'Голосовое',
+                      onPress: () => { setRecordMode('voice'); setRecording(true); },
+                    },
+                    {
+                      text: recordMode === 'video' ? 'Видеосообщение ●' : 'Видеосообщение',
+                      onPress: () => { setRecordMode('video'); recordCircleVideo(); },
+                    },
+                    { text: 'Отмена', style: 'cancel' },
+                  ]);
+                }}
+                delayLongPress={350}
+                disabled={uploading}
+                style={styles.sendBtn}
+              >
+                {recordMode === 'video'
+                  ? <Video size={20} color="#fff" />
+                  : <Mic size={20} color="#fff" />}
               </Pressable>
             )}
           </View>

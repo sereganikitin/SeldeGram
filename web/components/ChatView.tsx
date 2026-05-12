@@ -17,8 +17,9 @@ import { formatDateLabel, messagePreview, lastSeenText } from "@/lib/helpers";
 import { uploadFile } from "@/lib/media";
 import { useCall } from "@/lib/call";
 import { IconButton } from "./IconButton";
-import { Phone, Video, Search, Info, Megaphone, Users, ArrowLeft, Pin, X, Paperclip, Smile, Mic, Send, Check, BarChart3, Keyboard, Timer, MapPin, Camera } from "lucide-react";
+import { Phone, Video, Search, Info, Megaphone, Users, ArrowLeft, Pin, X, Paperclip, Smile, Send, Check, BarChart3, Keyboard, Timer, MapPin } from "lucide-react";
 import { VideoNoteRecorder } from "./VideoNoteRecorder";
+import { RecordButton } from "./RecordButton";
 
 interface Props {
   chat: Chat;
@@ -695,25 +696,11 @@ export function ChatView({ chat, onBack, onChatGone, onOpenStickers }: Props) {
                 className="flex-shrink-0 disabled:opacity-40"
               />
             ) : (
-              <>
-                <IconButton
-                  icon={Camera}
-                  size="md"
-                  variant="ghost"
-                  onClick={() => setVideoNoteOpen(true)}
-                  disabled={uploading}
-                  title="Видеосообщение (кружочек)"
-                  className="flex-shrink-0 disabled:opacity-40"
-                />
-                <IconButton
-                  icon={Mic}
-                  size="md"
-                  onClick={() => setVoiceRecording(true)}
-                  disabled={uploading}
-                  title="Голосовое сообщение"
-                  className="flex-shrink-0 disabled:opacity-40"
-                />
-              </>
+              <RecordButton
+                disabled={uploading}
+                onVoice={() => setVoiceRecording(true)}
+                onVideoNote={() => setVideoNoteOpen(true)}
+              />
             )}
           </div>
           {voiceRecording && <VoiceRecorder onRecorded={sendVoice} onCancel={() => setVoiceRecording(false)} />}
