@@ -52,12 +52,14 @@ export function messagePreview(msg: {
   content: string;
   mediaType?: string | null;
   mediaKey?: string | null;
+  mediaName?: string | null;
   isSticker?: boolean;
   deletedAt?: string | null;
 }): string {
   if (msg.deletedAt) return 'удалено';
   if (msg.isSticker) return `${msg.content || ''} Стикер`.trim();
   if (msg.mediaType?.startsWith('audio/')) return 'Голосовое';
+  if (msg.mediaType?.startsWith('video/') && msg.mediaName === 'circle.mp4') return 'Видеосообщение';
   if (msg.content) return msg.content;
   if (msg.mediaType?.startsWith('image/')) return 'Фото';
   if (msg.mediaType?.startsWith('video/')) return 'Видео';

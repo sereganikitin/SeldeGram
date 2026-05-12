@@ -4,6 +4,7 @@ import { Message, ChatMember } from '../types';
 import { MediaBubble } from './MediaBubble';
 import { StickerImage } from './StickerImage';
 import { AudioPlayer } from './AudioPlayer';
+import { VideoNoteBubble } from './VideoNoteBubble';
 import { PollBubble } from './PollBubble';
 import { formatTime, messagePreview, groupReactions } from '../helpers';
 import { Check, CheckCheck, Share2, Timer, MapPin } from 'lucide-react-native';
@@ -32,8 +33,13 @@ export function MessageBubble({
   const isPoll = message.content?.startsWith('📊 ');
   const isDeleted = !!message.deletedAt;
   const isSticker = !!message.isSticker && !isDeleted;
+  const isVideoNote =
+    !isDeleted &&
+    hasMedia &&
+    message.mediaType!.startsWith('video/') &&
+    message.mediaName === 'circle.mp4';
 
-  if (isSticker) {
+  if (isSticker || isVideoNote) {
     return (
       <Pressable
         onLongPress={onLongPress}
@@ -43,7 +49,11 @@ export function MessageBubble({
         {showSenderName && !mine && (
           <Text style={[styles.senderName, { marginLeft: 4 }]}>{senderName}</Text>
         )}
-        <StickerImage mediaKey={message.mediaKey!} mediaType={message.mediaType ?? undefined} size={150} />
+        {isVideoNote ? (
+          <VideoNoteBubble mediaKey={message.mediaKey!} />
+        ) : (
+          <StickerImage mediaKey={message.mediaKey!} mediaType={message.mediaType ?? undefined} size={150} />
+        )}
         <View style={styles.stickerMeta}>
           <Text style={styles.stickerTime}>{formatTime(message.createdAt)}</Text>
           {mine && (isRead ? <CheckCheck size={12} color="#ff7a99" /> : <Check size={12} color="#ff7a99" />)}

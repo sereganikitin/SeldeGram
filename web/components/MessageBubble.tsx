@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { Message } from "@/lib/types";
 import { formatTime, messagePreview, getMediaUrl, groupReactions } from "@/lib/helpers";
 import { AudioPlayer } from "./AudioPlayer";
+import { VideoNoteBubble } from "./VideoNoteBubble";
 import { PollBubble } from "./PollBubble";
 import { Reply, Pin, MessageSquare, Copy, Pencil, Trash2, FileText, MoreHorizontal, Share2, Check, CheckCheck, Timer, Bookmark, MapPin } from "lucide-react";
 
@@ -43,6 +44,10 @@ function MediaContent({ message, mine }: { message: Message; mine: boolean }) {
     return <AudioPlayer mediaKey={message.mediaKey} duration={message.mediaSize ?? undefined} mine={mine} />;
   }
 
+  if (message.mediaType.startsWith("video/") && message.mediaName === "circle.mp4") {
+    return <VideoNoteBubble mediaKey={message.mediaKey} />;
+  }
+
   if (message.mediaType.startsWith("image/")) {
     if (!url) return <div className="w-56 h-56 bg-black/10 rounded-xl animate-pulse" />;
     // eslint-disable-next-line @next/next/no-img-element
@@ -70,6 +75,11 @@ function MediaContent({ message, mine }: { message: Message; mine: boolean }) {
 export function MessageBubble({ message, mine, showSenderName, senderName, isRead, onAction, onReact, canComment }: Props) {
   const isDeleted = !!message.deletedAt;
   const isSticker = !!message.isSticker && !isDeleted;
+  const isVideoNote =
+    !isDeleted &&
+    !!message.mediaType &&
+    message.mediaType.startsWith("video/") &&
+    message.mediaName === "circle.mp4";
   const [menuOpen, setMenuOpen] = useState(false);
   const rowRef = useRef<HTMLDivElement>(null);
 
@@ -157,7 +167,7 @@ export function MessageBubble({ message, mine, showSenderName, senderName, isRea
     userSelect: "none" as const,
   };
 
-  if (isSticker) {
+  if (isSticker || isVideoNote) {
     return (
       <div
         ref={rowRef}

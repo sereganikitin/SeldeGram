@@ -409,6 +409,49 @@ export function ChatScreen({ route, navigation }: Props) {
     }
   };
 
+  const recordCircleVideo = async () => {
+    const camPerm = await ImagePicker.requestCameraPermissionsAsync();
+    if (!camPerm.granted) {
+      Alert.alert('Нет доступа', 'Разрешите доступ к камере в настройках');
+      return;
+    }
+    const result = await ImagePicker.launchCameraAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Videos,
+      videoMaxDuration: 30,
+      cameraType: ImagePicker.CameraType.front,
+      quality: 0.7,
+      allowsEditing: false,
+    });
+    if (result.canceled || !result.assets?.[0]) return;
+    const asset = result.assets[0];
+    setUploading(true);
+    try {
+      const contentType = asset.mimeType ?? 'video/mp4';
+      let size = asset.fileSize ?? 0;
+      if (!size) {
+        try {
+          const FileSystem = await import('expo-file-system/legacy');
+          const info = await FileSystem.getInfoAsync(asset.uri);
+          size = (info as any).size ?? 0;
+        } catch {}
+      }
+      if (!size) throw new Error('Не удалось определить размер видео');
+      const key = await uploadMedia(asset.uri, contentType, size);
+      await api.post(`/chats/${chatId}/messages`, {
+        mediaKey: key,
+        mediaType: contentType,
+        mediaName: 'circle.mp4',
+        mediaSize: size,
+        replyToId: replyTo?.id,
+      });
+      setReplyTo(null);
+    } catch (e: any) {
+      Alert.alert('Не получилось', e.message ?? String(e));
+    } finally {
+      setUploading(false);
+    }
+  };
+
   const sendVoice = async (uri: string, durationMs: number) => {
     setRecording(false);
     setUploading(true);
@@ -476,6 +519,7 @@ export function ChatScreen({ route, navigation }: Props) {
   const showAttach = () => {
     Alert.alert('Прикрепить', undefined, [
       { text: 'Фото', onPress: pickImage },
+      { text: 'Видеосообщение (кружочек)', onPress: recordCircleVideo },
       { text: 'Файл', onPress: pickFile },
       { text: 'Опрос', onPress: createPoll },
       {

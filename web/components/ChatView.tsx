@@ -17,7 +17,8 @@ import { formatDateLabel, messagePreview, lastSeenText } from "@/lib/helpers";
 import { uploadFile } from "@/lib/media";
 import { useCall } from "@/lib/call";
 import { IconButton } from "./IconButton";
-import { Phone, Video, Search, Info, Megaphone, Users, ArrowLeft, Pin, X, Paperclip, Smile, Mic, Send, Check, BarChart3, Keyboard, Timer, MapPin } from "lucide-react";
+import { Phone, Video, Search, Info, Megaphone, Users, ArrowLeft, Pin, X, Paperclip, Smile, Mic, Send, Check, BarChart3, Keyboard, Timer, MapPin, Camera } from "lucide-react";
+import { VideoNoteRecorder } from "./VideoNoteRecorder";
 
 interface Props {
   chat: Chat;
@@ -52,6 +53,7 @@ export function ChatView({ chat, onBack, onChatGone, onOpenStickers }: Props) {
   const [uploading, setUploading] = useState(false);
   const [dragOver, setDragOver] = useState(false);
   const [voiceRecording, setVoiceRecording] = useState(false);
+  const [videoNoteOpen, setVideoNoteOpen] = useState(false);
   const [threadParent, setThreadParent] = useState<Message | null>(null);
   const [peerOnline, setPeerOnline] = useState<boolean | undefined>(undefined);
   const [peerLastSeen, setPeerLastSeen] = useState<string | null>(null);
@@ -286,6 +288,27 @@ export function ChatView({ chat, onBack, onChatGone, onOpenStickers }: Props) {
         mediaType: "audio/webm",
         mediaName: "voice.webm",
         mediaSize: durationMs,
+      });
+    } catch (e: unknown) {
+      const err = e as { message?: string };
+      alert(err.message ?? "Не получилось");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const sendVideoNote = async (blob: Blob, _durationMs: number, mimeType: string) => {
+    setVideoNoteOpen(false);
+    setUploading(true);
+    try {
+      const { uploadBlob: doUpload } = await import("@/lib/media");
+      const ct = mimeType || "video/webm";
+      const key = await doUpload(blob, ct, blob.size);
+      await api.post(`/chats/${chat.id}/messages`, {
+        mediaKey: key,
+        mediaType: ct,
+        mediaName: "circle.mp4",
+        mediaSize: blob.size,
       });
     } catch (e: unknown) {
       const err = e as { message?: string };
@@ -672,17 +695,29 @@ export function ChatView({ chat, onBack, onChatGone, onOpenStickers }: Props) {
                 className="flex-shrink-0 disabled:opacity-40"
               />
             ) : (
-              <IconButton
-                icon={Mic}
-                size="md"
-                onClick={() => setVoiceRecording(true)}
-                disabled={uploading}
-                title="Голосовое сообщение"
-                className="flex-shrink-0 disabled:opacity-40"
-              />
+              <>
+                <IconButton
+                  icon={Camera}
+                  size="md"
+                  variant="ghost"
+                  onClick={() => setVideoNoteOpen(true)}
+                  disabled={uploading}
+                  title="Видеосообщение (кружочек)"
+                  className="flex-shrink-0 disabled:opacity-40"
+                />
+                <IconButton
+                  icon={Mic}
+                  size="md"
+                  onClick={() => setVoiceRecording(true)}
+                  disabled={uploading}
+                  title="Голосовое сообщение"
+                  className="flex-shrink-0 disabled:opacity-40"
+                />
+              </>
             )}
           </div>
           {voiceRecording && <VoiceRecorder onRecorded={sendVoice} onCancel={() => setVoiceRecording(false)} />}
+          {videoNoteOpen && <VideoNoteRecorder onRecorded={sendVideoNote} onCancel={() => setVideoNoteOpen(false)} />}
           {stickersOpen && !voiceRecording && <StickerPicker onPick={sendSticker} onOpenManage={() => { setStickersOpen(false); onOpenStickers(); }} />}
         </>
       ) : (
