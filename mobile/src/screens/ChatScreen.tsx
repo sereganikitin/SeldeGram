@@ -32,10 +32,9 @@ import { ChatBackground } from '../ui/ChatBackground';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColors } from '../theme';
 import { formatDateLabel, messagePreview, lastSeenText } from '../helpers';
-import { Search, Info, Pin, X, Paperclip, Smile, Keyboard as KeyboardIcon, Mic, Send, Check, Circle, Phone, Video, Sparkles, Timer } from 'lucide-react-native';
+import { Search, Info, Pin, X, Paperclip, Smile, Keyboard as KeyboardIcon, Mic, Send, Check, Circle, Phone, Video, Timer } from 'lucide-react-native';
 import { IconButton } from '../ui/IconButton';
 import { useCall } from '../store/call';
-import { AiOverlay } from '../ui/AiOverlay';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Chat'>;
 
@@ -75,12 +74,6 @@ export function ChatScreen({ route, navigation }: Props) {
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQ, setSearchQ] = useState('');
   const [searchResults, setSearchResults] = useState<Message[]>([]);
-  const [ai, setAi] = useState<{ visible: boolean; title: string; text: string; loading: boolean }>({
-    visible: false,
-    title: '',
-    text: '',
-    loading: false,
-  });
   const [ttlSec, setTtlSec] = useState<number | null>(null);
   const [peerOnline, setPeerOnline] = useState<boolean | undefined>(undefined);
   const [peerLastSeen, setPeerLastSeen] = useState<string | null>(null);
@@ -183,68 +176,49 @@ export function ChatScreen({ route, navigation }: Props) {
   // Обработчик header кнопки info — выбираем экран по типу чата
   useEffect(() => {
     if (!chat) return;
+    const callPeer = () => {
+      const other = chat.members.find((m) => m.id !== meId);
+      return other ? {
+        id: other.id,
+        username: other.username,
+        displayName: other.displayName,
+        avatarKey: other.avatarKey ?? null,
+      } : null;
+    };
     navigation.setOptions({
       headerRight: () => (
-        <View style={{ flexDirection: 'row', gap: 8, paddingHorizontal: 4 }}>
-          <Pressable
-            onPress={() => {
-              setAi({ visible: true, title: 'Краткое содержание', text: '', loading: true });
-              api.post('/ai/summarize', { chatId })
-                .then(({ data }: any) => setAi({ visible: true, title: 'Краткое содержание', text: data.summary, loading: false }))
-                .catch((e: any) =>
-                  setAi({ visible: true, title: 'Краткое содержание', text: e.response?.data?.message ?? e.message ?? 'Ошибка', loading: false }),
-                );
-            }}
-            style={{ paddingHorizontal: 4 }}
-          >
-            <Sparkles size={22} color="#ff7a99" />
-          </Pressable>
+        <View style={{ flexDirection: 'row', gap: 8, paddingRight: 4 }}>
           {chat.type === 'direct' && (
             <>
-              <Pressable
-                onPress={() => {
-                  const other = chat.members.find((m) => m.id !== meId);
-                  if (!other) return;
-                  useCall.getState().initiate({
-                    id: other.id,
-                    username: other.username,
-                    displayName: other.displayName,
-                    avatarKey: other.avatarKey ?? null,
-                  }, 'audio');
-                }}
-                style={{ paddingHorizontal: 4 }}
-              >
-                <Phone size={22} color="#ff7a99" />
-              </Pressable>
-              <Pressable
-                onPress={() => {
-                  const other = chat.members.find((m) => m.id !== meId);
-                  if (!other) return;
-                  useCall.getState().initiate({
-                    id: other.id,
-                    username: other.username,
-                    displayName: other.displayName,
-                    avatarKey: other.avatarKey ?? null,
-                  }, 'video');
-                }}
-                style={{ paddingHorizontal: 4 }}
-              >
-                <Video size={22} color="#ff7a99" />
-              </Pressable>
+              <IconButton
+                icon={Phone}
+                size="md"
+                onPress={() => { const p = callPeer(); if (p) useCall.getState().initiate(p, 'audio'); }}
+                accessibilityLabel="Аудиозвонок"
+              />
+              <IconButton
+                icon={Video}
+                size="md"
+                onPress={() => { const p = callPeer(); if (p) useCall.getState().initiate(p, 'video'); }}
+                accessibilityLabel="Видеозвонок"
+              />
             </>
           )}
-          <Pressable onPress={() => setSearchOpen((v) => !v)} style={{ paddingHorizontal: 4 }}>
-            <Search size={22} color="#ff7a99" />
-          </Pressable>
-          <Pressable
+          <IconButton
+            icon={Search}
+            size="md"
+            onPress={() => setSearchOpen((v) => !v)}
+            accessibilityLabel="Поиск"
+          />
+          <IconButton
+            icon={Info}
+            size="md"
             onPress={() => {
               if (chat.type === 'direct') navigation.navigate('UserInfo', { chatId });
               else navigation.navigate('GroupInfo', { chatId });
             }}
-            style={{ paddingHorizontal: 4 }}
-          >
-            <Info size={22} color="#ff7a99" />
-          </Pressable>
+            accessibilityLabel="Информация"
+          />
         </View>
       ),
     });
@@ -573,24 +547,6 @@ export function ChatScreen({ route, navigation }: Props) {
           }
         },
       });
-      options.push({
-        text: 'Перевести',
-        onPress: () => {
-          setAi({ visible: true, title: 'Перевод', text: '', loading: true });
-          api.post('/ai/translate', { messageId: msg.id, lang: 'русский' })
-            .then(({ data }: any) =>
-              setAi({ visible: true, title: 'Перевод', text: data.translated, loading: false }),
-            )
-            .catch((e: any) =>
-              setAi({
-                visible: true,
-                title: 'Перевод',
-                text: e.response?.data?.message ?? e.message ?? 'Ошибка',
-                loading: false,
-              }),
-            );
-        },
-      });
     }
     if (mine && msg.content && !msg.deletedAt) {
       options.push({
@@ -815,13 +771,6 @@ export function ChatScreen({ route, navigation }: Props) {
         </>
       )}
       </ChatBackground>
-      <AiOverlay
-        visible={ai.visible}
-        title={ai.title}
-        text={ai.text}
-        loading={ai.loading}
-        onClose={() => setAi((s) => ({ ...s, visible: false }))}
-      />
     </KeyboardAvoidingView>
   );
 }
