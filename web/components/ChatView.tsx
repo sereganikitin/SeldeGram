@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { api } from "@/lib/api";
 import { Chat, Message } from "@/lib/types";
 import { useAuth } from "@/lib/store";
@@ -199,18 +199,53 @@ export function ChatView({ chat, onBack, onChatGone, onOpenStickers }: Props) {
     initialScrollDoneRef.current = false;
   }, [chat.id]);
 
-  // Скролл вниз: первый раз после загрузки сообщений — instant (без анимации),
-  // дальше — smooth для свежеприлетевших сообщений.
-  useEffect(() => {
+  // Скролл вниз. useLayoutEffect: успевает до отрисовки, юзер не видит флэш
+  // верха ленты. Картинки/видео/стикеры догружаются асинхронно и меняют
+  // высоту — поэтому делаем повторные скроллы по таймерам и слушаем `load`
+  // у `<img>`/`<video>` внутри контейнера.
+  useLayoutEffect(() => {
     const el = scrollRef.current;
     if (!el || messages.length === 0) return;
+
+    const pin = () => {
+      el.scrollTop = el.scrollHeight;
+    };
+
     if (!initialScrollDoneRef.current) {
-      el.scrollTo({ top: el.scrollHeight, behavior: "auto" });
+      pin();
       initialScrollDoneRef.current = true;
-    } else {
-      el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
+
+      const t1 = requestAnimationFrame(pin);
+      const t2 = window.setTimeout(pin, 80);
+      const t3 = window.setTimeout(pin, 250);
+      const t4 = window.setTimeout(pin, 700);
+
+      const onMediaLoad = (e: Event) => {
+        const tag = (e.target as Element).tagName;
+        if (tag === "IMG" || tag === "VIDEO") pin();
+      };
+      el.addEventListener("load", onMediaLoad, true);
+      el.addEventListener("loadedmetadata", onMediaLoad, true);
+
+      const stopMs = 2500;
+      const stopAt = window.setTimeout(() => {
+        el.removeEventListener("load", onMediaLoad, true);
+        el.removeEventListener("loadedmetadata", onMediaLoad, true);
+      }, stopMs);
+
+      return () => {
+        cancelAnimationFrame(t1);
+        clearTimeout(t2);
+        clearTimeout(t3);
+        clearTimeout(t4);
+        clearTimeout(stopAt);
+        el.removeEventListener("load", onMediaLoad, true);
+        el.removeEventListener("loadedmetadata", onMediaLoad, true);
+      };
     }
-  }, [messages.length]);
+
+    el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
+  }, [messages.length, chat.id]);
 
   // Mark read
   useEffect(() => {
