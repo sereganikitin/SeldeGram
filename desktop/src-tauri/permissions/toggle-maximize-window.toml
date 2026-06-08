@@ -1,4 +1,0 @@
-[[permission]]
-identifier = "allow-toggle-maximize-window"
-description = "Allows the toggle_maximize_window command."
-commands.allow = ["toggle_maximize_window"]

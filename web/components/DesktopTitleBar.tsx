@@ -70,7 +70,7 @@ export function DesktopTitleBar() {
 
   return (
     <div
-      className="h-9 flex items-center bg-gradient-to-r from-brand to-brand-dark text-white shadow-sm flex-shrink-0 relative z-50"
+      className="h-9 flex items-center bg-gradient-to-r from-brand to-brand-dark text-white shadow-sm flex-shrink-0 relative z-50 select-none"
       onMouseDown={onDragDown}
       onDoubleClick={onDragDoubleClick}
       onContextMenu={onContextMenu}

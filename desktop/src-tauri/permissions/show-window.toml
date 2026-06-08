@@ -1,4 +1,0 @@
-[[permission]]
-identifier = "allow-show-window"
-description = "Allows the show_window command."
-commands.allow = ["show_window"]

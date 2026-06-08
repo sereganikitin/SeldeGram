@@ -1,4 +1,0 @@
-[[permission]]
-identifier = "allow-set-unread-count"
-description = "Allows the set_unread_count command."
-commands.allow = ["set_unread_count"]

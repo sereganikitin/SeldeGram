@@ -1,4 +1,0 @@
-[[permission]]
-identifier = "allow-start-dragging-window"
-description = "Allows the start_dragging_window command."
-commands.allow = ["start_dragging_window"]

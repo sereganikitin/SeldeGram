@@ -1,4 +1,0 @@
-[[permission]]
-identifier = "allow-toggle-window"
-description = "Allows the toggle_window command."
-commands.allow = ["toggle_window"]
