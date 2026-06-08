@@ -5,7 +5,11 @@ interface SmsRuResponse {
   status: 'OK' | 'ERROR';
   status_code: number;
   status_text?: string;
-  sms?: Record<string, { status: string; status_code: number; sms_id?: string }>;
+  sms?: Record<
+    string,
+    { status: 'OK' | 'ERROR'; status_code: number; status_text?: string; sms_id?: string }
+  >;
+  balance?: number;
 }
 
 @Injectable()
@@ -53,12 +57,24 @@ export class SmsService {
     try {
       const resp = await fetch(`https://sms.ru/sms/send?${params.toString()}`);
       const data = (await resp.json()) as SmsRuResponse;
-      if (data.status === 'OK') {
-        this.logger.log(`SMS sent to ${phone}`);
-        return true;
+
+      // Верхний статус "OK" значит только то, что запрос был принят — не что
+      // SMS реально доставлена. Проверяем под-статус для конкретного номера.
+      if (data.status !== 'OK') {
+        this.logger.error(
+          `SMS.ru rejected request: ${data.status_code} ${data.status_text ?? ''}`,
+        );
+        return false;
       }
-      this.logger.error(`SMS.ru rejected: ${data.status_code} ${data.status_text}`);
-      return false;
+      const per = data.sms?.[to];
+      if (per && per.status !== 'OK') {
+        this.logger.error(
+          `SMS.ru rejected delivery to ${phone}: ${per.status_code} ${per.status_text ?? ''} (balance: ${data.balance})`,
+        );
+        return false;
+      }
+      this.logger.log(`SMS sent to ${phone} (balance left: ${data.balance})`);
+      return true;
     } catch (e) {
       this.logger.error(`SMS.ru fetch error: ${(e as Error).message}`);
       return false;
