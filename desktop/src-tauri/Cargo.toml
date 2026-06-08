@@ -1,13 +1,13 @@
 [package]
-name = "seldegram-desktop"
+name = "crabogram-desktop"
 version = "1.0.0"
-description = "SeldeGram desktop client"
-authors = ["SeldeGram"]
+description = "CraboGram desktop client"
+authors = ["CraboGram"]
 edition = "2021"
 rust-version = "1.75"
 
 [lib]
-name = "seldegram_desktop_lib"
+name = "crabogram_desktop_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
 
 [build-dependencies]

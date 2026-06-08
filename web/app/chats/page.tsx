@@ -8,6 +8,7 @@ import { useWs, type WsState } from "@/lib/ws";
 import { Chat } from "@/lib/types";
 import { ChatList } from "@/components/ChatList";
 import { ChatView } from "@/components/ChatView";
+import { ResizableSidebar } from "@/components/ResizableSidebar";
 import { NewChatModal } from "@/components/NewChatModal";
 import { StickerPacksModal } from "@/components/StickerPacksModal";
 import { ProfileModal } from "@/components/ProfileModal";
@@ -71,14 +72,16 @@ export default function ChatsPage() {
     <>
       <div className="flex-1 flex min-h-0 overflow-hidden w-full max-w-full">
         <div className={`${selected ? "hidden md:flex" : "flex"} w-full md:w-auto`}>
-          <ChatList
-            selectedId={selected?.id ?? null}
-            onSelect={setSelected}
-            onLogout={() => setProfileOpen(true)}
-            onNewChat={() => setNewChatOpen(true)}
-            onOpenStickers={() => setStickersOpen(true)}
-            onOpenCalls={() => setCallsOpen(true)}
-          />
+          <ResizableSidebar>
+            <ChatList
+              selectedId={selected?.id ?? null}
+              onSelect={setSelected}
+              onLogout={() => setProfileOpen(true)}
+              onNewChat={() => setNewChatOpen(true)}
+              onOpenStickers={() => setStickersOpen(true)}
+              onOpenCalls={() => setCallsOpen(true)}
+            />
+          </ResizableSidebar>
         </div>
         <div className={`${selected ? "flex" : "hidden md:flex"} flex-1 min-w-0`}>
           {selected ? (

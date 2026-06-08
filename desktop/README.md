@@ -1,7 +1,7 @@
-# SeldeGram Desktop (Tauri)
+# CraboGram Desktop (Tauri)
 
 Тонкая Tauri-обёртка над веб-приложением. В продакшене грузит
-`https://app.pinkcrab.ru` в системный WebView2. Установщик ~10 МБ.
+`https://app.pinkcrab.ru` в системный WebView2. Установщик ~3 МБ.
 
 ## Что поставить один раз
 
@@ -52,14 +52,31 @@ Tauri откроет окно и подключится к `localhost:3000`.
 
 ## Продакшн-сборка
 
+### Установочные варианты
+
 ```powershell
 cd desktop
 npm run build
 ```
 
-После сборки установщики окажутся в `src-tauri/target/release/bundle/`:
-- `msi/` — стандартный .msi
-- `nsis/` — .exe-инсталлятор
+После сборки в `src-tauri/target/release/bundle/`:
+- `nsis/CraboGram_1.0.0_x64-setup.exe` — устанавливает в `%LocalAppData%\Programs`,
+  **не требует прав администратора**.
+- `msi/CraboGram_1.0.0_x64_en-US.msi` — для развёртывания через GPO/SCCM,
+  тоже per-user (currentUser scope).
+
+### Портативный вариант
+
+```powershell
+cd desktop
+npm run build:portable
+```
+
+Кроме обычных установщиков положит в
+`src-tauri/target/release/portable/CraboGram-portable.exe` —
+самодостаточный exe, ассеты вшиты в бинарник, установка не нужна.
+Скопировал на флешку → запустил на любой машине с WebView2 (он же
+есть на любой Win10/11 благодаря Edge).
 
 Окно загружает `dist/index.html`, который мгновенно редиректит на
 `https://app.pinkcrab.ru`. Чтобы изменить URL — поправь скрипт в

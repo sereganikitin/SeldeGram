@@ -38,3 +38,31 @@ p, span, div {
   overflow-wrap: break-word;
   word-break: break-word;
 }
+
+/* Розовый скроллбар. Webkit (Chrome/Edge/Safari) + Firefox через scrollbar-color. */
+.scrollbar-pink {
+  scrollbar-color: var(--color-brand) transparent;
+  scrollbar-width: thin;
+}
+.scrollbar-pink::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+.scrollbar-pink::-webkit-scrollbar-track {
+  background: transparent;
+}
+.scrollbar-pink::-webkit-scrollbar-thumb {
+  background: var(--color-cream-border);
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+.scrollbar-pink::-webkit-scrollbar-thumb:hover {
+  background: var(--color-brand);
+  background-clip: padding-box;
+  border: 2px solid transparent;
+}
+.dark .scrollbar-pink::-webkit-scrollbar-thumb {
+  background: var(--color-brand-dark);
+  background-clip: padding-box;
+}

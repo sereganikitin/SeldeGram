@@ -4,5 +4,5 @@ pub fn run() {
         .plugin(tauri_plugin_shell::init())
         .setup(|_app| Ok(()))
         .run(tauri::generate_context!())
-        .expect("error while running SeldeGram desktop");
+        .expect("error while running CraboGram desktop");
 }

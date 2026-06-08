@@ -60,6 +60,7 @@ export function ChatView({ chat, onBack, onChatGone, onOpenStickers }: Props) {
   const [peerLastSeen, setPeerLastSeen] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const initialScrollDoneRef = useRef(false);
   const typingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastTypingSentRef = useRef(0);
 
@@ -193,9 +194,22 @@ export function ChatView({ chat, onBack, onChatGone, onOpenStickers }: Props) {
     [chat.id, meId, onTypingWs],
   );
 
-  // Скролл вниз
+  // На новый чат — сбрасываем флаг, чтобы первый скролл был мгновенным.
   useEffect(() => {
-    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
+    initialScrollDoneRef.current = false;
+  }, [chat.id]);
+
+  // Скролл вниз: первый раз после загрузки сообщений — instant (без анимации),
+  // дальше — smooth для свежеприлетевших сообщений.
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el || messages.length === 0) return;
+    if (!initialScrollDoneRef.current) {
+      el.scrollTo({ top: el.scrollHeight, behavior: "auto" });
+      initialScrollDoneRef.current = true;
+    } else {
+      el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
+    }
   }, [messages.length]);
 
   // Mark read
@@ -396,7 +410,7 @@ export function ChatView({ chat, onBack, onChatGone, onOpenStickers }: Props) {
           <div className="text-brand-dark text-2xl font-bold">Отпустите файл для отправки</div>
         </div>
       )}
-      <header className="bg-white dark:bg-slate-950 border-b border-cream-border dark:border-slate-800 px-4 py-3 flex items-center gap-3">
+      <header className="bg-white dark:bg-slate-950 border-b border-cream-border dark:border-slate-800 px-3 py-3 flex items-center gap-2 min-w-0">
         {onBack && (
           <button onClick={onBack} className="md:hidden text-ink-muted mr-1" title="Назад">
             <ArrowLeft size={22} />
@@ -428,7 +442,7 @@ export function ChatView({ chat, onBack, onChatGone, onOpenStickers }: Props) {
           <>
             <IconButton
               icon={Phone}
-              size="lg"
+              size="md"
               onClick={() => {
                 useCall.getState().initiate({
                   id: other.id,
@@ -438,10 +452,11 @@ export function ChatView({ chat, onBack, onChatGone, onOpenStickers }: Props) {
                 }, "audio");
               }}
               title="Аудиозвонок"
+              className="flex-shrink-0"
             />
             <IconButton
               icon={Video}
-              size="lg"
+              size="md"
               onClick={() => {
                 useCall.getState().initiate({
                   id: other.id,
@@ -451,11 +466,12 @@ export function ChatView({ chat, onBack, onChatGone, onOpenStickers }: Props) {
                 }, "video");
               }}
               title="Видеозвонок"
+              className="flex-shrink-0"
             />
           </>
         )}
-        <IconButton icon={Search} size="lg" onClick={() => setSearchOpen((v) => !v)} title="Поиск" />
-        <IconButton icon={Info} size="lg" onClick={() => setInfoOpen(true)} title="Информация" />
+        <IconButton icon={Search} size="md" onClick={() => setSearchOpen((v) => !v)} title="Поиск" className="flex-shrink-0" />
+        <IconButton icon={Info} size="md" onClick={() => setInfoOpen(true)} title="Информация" className="flex-shrink-0" />
       </header>
 
       {pinnedMsg && !pinnedMsg.deletedAt && (
@@ -509,7 +525,7 @@ export function ChatView({ chat, onBack, onChatGone, onOpenStickers }: Props) {
         </div>
       )}
 
-      <div ref={scrollRef} className="flex-1 overflow-y-auto p-4">
+      <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 scrollbar-pink">
         {items.map((item) => {
           if (item.kind === "date") {
             return (
