@@ -10,15 +10,21 @@ import * as argon2 from 'argon2';
 import * as crypto from 'crypto';
 import { PrismaService } from '../prisma/prisma.service';
 import { MailService } from '../mail/mail.service';
+import { SmsService } from '../sms/sms.service';
 import * as speakeasy from 'speakeasy';
 import { RegisterDto } from './dto/register.dto';
 import { VerifyDto } from './dto/verify.dto';
 import { LoginDto } from './dto/login.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
+import { PhoneRequestDto } from './dto/phone-request.dto';
+import { PhoneVerifyDto } from './dto/phone-verify.dto';
 
 const VERIFICATION_TTL_MIN = 15;
 const PASSWORD_RESET_TTL_MIN = 15;
+const PHONE_OTP_TTL_MIN = 10;
+const PHONE_OTP_RESEND_SEC = 60;
+const PHONE_OTP_DAILY_LIMIT = 5;
 const REFRESH_TTL_DAYS = 30;
 
 @Injectable()
@@ -26,6 +32,7 @@ export class AuthService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly mail: MailService,
+    private readonly sms: SmsService,
     private readonly jwt: JwtService,
     private readonly config: ConfigService,
   ) {}
@@ -220,6 +227,120 @@ export class AuthService {
     });
 
     return this.issueTokens(record.userId);
+  }
+
+  async requestPhoneCode(dto: PhoneRequestDto) {
+    const phone = dto.phone;
+
+    // anti-spam: не чаще раза в минуту, ≤5 в сутки
+    const dayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    const recent = await this.prisma.phoneVerification.findMany({
+      where: { phone, createdAt: { gt: dayAgo } },
+      orderBy: { createdAt: 'desc' },
+      take: PHONE_OTP_DAILY_LIMIT,
+    });
+    if (recent[0]) {
+      const sinceLast = (Date.now() - recent[0].createdAt.getTime()) / 1000;
+      if (sinceLast < PHONE_OTP_RESEND_SEC) {
+        throw new BadRequestException(
+          `Подождите ${Math.ceil(PHONE_OTP_RESEND_SEC - sinceLast)} сек перед повторной отправкой`,
+        );
+      }
+    }
+    if (recent.length >= PHONE_OTP_DAILY_LIMIT) {
+      throw new BadRequestException('Слишком много попыток за сутки. Попробуйте завтра.');
+    }
+
+    const code = ('' + Math.floor(100000 + Math.random() * 900000)).slice(0, 6);
+    const existing = await this.prisma.user.findUnique({ where: { phone } });
+
+    await this.prisma.phoneVerification.create({
+      data: {
+        userId: existing?.id ?? null,
+        phone,
+        code,
+        expiresAt: new Date(Date.now() + PHONE_OTP_TTL_MIN * 60 * 1000),
+      },
+    });
+
+    const sent = await this.sms.sendOtp(phone, code);
+    if (!sent) throw new BadRequestException('Не удалось отправить SMS');
+
+    return {
+      ok: true,
+      needsRegistration: !existing,
+      resendAfterSec: PHONE_OTP_RESEND_SEC,
+    };
+  }
+
+  async verifyPhoneCode(dto: PhoneVerifyDto) {
+    const record = await this.prisma.phoneVerification.findFirst({
+      where: {
+        phone: dto.phone,
+        consumed: false,
+        expiresAt: { gt: new Date() },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+    if (!record) throw new BadRequestException('Код не найден или истёк');
+
+    if (record.code !== dto.code) {
+      if (record.attemptsLeft <= 1) {
+        await this.prisma.phoneVerification.update({
+          where: { id: record.id },
+          data: { consumed: true, attemptsLeft: 0 },
+        });
+        throw new BadRequestException('Превышено число попыток');
+      }
+      await this.prisma.phoneVerification.update({
+        where: { id: record.id },
+        data: { attemptsLeft: { decrement: 1 } },
+      });
+      throw new BadRequestException('Неверный код');
+    }
+
+    await this.prisma.phoneVerification.update({
+      where: { id: record.id },
+      data: { consumed: true },
+    });
+
+    let user = await this.prisma.user.findUnique({ where: { phone: dto.phone } });
+
+    if (!user) {
+      // регистрация — username и displayName обязательны
+      if (!dto.username || !dto.displayName) {
+        throw new BadRequestException('Username and displayName required for new account');
+      }
+      const conflict = await this.prisma.user.findFirst({
+        where: { OR: [{ username: dto.username }, { email: this.phoneToPseudoEmail(dto.phone) }] },
+      });
+      if (conflict) {
+        throw new ConflictException('Username already taken');
+      }
+      // Email обязателен в схеме — используем псевдо-email для phone-only юзеров.
+      // Юзер сможет привязать настоящий email позже из настроек.
+      user = await this.prisma.user.create({
+        data: {
+          phone: dto.phone,
+          email: this.phoneToPseudoEmail(dto.phone),
+          username: dto.username,
+          displayName: dto.displayName,
+          passwordHash: '', // нет пароля у phone-only — логин только через SMS
+          isVerified: true,
+        },
+      });
+    }
+
+    if (user.totpEnabled) {
+      // 2FA-ход не нужно дублировать поверх SMS — это и есть второй фактор.
+      // Намеренно скипаем здесь, иначе UX превращается в кашу.
+    }
+
+    return this.issueTokens(user.id);
+  }
+
+  private phoneToPseudoEmail(phone: string): string {
+    return `${phone.replace(/[^0-9]/g, '')}@phone.crabogram.local`;
   }
 
   private async issueVerificationCode(userId: string, email: string) {

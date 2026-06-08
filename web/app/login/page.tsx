@@ -109,6 +109,12 @@ export default function LoginPage() {
             Создать
           </Link>
         </p>
+        <p className="mt-3 text-center text-sm text-ink-muted">
+          или{" "}
+          <Link href="/phone" className="text-brand-dark font-medium hover:underline">
+            войти по телефону
+          </Link>
+        </p>
       </div>
     </div>
   );

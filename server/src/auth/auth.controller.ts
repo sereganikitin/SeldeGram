@@ -7,6 +7,8 @@ import { LoginDto } from './dto/login.dto';
 import { RefreshDto } from './dto/refresh.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
+import { PhoneRequestDto } from './dto/phone-request.dto';
+import { PhoneVerifyDto } from './dto/phone-verify.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -45,6 +47,18 @@ export class AuthController {
   @HttpCode(200)
   resetPassword(@Body() dto: ResetPasswordDto) {
     return this.auth.resetPassword(dto);
+  }
+
+  @Post('phone/request-code')
+  @HttpCode(200)
+  requestPhoneCode(@Body() dto: PhoneRequestDto) {
+    return this.auth.requestPhoneCode(dto);
+  }
+
+  @Post('phone/verify')
+  @HttpCode(200)
+  verifyPhoneCode(@Body() dto: PhoneVerifyDto) {
+    return this.auth.verifyPhoneCode(dto);
   }
 
   @UseGuards(JwtAuthGuard)

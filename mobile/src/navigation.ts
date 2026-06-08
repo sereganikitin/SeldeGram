@@ -3,6 +3,7 @@ export type RootStackParamList = {
   Register: undefined;
   Verify: { email: string };
   Login: undefined;
+  PhoneAuth: undefined;
   ForgotPassword: undefined;
   ChatList: undefined;
   NewChat: undefined;
