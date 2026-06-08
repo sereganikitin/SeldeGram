@@ -1,3 +1,5 @@
+mod vpn;
+
 use tauri::{
     menu::{Menu, MenuItem},
     tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
@@ -57,12 +59,22 @@ pub fn run() {
             toggle_window,
             quit_app,
             set_unread_count,
+            vpn::vpn_list_profiles,
+            vpn::vpn_import_link,
+            vpn::vpn_import_json,
+            vpn::vpn_delete_profile,
+            vpn::vpn_connect,
+            vpn::vpn_disconnect,
+            vpn::vpn_status,
         ])
         .on_window_event(|window, event| {
             // Перехватываем закрытие окна — сворачиваем в трей.
             if let tauri::WindowEvent::CloseRequested { api, .. } = event {
                 api.prevent_close();
                 let _ = window.hide();
+            }
+            if let tauri::WindowEvent::Destroyed = event {
+                vpn::shutdown();
             }
         })
         .setup(|app| {

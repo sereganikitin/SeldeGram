@@ -7,9 +7,11 @@ import { useAuth } from "@/lib/store";
 import { useWs, type WsState } from "@/lib/ws";
 import { Avatar } from "./Avatar";
 import { IconButton } from "./IconButton";
-import { Plus, Smile, Phone, User, Megaphone, Users, Bookmark, Pin, Bell, BellOff, Archive, ArchiveRestore, FolderPlus, Folder, X as XIcon } from "lucide-react";
+import { Plus, Smile, Phone, User, Megaphone, Users, Bookmark, Pin, Bell, BellOff, Archive, ArchiveRestore, FolderPlus, Folder, X as XIcon, Shield } from "lucide-react";
 import { formatTime, messagePreview } from "@/lib/helpers";
 import { StoriesBar } from "./StoriesBar";
+import { VpnModal } from "./VpnModal";
+import { isTauri } from "@/lib/tauri";
 
 interface Props {
   selectedId: string | null;
@@ -30,6 +32,8 @@ export function ChatList({ selectedId, onSelect, onLogout, onNewChat, onOpenStic
   const onDeleted = useWs((s: WsState) => s.onDeleted);
   const onEdited = useWs((s: WsState) => s.onEdited);
   const [chats, setChats] = useState<Chat[]>([]);
+  const [vpnOpen, setVpnOpen] = useState(false);
+  const tauriEnv = typeof window !== "undefined" && isTauri();
   const [search, setSearch] = useState("");
   const [showArchived, setShowArchived] = useState(false);
   const [menuChat, setMenuChat] = useState<{ chat: Chat; x: number; y: number } | null>(null);
@@ -175,8 +179,13 @@ export function ChatList({ selectedId, onSelect, onLogout, onNewChat, onOpenStic
         <IconButton icon={Plus} onClick={onNewChat} title="Новый чат" size="md" />
         <IconButton icon={Smile} onClick={onOpenStickers} title="Стикерпаки" size="md" variant="ghost" />
         <IconButton icon={Phone} onClick={onOpenCalls} title="История звонков" size="md" variant="ghost" />
+        {tauriEnv && (
+          <IconButton icon={Shield} onClick={() => setVpnOpen(true)} title="VPN" size="md" variant="ghost" />
+        )}
         <IconButton icon={User} onClick={onLogout} title="Профиль" size="md" variant="ghost" />
       </header>
+
+      <VpnModal open={vpnOpen} onClose={() => setVpnOpen(false)} />
 
       <StoriesBar />
 

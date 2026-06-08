@@ -81,3 +81,46 @@ npm run build:portable
 Окно загружает `dist/index.html`, который мгновенно редиректит на
 `https://app.pinkcrab.ru`. Чтобы изменить URL — поправь скрипт в
 `dist/index.html`.
+
+## VPN-клиент
+
+Десктоп-приложение умеет подключаться к VPN-серверам через встроенный
+sing-box-движок. Поддерживаемые протоколы: **VLESS** (TLS / Reality, ws /
+grpc / http), **Hysteria 2**, **Shadowsocks**, **SOCKS5**, плюс импорт
+произвольного sing-box outbound JSON.
+
+### Подготовка
+
+Скачай `sing-box.exe` для Windows AMD64 с
+https://github.com/SagerNet/sing-box/releases и положи в
+`src-tauri/binaries/sing-box-x86_64-pc-windows-msvc.exe`. Подробности в
+[src-tauri/binaries/README.md](src-tauri/binaries/README.md).
+
+Без бинарника `npm run build` упадёт на bundling-стадии.
+
+### Использование
+
+В сайдбаре приложения появится значок **Shield** — открывается VPN-модалка.
+Импортируй профиль одним из трёх способов:
+
+- **Ссылка**: `vless://`, `hy2://`, `hysteria2://`, `ss://`, `socks5://`
+  — либо вставь руками, либо «Из буфера».
+- **JSON**: outbound из sing-box формата (`{"type":"vless",...}`),
+  целиком файл конфига (`{"outbounds":[...]}`) или массив outbounds —
+  парсер сам найдёт прокси-outbound.
+- **.json файл**: то же что JSON, но из файла на диске.
+
+Профили сохраняются в `$APP_DATA/vpn-profiles.json`
+(Windows: `%RoamingAppData%\ru.infoseledka.crabogram.desktop\`).
+
+### Текущее ограничение MVP
+
+Связка sing-box ↔ WebView2 пока не **автоматически** подключена. При
+нажатии «Подключить»:
+1. Запускается sing-box-sidecar, поднимает локальный SOCKS5 на
+   `127.0.0.1:47180`.
+2. Профиль роутится через выбранный outbound.
+3. WebView2 при этом всё ещё ходит напрямую — её прокси не переключается
+   автоматически.
+
+Следующая итерация: пересоздание WebView с `proxy_url` при коннекте.

@@ -39,4 +39,29 @@ export const tauri = {
   hideToTray: () => tauriInvoke("hide_window"),
   setUnreadCount: (count: number) =>
     tauriInvoke("set_unread_count", { count: Math.max(0, Math.floor(count)) }),
+
+  // VPN
+  vpnList: () => tauriInvoke<{ profiles: VpnProfile[]; active_id: string | null }>("vpn_list_profiles"),
+  vpnImportLink: (link: string) => tauriInvoke<VpnProfile>("vpn_import_link", { link }),
+  vpnImportJson: (json: string, name: string) =>
+    tauriInvoke<VpnProfile>("vpn_import_json", { json, name }),
+  vpnDelete: (id: string) => tauriInvoke<void>("vpn_delete_profile", { id }),
+  vpnConnect: (id: string) => tauriInvoke<VpnStatus>("vpn_connect", { id }),
+  vpnDisconnect: () => tauriInvoke<VpnStatus>("vpn_disconnect"),
+  vpnStatus: () => tauriInvoke<VpnStatus>("vpn_status"),
 };
+
+export interface VpnProfile {
+  id: string;
+  name: string;
+  kind: string;
+  server: string | null;
+  outbound: unknown;
+  created_at: string;
+}
+
+export interface VpnStatus {
+  connected: boolean;
+  active_id: string | null;
+  socks_port: number;
+}
