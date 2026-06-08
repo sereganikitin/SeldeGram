@@ -62,23 +62,28 @@ export function DesktopTitleBar() {
     try { await tauri.hideToTray(); } catch (e) { console.error("hideToTray", e); }
   };
 
+  const onContextMenu = (e: React.MouseEvent) => {
+    // Заблокировать кастомный веб-context-menu в зоне титлбара —
+    // там ему делать нечего.
+    e.preventDefault();
+  };
+
   return (
     <div
       className="h-9 flex items-center bg-gradient-to-r from-brand to-brand-dark text-white shadow-sm flex-shrink-0 relative z-50"
       onMouseDown={onDragDown}
       onDoubleClick={onDragDoubleClick}
-      data-tauri-drag-region
+      onContextMenu={onContextMenu}
     >
       <div
         className="flex-1 flex items-center gap-2 pl-3 h-full"
-        data-tauri-drag-region
       >
         <div
-          className="w-5 h-5 rounded-md bg-white/25 backdrop-blur flex items-center justify-center text-[11px] font-extrabold shadow-inner"
+          className="w-5 h-5 rounded-md bg-white/25 backdrop-blur flex items-center justify-center text-[11px] font-extrabold shadow-inner pointer-events-none"
         >
           C
         </div>
-        <span className="text-[13px] font-semibold tracking-tight">
+        <span className="text-[13px] font-semibold tracking-tight pointer-events-none">
           CraboGram
         </span>
       </div>
