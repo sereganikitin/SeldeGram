@@ -1,0 +1,4 @@
+[[permission]]
+identifier = "allow-minimize-window"
+description = "Allows the minimize_window command."
+commands.allow = ["minimize_window"]

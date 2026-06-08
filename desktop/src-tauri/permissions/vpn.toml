@@ -1,0 +1,34 @@
+[[permission]]
+identifier = "allow-vpn-list-profiles"
+description = "Allows the vpn_list_profiles command."
+commands.allow = ["vpn_list_profiles"]
+
+[[permission]]
+identifier = "allow-vpn-import-link"
+description = "Allows the vpn_import_link command."
+commands.allow = ["vpn_import_link"]
+
+[[permission]]
+identifier = "allow-vpn-import-json"
+description = "Allows the vpn_import_json command."
+commands.allow = ["vpn_import_json"]
+
+[[permission]]
+identifier = "allow-vpn-delete-profile"
+description = "Allows the vpn_delete_profile command."
+commands.allow = ["vpn_delete_profile"]
+
+[[permission]]
+identifier = "allow-vpn-connect"
+description = "Allows the vpn_connect command."
+commands.allow = ["vpn_connect"]
+
+[[permission]]
+identifier = "allow-vpn-disconnect"
+description = "Allows the vpn_disconnect command."
+commands.allow = ["vpn_disconnect"]
+
+[[permission]]
+identifier = "allow-vpn-status"
+description = "Allows the vpn_status command."
+commands.allow = ["vpn_status"]

@@ -1,0 +1,4 @@
+[[permission]]
+identifier = "allow-is-maximized-window"
+description = "Allows the is_maximized_window command."
+commands.allow = ["is_maximized_window"]

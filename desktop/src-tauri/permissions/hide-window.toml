@@ -1,0 +1,4 @@
+[[permission]]
+identifier = "allow-hide-window"
+description = "Allows the hide_window command."
+commands.allow = ["hide_window"]
