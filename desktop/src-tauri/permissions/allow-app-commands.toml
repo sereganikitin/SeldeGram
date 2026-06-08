@@ -1,0 +1,23 @@
+"$schema" = "../gen/schemas/schema.json"
+
+[[permission]]
+identifier = "allow-app-commands"
+description = "Allow all CraboGram custom Tauri commands."
+commands.allow = [
+  "hide_window",
+  "show_window",
+  "toggle_window",
+  "minimize_window",
+  "toggle_maximize_window",
+  "is_maximized_window",
+  "start_dragging_window",
+  "quit_app",
+  "set_unread_count",
+  "vpn_list_profiles",
+  "vpn_import_link",
+  "vpn_import_json",
+  "vpn_delete_profile",
+  "vpn_connect",
+  "vpn_disconnect",
+  "vpn_status",
+]
