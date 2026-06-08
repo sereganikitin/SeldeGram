@@ -3,6 +3,12 @@
   "identifier": "default",
   "description": "Default capabilities for CraboGram desktop",
   "windows": ["main"],
+  "remote": {
+    "urls": [
+      "https://app.pinkcrab.ru/*",
+      "http://localhost:3000/*"
+    ]
+  },
   "permissions": [
     "core:default",
     "core:window:default",
