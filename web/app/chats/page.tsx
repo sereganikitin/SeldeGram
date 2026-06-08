@@ -9,6 +9,7 @@ import { Chat } from "@/lib/types";
 import { ChatList } from "@/components/ChatList";
 import { ChatView } from "@/components/ChatView";
 import { ResizableSidebar } from "@/components/ResizableSidebar";
+import { DesktopTitleBar } from "@/components/DesktopTitleBar";
 import { NewChatModal } from "@/components/NewChatModal";
 import { StickerPacksModal } from "@/components/StickerPacksModal";
 import { ProfileModal } from "@/components/ProfileModal";
@@ -70,6 +71,7 @@ export default function ChatsPage() {
 
   return (
     <>
+      <DesktopTitleBar />
       <div className="flex-1 flex min-h-0 overflow-hidden w-full max-w-full">
         <div className={`${selected ? "hidden md:flex" : "flex"} w-full md:w-auto`}>
           <ResizableSidebar>

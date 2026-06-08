@@ -85,6 +85,16 @@ export function ChatList({ selectedId, onSelect, onLogout, onNewChat, onOpenStic
     load();
   }, [load]);
 
+  // Сводный счётчик непрочитанных — отдаём в Tauri, чтобы он нарисовал
+  // overlay-бейдж на иконке в таскбаре Windows. В обычном браузере вызов
+  // безопасный no-op.
+  useEffect(() => {
+    const total = chats.reduce((sum, c) => sum + (c.unreadCount ?? 0), 0);
+    import("@/lib/tauri").then(({ tauri }) => {
+      void tauri.setUnreadCount(total);
+    });
+  }, [chats]);
+
   useEffect(() => onChatUpdated(() => load()), [onChatUpdated, load]);
   useEffect(() => onChatDeleted((id) => setChats((p) => p.filter((c) => c.id !== id))), [onChatDeleted]);
 

@@ -21,8 +21,10 @@
         "resizable": true,
         "fullscreen": false,
         "center": true,
+        "decorations": false,
         "backgroundColor": "#fff5f9",
         "shadow": true,
+        "transparent": false,
         "windowEffects": {
           "effects": ["mica", "acrylic"],
           "state": "active"
