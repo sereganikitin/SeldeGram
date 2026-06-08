@@ -2,3 +2,8 @@ node_modules/
 package-lock.json
 src-tauri/target/
 src-tauri/gen/
+
+# Root .gitignore excludes "dist/" globally — but desktop/dist/ is our
+# hand-written splash, not a build output. Un-ignore it here.
+!dist/
+!dist/**
