@@ -39,9 +39,12 @@ export class SmsService {
       return true;
     }
 
+    // SMS.ru принимает номер без +
+    const to = phone.replace(/^\+/, '');
+
     const params = new URLSearchParams({
       api_id: this.apiId,
-      to: phone,
+      to,
       msg,
       json: '1',
     });
