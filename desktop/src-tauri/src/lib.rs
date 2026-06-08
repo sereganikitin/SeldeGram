@@ -30,6 +30,32 @@ fn toggle_window(window: WebviewWindow) {
 }
 
 #[tauri::command]
+fn minimize_window(window: WebviewWindow) {
+    let _ = window.minimize();
+}
+
+#[tauri::command]
+fn toggle_maximize_window(window: WebviewWindow) -> bool {
+    if window.is_maximized().unwrap_or(false) {
+        let _ = window.unmaximize();
+        false
+    } else {
+        let _ = window.maximize();
+        true
+    }
+}
+
+#[tauri::command]
+fn is_maximized_window(window: WebviewWindow) -> bool {
+    window.is_maximized().unwrap_or(false)
+}
+
+#[tauri::command]
+fn start_dragging_window(window: WebviewWindow) {
+    let _ = window.start_dragging();
+}
+
+#[tauri::command]
 fn quit_app(app: tauri::AppHandle) {
     app.exit(0);
 }
@@ -52,11 +78,23 @@ fn set_unread_count(window: WebviewWindow, count: u32) {
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_single_instance::init(|app, _argv, _cwd| {
+            // Второй запуск приложения — поднимаем уже работающее окно.
+            if let Some(win) = app.get_webview_window("main") {
+                let _ = win.show();
+                let _ = win.set_focus();
+                let _ = win.unminimize();
+            }
+        }))
         .plugin(tauri_plugin_shell::init())
         .invoke_handler(tauri::generate_handler![
             hide_window,
             show_window,
             toggle_window,
+            minimize_window,
+            toggle_maximize_window,
+            is_maximized_window,
+            start_dragging_window,
             quit_app,
             set_unread_count,
             vpn::vpn_list_profiles,

@@ -23,19 +23,25 @@ export async function tauriInvoke<T = unknown>(
 ): Promise<T | null> {
   if (!isTauri()) return null;
   const w = window as TauriWindow;
-  return (await w.__TAURI_INTERNALS__!.invoke<T>(cmd, args ?? {})) ?? null;
+  try {
+    return (await w.__TAURI_INTERNALS__!.invoke<T>(cmd, args ?? {})) ?? null;
+  } catch (e) {
+    console.error("[tauri.invoke]", cmd, e);
+    throw e;
+  }
 }
 
-// Хелперы для управления окном через встроенный плагин window Tauri 2.
+// Хелперы для управления окном — все через собственные Rust-команды,
+// чтобы обойти permission-юниты Tauri 2 (которые могут меняться от
+// версии к версии). Тонкая ярлычная обёртка над invoke().
 export const tauri = {
   isAvailable: isTauri,
 
-  minimize: () => tauriInvoke("plugin:window|minimize"),
-  toggleMaximize: () => tauriInvoke("plugin:window|toggle_maximize"),
-  isMaximized: () => tauriInvoke<boolean>("plugin:window|is_maximized"),
-  startDragging: () => tauriInvoke("plugin:window|start_dragging"),
+  minimize: () => tauriInvoke("minimize_window"),
+  toggleMaximize: () => tauriInvoke<boolean>("toggle_maximize_window"),
+  isMaximized: () => tauriInvoke<boolean>("is_maximized_window"),
+  startDragging: () => tauriInvoke("start_dragging_window"),
 
-  // Кастомные команды на Rust-стороне:
   hideToTray: () => tauriInvoke("hide_window"),
   setUnreadCount: (count: number) =>
     tauriInvoke("set_unread_count", { count: Math.max(0, Math.floor(count)) }),
