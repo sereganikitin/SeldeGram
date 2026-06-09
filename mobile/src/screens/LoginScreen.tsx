@@ -54,14 +54,9 @@ export function LoginScreen({ navigation }: Props) {
       )}
       <Button title={needs2fa ? 'Подтвердить' : 'Войти'} onPress={submit} loading={loading} />
       {!needs2fa && (
-        <>
-          <Text style={styles.link} onPress={() => navigation.navigate('ForgotPassword')}>
-            Забыли пароль?
-          </Text>
-          <Text style={styles.link} onPress={() => navigation.navigate('PhoneAuth')}>
-            Войти по номеру телефона
-          </Text>
-        </>
+        <Text style={styles.link} onPress={() => navigation.navigate('ForgotPassword')}>
+          Забыли пароль?
+        </Text>
       )}
     </View>
   );
